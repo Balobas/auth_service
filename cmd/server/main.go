@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	grpcPort = "50051"
+	grpcPort = "localhost:50051"
 )
 
 func main() {
@@ -20,6 +20,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to listen: %v\n", err)
 	}
+	defer conn.Close()
 
 	server := grpc.NewServer()
 	reflection.Register(server)
@@ -28,6 +29,6 @@ func main() {
 	log.Printf("server listening at %s\n", conn.Addr())
 
 	if err := server.Serve(conn); err != nil {
-		log.Fatalf("failed to serve %v\n", err)
+		log.Printf("failed to serve %v\n", err)
 	}
 }
