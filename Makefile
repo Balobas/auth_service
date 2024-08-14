@@ -26,3 +26,12 @@ generate-auth-api:
 	--go-grpc_out=pkg/auth_v1 --go-grpc_opt=paths=source_relative \
 	--plugin=protoc-gen-go-grpc=bin/protoc-gen-go-grpc \
 	api/auth_v1/auth_api.proto
+
+run-server:
+	go run $(CURDIR)/cmd/server/main.go
+
+run-client:
+	go run $(CURDIR)/cmd/client/main.go
+
+build-for-cloud:
+	GOOS=linux GOARCH=amd64 go build -o service_linux cmd/server/main.go
