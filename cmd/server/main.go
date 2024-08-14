@@ -1,8 +1,8 @@
 package main
 
 import (
-	deliveryGrpc "balun/auth_service_bln/internal/delivery/grpc"
-	"balun/auth_service_bln/pkg/auth_v1"
+	deliveryGrpc "auth_service_bln/internal/delivery/grpc"
+	"auth_service_bln/pkg/auth_v1"
 	"log"
 	"net"
 

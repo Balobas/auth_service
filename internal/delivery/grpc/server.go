@@ -1,11 +1,12 @@
 package grpc
 
 import (
-	"balun/auth_service_bln/pkg/auth_v1"
-	"balun/auth_service_bln/vendor/google.golang.org/protobuf/types/known/timestamppb"
+	"auth_service_bln/pkg/auth_v1"
 	"context"
 	"fmt"
 	"time"
+
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"google.golang.org/protobuf/types/known/emptypb"
 )
