@@ -1,10 +1,11 @@
 package grpc
 
 import (
-	"auth_service_bln/pkg/auth_v1"
 	"context"
 	"fmt"
 	"time"
+
+	"github.com/balobas/auth_service_bln/pkg/auth_v1"
 
 	"google.golang.org/protobuf/types/known/timestamppb"
 

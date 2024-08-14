@@ -1,10 +1,11 @@
 package main
 
 import (
-	deliveryGrpc "auth_service_bln/internal/delivery/grpc"
-	"auth_service_bln/pkg/auth_v1"
 	"log"
 	"net"
+
+	deliveryGrpc "github.com/balobas/auth_service_bln/internal/delivery/grpc"
+	"github.com/balobas/auth_service_bln/pkg/auth_v1"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
