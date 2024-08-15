@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	grpcPort = "localhost:50051"
+	grpcPort = "[::]:50051"
 )
 
 func main() {
