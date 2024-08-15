@@ -33,7 +33,7 @@ func (a *AuthServiceGrpc) Create(ctx context.Context, req *auth_v1.CreateRequest
 func (a *AuthServiceGrpc) Get(ctx context.Context, req *auth_v1.GetRequest) (*auth_v1.GetResponse, error) {
 	return &auth_v1.GetResponse{
 		Id:        1,
-		Name:      "test",
+		Name:      "HUIHUIHUIHUIHUI",
 		Email:     "test@email.com",
 		Role:      auth_v1.Role_user,
 		CreatedAt: timestamppb.New(time.Now()),
