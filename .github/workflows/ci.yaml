@@ -25,11 +25,17 @@ jobs:
       - name: Login to Docker Registry
         run: docker login -u ${{ secrets.REGISTRY_USERNAME }} -p ${{ secrets.REGISTRY_PASSWORD }} $REGISTRY
 
-      - name: Build and Push Docker Image
+      - name: Build and Push service Docker Image
         run: |
           TAG_NAME=$(echo $GITHUB_SHA | head -c7)
           docker buildx create --use
           docker buildx build --no-cache --push --tag $REGISTRY/$IMAGE_NAME:$TAG_NAME -f Dockerfile ./
+        
+      -name: Build and Push migrator Docker Image
+        run: |
+          TAG_NAME=$(echo $GITHUB_SHA | head -c7)
+          docker buildx create --use
+          docker buildx build --no-cache --push --tag $REGISTRY/migrator:$TAG_NAME -f migration.Dockerfile ./
 
   deploy-image:
     runs-on: ubuntu-latest
@@ -55,6 +61,16 @@ jobs:
             
             # Remove old container
             docker rm $CONTAINER_NAME
+
+            # Stop migrator if it work
+            docker stop migrator
+
+            #Remove old migrator container
+            docker rm migrator
+
+            # Run migrations
+            docker run -d --name=migrator --restart on-failure -t $REGISTRY/migrator:$TAG_NAME
             
             # Run a new container from a new image
             docker run -d -p $EXTERNAL_PORT:$CONTAINER_PORT --name $CONTAINER_NAME -t $REGISTRY/$IMAGE_NAME:$TAG_NAME
+
