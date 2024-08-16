@@ -77,3 +77,5 @@ jobs:
             # Run a new container from a new image
             docker run -d -p $EXTERNAL_PORT:$CONTAINER_PORT --name $CONTAINER_NAME -t $REGISTRY/$IMAGE_NAME:$TAG_NAME
 
+            docker network connect db_network $CONTAINER_NAME
+
