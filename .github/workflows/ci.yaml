@@ -70,6 +70,9 @@ jobs:
 
             # Run migrations
             docker run -d --name=migrator --restart on-failure -t $REGISTRY/migrator:$TAG_NAME
+
+            # Connect migrator to db network
+            docker network connect db_network migrator
             
             # Run a new container from a new image
             docker run -d -p $EXTERNAL_PORT:$CONTAINER_PORT --name $CONTAINER_NAME -t $REGISTRY/$IMAGE_NAME:$TAG_NAME
