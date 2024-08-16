@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	repositoryPostgres "github.com/balobas/auth_service_bln/internal/repository/postgres"
 	"github.com/balobas/auth_service_bln/pkg/auth_v1"
 
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -14,37 +15,53 @@ import (
 
 type AuthServiceGrpc struct {
 	auth_v1.UnimplementedAuthServer
+
+	repository *repositoryPostgres.Repository
 }
 
-type Config interface {
-}
+type Config interface{}
 
-func NewAuthService(cfg Config) *AuthServiceGrpc {
-	return &AuthServiceGrpc{}
+func NewAuthService(cfg Config, repo *repositoryPostgres.Repository) *AuthServiceGrpc {
+	return &AuthServiceGrpc{
+		repository: repo,
+	}
 }
 
 func (a *AuthServiceGrpc) Create(ctx context.Context, req *auth_v1.CreateRequest) (*auth_v1.CreateResponse, error) {
-	fmt.Printf("%+v\n", req)
+	fmt.Printf("create request: %+v\n", req)
+
+	id, err := a.repository.CreateUser(ctx, req, req.Role)
+	if err != nil {
+		return nil, err
+	}
+
 	return &auth_v1.CreateResponse{
-		Id: 1,
+		Id: id,
 	}, nil
 }
 
 func (a *AuthServiceGrpc) Get(ctx context.Context, req *auth_v1.GetRequest) (*auth_v1.GetResponse, error) {
+	fmt.Printf("get user request: %+v\n", req)
+
+	user, err := a.repository.GetUser(ctx, req.GetId())
+	if err != nil {
+		return nil, err
+	}
+
 	return &auth_v1.GetResponse{
-		Id:        1,
-		Name:      "HUIHUIHUIHUIHUI",
-		Email:     "test@email.com",
-		Role:      auth_v1.Role_user,
-		CreatedAt: timestamppb.New(time.Now()),
-		UpdatedAt: timestamppb.New(time.Now()),
+		Id:        user.Id,
+		Name:      user.Name,
+		Email:     user.Email,
+		Role:      auth_v1.Role(auth_v1.Role_value[user.Role]),
+		CreatedAt: timestamppb.New(time.UnixMicro(user.CreatedAt)),
+		UpdatedAt: timestamppb.New(time.UnixMicro(user.UpdatedAt)),
 	}, nil
 }
 
 func (a *AuthServiceGrpc) Update(ctx context.Context, req *auth_v1.UpdateRequest) (*emptypb.Empty, error) {
-	return nil, nil
+	return nil, a.repository.UpdateUser(ctx, req.GetId(), req.GetName().GetValue(), req.GetEmail().GetValue())
 }
 
 func (a *AuthServiceGrpc) Delete(ctx context.Context, req *auth_v1.DeleteRequest) (*emptypb.Empty, error) {
-	return nil, nil
+	return nil, a.repository.DeleteUser(ctx, req.GetId())
 }
