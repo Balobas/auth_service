@@ -1,4 +1,4 @@
-include .env
+include local.env
 
 LOCAL_BIN:=$(CURDIR)/bin
 
@@ -64,7 +64,8 @@ local-migration-down:
 run-pg-test:
 	go run cmd/postgres/main.go
 
-push-pg:
+push-and-run-pg:
 	scp .env root@45.94.123.176:postgres/
 	scp docker-compose.yaml root@45.94.123.176:postgres/
 	ssh root@45.94.123.176 "cd postgres;docker-compose up -d;exit"
+
