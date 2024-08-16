@@ -9,6 +9,6 @@ FROM alpine:latest
 
 WORKDIR /root/
 COPY --from=builder /github.com/balobasta/auth_service_bln/src/bin/auth_service .
-COPY --from=builder /github.com/balobasta/auth_service_bln/src/bin/.env .
+COPY --from=builder /github.com/balobasta/auth_service_bln/src/.env .
 
 ENTRYPOINT ["./auth_service", "-config-path=.env"]
