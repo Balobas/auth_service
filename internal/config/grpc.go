@@ -1,7 +1,6 @@
 package config
 
 import (
-	"net"
 	"os"
 
 	"github.com/pkg/errors"
