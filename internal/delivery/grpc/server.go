@@ -3,43 +3,39 @@ package grpc
 import (
 	"context"
 	"fmt"
-	"time"
 
+	converterGrpc "github.com/balobas/auth_service_bln/internal/delivery/grpc/converter"
 	"github.com/balobas/auth_service_bln/internal/entity"
-	repositoryPostgres "github.com/balobas/auth_service_bln/internal/repository/postgres"
 	"github.com/balobas/auth_service_bln/pkg/auth_v1"
-
-	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
-type AuthServiceGrpc struct {
+type AuthServerGrpc struct {
 	auth_v1.UnimplementedAuthServer
 
-	repository *repositoryPostgres.Repository
+	usersService UsersService
+}
+
+type UsersService interface {
+	Create(ctx context.Context, user entity.User) (int64, error)
+	Get(ctx context.Context, id int64) (entity.User, error)
+	Update(ctx context.Context, user entity.User) error
+	Delete(ctx context.Context, id int64) error
 }
 
 type Config interface{}
 
-func NewAuthService(cfg Config, repo *repositoryPostgres.Repository) *AuthServiceGrpc {
-	return &AuthServiceGrpc{
-		repository: repo,
+func NewAuthServerGRPC(cfg Config, usersService UsersService) *AuthServerGrpc {
+	return &AuthServerGrpc{
+		usersService: usersService,
 	}
 }
 
-func (a *AuthServiceGrpc) Create(ctx context.Context, req *auth_v1.CreateRequest) (*auth_v1.CreateResponse, error) {
+func (a *AuthServerGrpc) Create(ctx context.Context, req *auth_v1.CreateRequest) (*auth_v1.CreateResponse, error) {
 	fmt.Printf("create request: %+v\n", req)
 
-	id, err := a.repository.CreateUser(ctx, entity.User{
-		Name:            req.Name,
-		Email:           req.Email,
-		Password:        req.Password,
-		ConfirmPassword: req.PasswordConfirm,
-		Role:            req.Role.String(),
-		CreatedAt:       time.Now().UTC(),
-		UpdatedAt:       time.Now().UTC(),
-	})
+	id, err := a.usersService.Create(ctx, converterGrpc.FromCreateUserRequestToUserEntity(req))
 	if err != nil {
 		return nil, err
 	}
@@ -49,32 +45,21 @@ func (a *AuthServiceGrpc) Create(ctx context.Context, req *auth_v1.CreateRequest
 	}, nil
 }
 
-func (a *AuthServiceGrpc) Get(ctx context.Context, req *auth_v1.GetRequest) (*auth_v1.GetResponse, error) {
+func (a *AuthServerGrpc) Get(ctx context.Context, req *auth_v1.GetRequest) (*auth_v1.GetResponse, error) {
 	fmt.Printf("get user request: %+v\n", req)
 
-	user, err := a.repository.GetUser(ctx, req.GetId())
+	user, err := a.usersService.Get(ctx, req.GetId())
 	if err != nil {
 		return nil, err
 	}
 
-	return &auth_v1.GetResponse{
-		Id:        user.Id,
-		Name:      user.Name,
-		Email:     user.Email,
-		Role:      auth_v1.Role(auth_v1.Role_value[user.Role]),
-		CreatedAt: timestamppb.New(user.CreatedAt),
-		UpdatedAt: timestamppb.New(user.UpdatedAt),
-	}, nil
+	return converterGrpc.FromUserEntityToGetResponse(user), nil
 }
 
-func (a *AuthServiceGrpc) Update(ctx context.Context, req *auth_v1.UpdateRequest) (*emptypb.Empty, error) {
-	return nil, a.repository.UpdateUser(ctx, entity.User{
-		Id:    req.Id,
-		Name:  req.GetName().GetValue(),
-		Email: req.GetEmail().GetValue(),
-	})
+func (a *AuthServerGrpc) Update(ctx context.Context, req *auth_v1.UpdateRequest) (*emptypb.Empty, error) {
+	return nil, a.usersService.Update(ctx, converterGrpc.FromUpdateRequestToUserEntity(req))
 }
 
-func (a *AuthServiceGrpc) Delete(ctx context.Context, req *auth_v1.DeleteRequest) (*emptypb.Empty, error) {
-	return nil, a.repository.DeleteUser(ctx, req.GetId())
+func (a *AuthServerGrpc) Delete(ctx context.Context, req *auth_v1.DeleteRequest) (*emptypb.Empty, error) {
+	return nil, a.usersService.Delete(ctx, req.GetId())
 }
