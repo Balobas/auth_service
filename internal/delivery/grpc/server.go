@@ -37,8 +37,8 @@ func (a *AuthServiceGrpc) Create(ctx context.Context, req *auth_v1.CreateRequest
 		Password:        req.Password,
 		ConfirmPassword: req.PasswordConfirm,
 		Role:            req.Role.String(),
-		CreatedAt:       time.Now(),
-		UpdatedAt:       time.Now(),
+		CreatedAt:       time.Now().UTC(),
+		UpdatedAt:       time.Now().UTC(),
 	})
 	if err != nil {
 		return nil, err
