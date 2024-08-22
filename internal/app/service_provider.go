@@ -7,7 +7,7 @@ import (
 	"github.com/balobas/auth_service_bln/internal/client"
 	"github.com/balobas/auth_service_bln/internal/client/pg"
 	"github.com/balobas/auth_service_bln/internal/config"
-	"github.com/balobas/auth_service_bln/internal/delivery/grpc"
+	deliveryGrpc "github.com/balobas/auth_service_bln/internal/delivery/grpc"
 	"github.com/balobas/auth_service_bln/internal/manager/transaction"
 	repositoryPostgres "github.com/balobas/auth_service_bln/internal/repository/postgres"
 	usersService "github.com/balobas/auth_service_bln/internal/service/users"
@@ -23,10 +23,10 @@ type serviceProvider struct {
 	txManager *transaction.Manager
 
 	usersService   *usersService.UsersService
-	authServerGrpc *grpc.AuthServerGrpc
+	authServerGrpc *deliveryGrpc.AuthServerGrpc
 }
 
-func NewServiceProvider() *serviceProvider {
+func newServiceProvider() *serviceProvider {
 	return &serviceProvider{}
 }
 
@@ -75,18 +75,18 @@ func (sp *serviceProvider) TxManager() *transaction.Manager {
 	return sp.txManager
 }
 
-func (sp *serviceProvider) UsersService(ctx context.Context) usersService.UsersService {
+func (sp *serviceProvider) UsersService(ctx context.Context) *usersService.UsersService {
 	if sp.usersService == nil {
 		sp.usersService = usersService.New(sp.UsersRepo(ctx))
 	}
-	return *sp.usersService
+	return sp.usersService
 }
 
-func (sp *serviceProvider) AuthServerGrpc(ctx context.Context) *grpc.AuthServerGrpc {
+func (sp *serviceProvider) AuthServerGrpc(ctx context.Context) *deliveryGrpc.AuthServerGrpc {
 	if sp.authServerGrpc == nil {
-		sp.authServerGrpc = grpc.NewAuthServerGRPC(
-			sp.grpcConfig,
-			sp.usersService,
+		sp.authServerGrpc = deliveryGrpc.NewAuthServerGRPC(
+			sp.GrpcConfig(),
+			sp.UsersService(ctx),
 		)
 	}
 	return sp.authServerGrpc
