@@ -16,7 +16,7 @@ var (
 		"name",
 		"email",
 		"password",
-		"confirm_password",
+		"password_confirm",
 		"role",
 		"created_at",
 		"updated_at",
