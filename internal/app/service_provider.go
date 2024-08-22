@@ -11,6 +11,7 @@ import (
 	"github.com/balobas/auth_service_bln/internal/manager/transaction"
 	repositoryPostgres "github.com/balobas/auth_service_bln/internal/repository/postgres"
 	usersService "github.com/balobas/auth_service_bln/internal/service/users"
+	"github.com/balobas/auth_service_bln/internal/shutdown"
 )
 
 type serviceProvider struct {
@@ -55,6 +56,8 @@ func (sp *serviceProvider) PgClient(ctx context.Context) client.ClientDB {
 		if err != nil {
 			log.Fatalf("failed to create pgClient: %v", err)
 		}
+
+		shutdown.Add(client.Close)
 
 		sp.pgClient = client
 	}

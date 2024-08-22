@@ -4,8 +4,10 @@ import (
 	"context"
 	"log"
 	"net"
+	"time"
 
 	"github.com/balobas/auth_service_bln/internal/config"
+	"github.com/balobas/auth_service_bln/internal/shutdown"
 	"github.com/balobas/auth_service_bln/pkg/auth_v1"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
@@ -20,15 +22,22 @@ type App struct {
 	configPath string
 }
 
-func NewApp(ctx context.Context, configPath string) (*App, error) {
-	a := &App{}
-	if err := a.initDeps(ctx); err != nil {
-		return nil, errors.Wrap(err, "failed to init app deps")
-	}
-	return a, nil
+func NewApp(configPath string) *App {
+	return &App{configPath: configPath}
 }
 
-func (a *App) Run() error {
+func (a *App) Run(ctx context.Context) error {
+	defer func() {
+		shutdownCtx, cancel := context.WithTimeout(ctx, 2*time.Minute)
+		defer cancel()
+
+		shutdown.CloseAll(shutdownCtx)
+	}()
+
+	if err := a.initDeps(ctx); err != nil {
+		return errors.Wrap(err, "failed to init app deps")
+	}
+
 	return a.runGrpcServer()
 }
 

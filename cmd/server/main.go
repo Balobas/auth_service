@@ -19,12 +19,7 @@ func main() {
 
 	ctx := context.Background()
 
-	app, err := app.NewApp(ctx, configPath)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	if err := app.Run(); err != nil {
+	if err := app.NewApp(configPath).Run(ctx); err != nil {
 		log.Fatal(err)
 	}
 }
