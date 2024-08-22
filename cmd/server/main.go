@@ -7,9 +7,11 @@ import (
 	"log"
 	"net"
 
+	"github.com/balobas/auth_service_bln/internal/client/pg"
 	"github.com/balobas/auth_service_bln/internal/config"
 	deliveryGrpc "github.com/balobas/auth_service_bln/internal/delivery/grpc"
 	repositoryPostgres "github.com/balobas/auth_service_bln/internal/repository/postgres"
+	usersService "github.com/balobas/auth_service_bln/internal/service/users"
 	"github.com/balobas/auth_service_bln/pkg/auth_v1"
 
 	"google.golang.org/grpc"
@@ -39,17 +41,20 @@ func main() {
 	}
 
 	// Инициализация зависимостей
-	repo, err := repositoryPostgres.New(ctx, pgConfig)
+
+	pgClient, err := pg.NewClient(ctx, pgConfig.DSN())
 	if err != nil {
-		fmt.Println(err)
-		return
+		log.Fatal(err)
 	}
 	fmt.Println("successfuly connected to db")
+
+	repo := repositoryPostgres.New(pgClient)
+	usersService := usersService.New(repo)
 
 	// Инициализация сервиса
 	server := grpc.NewServer()
 	reflection.Register(server)
-	auth_v1.RegisterAuthServer(server, deliveryGrpc.NewAuthService(nil, repo))
+	auth_v1.RegisterAuthServer(server, deliveryGrpc.NewAuthServerGRPC(nil, usersService))
 
 	// Запуск сервиса
 	conn, err := net.Listen("tcp", grpcConfig.Address())

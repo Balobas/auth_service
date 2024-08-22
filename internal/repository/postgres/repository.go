@@ -1,28 +1,23 @@
 package repositoryPostgres
 
 import (
-	"context"
-
-	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/balobas/auth_service_bln/internal/client"
 )
 
 type Repository struct {
-	pool *pgxpool.Pool
+	dbc client.ClientDB
 }
 
 type RepositoryConfig interface {
 	DSN() string
 }
 
-func New(ctx context.Context, config RepositoryConfig) (*Repository, error) {
-	pool, err := pgxpool.Connect(ctx, config.DSN())
-	if err != nil {
-		return nil, err
+func New(client client.ClientDB) *Repository {
+	return &Repository{
+		dbc: client,
 	}
-
-	return &Repository{pool: pool}, nil
 }
 
-func (r *Repository) Close() {
-	r.pool.Close()
+func (r *Repository) db() client.DB {
+	return r.dbc.DB()
 }
