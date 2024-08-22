@@ -107,6 +107,7 @@ func (ur *UserRow) Values() []interface{} {
 		ur.Email,
 		ur.Password,
 		ur.ConfirmPassword,
+		ur.Role,
 		ur.CreatedAt,
 		ur.UpdatedAt,
 	}
