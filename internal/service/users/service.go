@@ -3,7 +3,7 @@ package usersService
 import (
 	"context"
 
-	"github.com/balobas/auth_service_bln/internal/entity"
+	"github.com/balobas/auth_service/internal/entity"
 )
 
 type UsersService struct {

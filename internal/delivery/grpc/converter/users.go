@@ -3,8 +3,8 @@ package converterGrpc
 import (
 	"time"
 
-	"github.com/balobas/auth_service_bln/internal/entity"
-	"github.com/balobas/auth_service_bln/pkg/auth_v1"
+	"github.com/balobas/auth_service/internal/entity"
+	"github.com/balobas/auth_service/pkg/auth_v1"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 

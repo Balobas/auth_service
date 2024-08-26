@@ -4,7 +4,7 @@ import (
 	"context"
 	"log"
 
-	"github.com/balobas/auth_service_bln/pkg/auth_v1"
+	"github.com/balobas/auth_service/pkg/auth_v1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )

@@ -7,12 +7,12 @@ import (
 	"log"
 	"net"
 
-	"github.com/balobas/auth_service_bln/internal/client/pg"
-	"github.com/balobas/auth_service_bln/internal/config"
-	deliveryGrpc "github.com/balobas/auth_service_bln/internal/delivery/grpc"
-	repositoryPostgres "github.com/balobas/auth_service_bln/internal/repository/postgres"
-	usersService "github.com/balobas/auth_service_bln/internal/service/users"
-	"github.com/balobas/auth_service_bln/pkg/auth_v1"
+	"github.com/balobas/auth_service/internal/client/pg"
+	"github.com/balobas/auth_service/internal/config"
+	deliveryGrpc "github.com/balobas/auth_service/internal/delivery/grpc"
+	repositoryPostgres "github.com/balobas/auth_service/internal/repository/postgres"
+	usersService "github.com/balobas/auth_service/internal/service/users"
+	"github.com/balobas/auth_service/pkg/auth_v1"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"

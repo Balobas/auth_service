@@ -1,4 +1,4 @@
-module github.com/balobas/auth_service_bln
+module github.com/balobas/auth_service
 
 go 1.21.4
 

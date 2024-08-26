@@ -1,7 +1,7 @@
 package repositoryPostgres
 
 import (
-	"github.com/balobas/auth_service_bln/internal/client"
+	"github.com/balobas/auth_service/internal/client"
 )
 
 type Repository struct {
