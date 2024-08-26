@@ -12,11 +12,11 @@ const (
 
 var (
 	usersTableColumns = []string{
-		"id",
+		"uid",
 		"name",
 		"email",
+		"phone",
 		"password",
-		"password_confirm",
 		"role",
 		"created_at",
 		"updated_at",
@@ -24,14 +24,14 @@ var (
 )
 
 type UserRow struct {
-	Id              int64
-	Name            string
-	Email           string
-	Role            string
-	Password        string
-	ConfirmPassword string
-	CreatedAt       pgtype.Timestamp
-	UpdatedAt       pgtype.Timestamp
+	Uid       pgtype.UUID
+	Name      string
+	Email     string
+	Phone     string
+	Password  string
+	Role      string
+	CreatedAt pgtype.Timestamp
+	UpdatedAt pgtype.Timestamp
 }
 
 func NewUserRow() *UserRow {
@@ -43,12 +43,15 @@ func (ur *UserRow) Table() string {
 }
 
 func (ur *UserRow) FromEntity(user entity.User) *UserRow {
-	ur.Id = user.Id
+	ur.Uid = pgtype.UUID{
+		Bytes:  user.Uid,
+		Status: pgtype.Present,
+	}
 	ur.Name = user.Name
 	ur.Email = user.Email
+	ur.Phone = user.Phone
 	ur.Role = user.Role
 	ur.Password = user.Password
-	ur.ConfirmPassword = user.ConfirmPassword
 
 	if user.CreatedAt.Unix() == 0 {
 		ur.CreatedAt = pgtype.Timestamp{
@@ -77,14 +80,14 @@ func (ur *UserRow) FromEntity(user entity.User) *UserRow {
 
 func (ur *UserRow) ToEntity() entity.User {
 	return entity.User{
-		Id:              ur.Id,
-		Name:            ur.Name,
-		Email:           ur.Email,
-		Password:        ur.Password,
-		ConfirmPassword: ur.ConfirmPassword,
-		Role:            ur.Role,
-		CreatedAt:       ur.CreatedAt.Time,
-		UpdatedAt:       ur.UpdatedAt.Time,
+		Uid:       ur.Uid.Bytes,
+		Name:      ur.Name,
+		Email:     ur.Email,
+		Phone:     ur.Phone,
+		Password:  ur.Password,
+		Role:      ur.Role,
+		CreatedAt: ur.CreatedAt.Time,
+		UpdatedAt: ur.UpdatedAt.Time,
 	}
 }
 
@@ -94,48 +97,38 @@ func (ur *UserRow) Columns() []string {
 	return columns
 }
 
-func (ur *UserRow) ColumnsWithoutId() []string {
-	columns := make([]string, len(usersTableColumns)-1)
-	copy(columns, usersTableColumns[1:])
-	return columns
-}
-
 func (ur *UserRow) Values() []interface{} {
 	return []interface{}{
-		ur.Id,
+		ur.Uid,
 		ur.Name,
 		ur.Email,
+		ur.Phone,
 		ur.Password,
-		ur.ConfirmPassword,
 		ur.Role,
 		ur.CreatedAt,
 		ur.UpdatedAt,
 	}
 }
 
-func (ur *UserRow) ValuesWithoutId() []interface{} {
-	return ur.Values()[1:]
-}
-
 func (ur *UserRow) IdColumnName() string {
-	return "id"
+	return "uid"
 }
 
 func (ur *UserRow) ScanId(row pgx.Row) error {
-	return row.Scan(&ur.Id)
+	return row.Scan(&ur.Uid)
 }
 
 func (ur *UserRow) GetId() interface{} {
-	return ur.Id
+	return ur.Uid
 }
 
 func (ur *UserRow) Scan(row pgx.Row) error {
 	return row.Scan(
-		&ur.Id,
+		&ur.Uid,
 		&ur.Name,
 		&ur.Email,
+		&ur.Phone,
 		&ur.Password,
-		&ur.ConfirmPassword,
 		&ur.Role,
 		&ur.CreatedAt,
 		&ur.UpdatedAt,
@@ -145,14 +138,16 @@ func (ur *UserRow) Scan(row pgx.Row) error {
 func (ur *UserRow) ColumnsForUpdate() []string {
 	return []string{
 		"name",
+		"phone",
 		"email",
-		"created_at",
+		"updated_at",
 	}
 }
 
 func (ur *UserRow) ValuesForUpdate() []interface{} {
 	return []interface{}{
 		ur.Name,
+		ur.Phone,
 		ur.Email,
 		ur.UpdatedAt,
 	}

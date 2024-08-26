@@ -24,6 +24,7 @@ type Transactor interface {
 type DB interface {
 	QueryExecer
 	Transactor
+	HasTxInCtx(ctx context.Context) bool
 	Ping(ctx context.Context) error
 	Close()
 }

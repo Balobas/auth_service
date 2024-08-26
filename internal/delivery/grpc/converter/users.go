@@ -13,7 +13,6 @@ func FromCreateUserRequestToUserEntity(userProto *auth_v1.CreateRequest) entity.
 		Name:            userProto.Name,
 		Email:           userProto.Email,
 		Password:        userProto.Password,
-		ConfirmPassword: userProto.PasswordConfirm,
 		Role:            userProto.Role.String(),
 		CreatedAt:       time.Now().UTC(),
 		UpdatedAt:       time.Now().UTC(),
@@ -22,7 +21,7 @@ func FromCreateUserRequestToUserEntity(userProto *auth_v1.CreateRequest) entity.
 
 func FromUserEntityToGetResponse(user entity.User) *auth_v1.GetResponse {
 	return &auth_v1.GetResponse{
-		Id:        user.Id,
+		Id:        user.Uid,
 		Name:      user.Name,
 		Email:     user.Email,
 		Role:      auth_v1.Role(auth_v1.Role_value[user.Role]),

@@ -1,14 +1,26 @@
 package entity
 
-import "time"
+import (
+	"time"
+
+	uuid "github.com/satori/go.uuid"
+)
 
 type User struct {
-	Id              int64
-	Name            string
-	Email           string
-	Role            string
-	Password        string
-	ConfirmPassword string
-	CreatedAt       time.Time
-	UpdatedAt       time.Time
+	Uid         uuid.UUID
+	Name        string
+	Email       string
+	Phone       string
+	Password    string
+	Role        string
+	Permissions []UserPermission
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
 }
+
+type UserPermission string
+
+const (
+	UserPermissionNotVerified = UserPermission("not_verified")
+	UserPermissionBase        = UserPermission("base")
+)

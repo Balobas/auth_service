@@ -75,3 +75,8 @@ func (p *pg) BeginTxWithContext(ctx context.Context) (context.Context, contract.
 
 	return context.WithValue(ctx, TxKey{}, tx), tx, nil
 }
+
+func (p *pg) HasTxInCtx(ctx context.Context) bool {
+	_, ok := ctx.Value(TxKey{}).(pgx.Tx)
+	return ok
+}
