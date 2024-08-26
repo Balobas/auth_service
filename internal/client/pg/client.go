@@ -31,7 +31,7 @@ func (c *pgClient) DB() client.DB {
 	return c.dbc
 }
 
-func (c *pgClient) Close() error {
+func (c *pgClient) Close(ctx context.Context) error {
 	if c.dbc != nil {
 		c.dbc.Close()
 	}

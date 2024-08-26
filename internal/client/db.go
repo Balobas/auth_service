@@ -30,5 +30,5 @@ type DB interface {
 
 type ClientDB interface {
 	DB() DB
-	Close() error
+	Close(ctx context.Context) error
 }
