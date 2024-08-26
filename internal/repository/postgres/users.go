@@ -4,8 +4,8 @@ import (
 	"context"
 	"log"
 
-	"github.com/balobas/auth_service_bln/internal/entity"
-	pgEntity "github.com/balobas/auth_service_bln/internal/repository/postgres/pg_entity"
+	"github.com/balobas/auth_service/internal/entity"
+	pgEntity "github.com/balobas/auth_service/internal/repository/postgres/pg_entity"
 	"github.com/pkg/errors"
 )
 

@@ -3,7 +3,7 @@ package transaction
 import (
 	"context"
 
-	"github.com/balobas/auth_service_bln/internal/entity/contract"
+	"github.com/balobas/auth_service/internal/entity/contract"
 	"github.com/pkg/errors"
 )
 

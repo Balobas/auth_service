@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	converterGrpc "github.com/balobas/auth_service_bln/internal/delivery/grpc/converter"
-	"github.com/balobas/auth_service_bln/internal/entity"
-	"github.com/balobas/auth_service_bln/pkg/auth_v1"
+	converterGrpc "github.com/balobas/auth_service/internal/delivery/grpc/converter"
+	"github.com/balobas/auth_service/internal/entity"
+	"github.com/balobas/auth_service/pkg/auth_v1"
 
 	"google.golang.org/protobuf/types/known/emptypb"
 )

@@ -4,7 +4,7 @@ import (
 	"context"
 	"log"
 
-	"github.com/balobas/auth_service_bln/internal/entity"
+	"github.com/balobas/auth_service/internal/entity"
 )
 
 func (s *UsersService) Update(ctx context.Context, user entity.User) error {

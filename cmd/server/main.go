@@ -5,7 +5,7 @@ import (
 	"flag"
 	"log"
 
-	"github.com/balobas/auth_service_bln/internal/app"
+	"github.com/balobas/auth_service/internal/app"
 )
 
 var configPath string

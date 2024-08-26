@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/balobas/auth_service_bln/internal/client/pg"
+	"github.com/balobas/auth_service/internal/client/pg"
 )
 
 func TestTx(t *testing.T) {

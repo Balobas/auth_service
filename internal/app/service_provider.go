@@ -4,14 +4,14 @@ import (
 	"context"
 	"log"
 
-	"github.com/balobas/auth_service_bln/internal/client"
-	"github.com/balobas/auth_service_bln/internal/client/pg"
-	"github.com/balobas/auth_service_bln/internal/config"
-	deliveryGrpc "github.com/balobas/auth_service_bln/internal/delivery/grpc"
-	"github.com/balobas/auth_service_bln/internal/manager/transaction"
-	repositoryPostgres "github.com/balobas/auth_service_bln/internal/repository/postgres"
-	usersService "github.com/balobas/auth_service_bln/internal/service/users"
-	"github.com/balobas/auth_service_bln/internal/shutdown"
+	"github.com/balobas/auth_service/internal/client"
+	"github.com/balobas/auth_service/internal/client/pg"
+	"github.com/balobas/auth_service/internal/config"
+	deliveryGrpc "github.com/balobas/auth_service/internal/delivery/grpc"
+	"github.com/balobas/auth_service/internal/manager/transaction"
+	repositoryPostgres "github.com/balobas/auth_service/internal/repository/postgres"
+	usersService "github.com/balobas/auth_service/internal/service/users"
+	"github.com/balobas/auth_service/internal/shutdown"
 )
 
 type serviceProvider struct {

@@ -1,7 +1,7 @@
 package pgEntity
 
 import (
-	"github.com/balobas/auth_service_bln/internal/entity"
+	"github.com/balobas/auth_service/internal/entity"
 	"github.com/jackc/pgtype"
 	"github.com/jackc/pgx/v4"
 )

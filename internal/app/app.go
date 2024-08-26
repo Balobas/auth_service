@@ -6,9 +6,9 @@ import (
 	"net"
 	"time"
 
-	"github.com/balobas/auth_service_bln/internal/config"
-	"github.com/balobas/auth_service_bln/internal/shutdown"
-	"github.com/balobas/auth_service_bln/pkg/auth_v1"
+	"github.com/balobas/auth_service/internal/config"
+	"github.com/balobas/auth_service/internal/shutdown"
+	"github.com/balobas/auth_service/pkg/auth_v1"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"

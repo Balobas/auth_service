@@ -3,7 +3,7 @@ package pg
 import (
 	"context"
 
-	"github.com/balobas/auth_service_bln/internal/entity/contract"
+	"github.com/balobas/auth_service/internal/entity/contract"
 	"github.com/georgysavva/scany/pgxscan"
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgx/v4"
