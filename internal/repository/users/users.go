@@ -5,36 +5,26 @@ import (
 	"log"
 
 	"github.com/balobas/auth_service/internal/entity"
-	"github.com/balobas/auth_service/internal/entity/contract"
 	repositoryPostgres "github.com/balobas/auth_service/internal/repository/postgres"
 	pgEntity "github.com/balobas/auth_service/internal/repository/postgres/pg_entity"
 	"github.com/pkg/errors"
 	uuid "github.com/satori/go.uuid"
 )
 
-func (r *UsersRepository) CreateUser(ctx context.Context, user entity.User) (err error) {
-	if !r.DB().HasTxInCtx(ctx) {
-		var (
-			tx         contract.Transaction
-			beginTxErr error
-		)
-		ctx, tx, beginTxErr = r.DB().BeginTxWithContext(ctx)
-		if beginTxErr != nil {
-			return errors.Wrap(beginTxErr, "failed to start transaction")
-		}
+func (r *UsersRepository) CreateUserWithPermissions(ctx context.Context, user entity.User) error {
+	if err := r.WithTx(ctx, func(ctx context.Context) error {
 
-		defer func() {
-			err = HandleTxEnd(ctx, tx, err)
-		}()
-	}
-
-	for _, row := range []repositoryPostgres.Row{
-		pgEntity.NewUserRow().FromEntity(user),
-		pgEntity.NewUserPermissionsRow().FromEntity(user),
-	} {
-		if err := r.Create(ctx, row); err != nil {
-			return errors.Wrapf(err, "failed to create row in table %s", row.Table())
+		for _, row := range []repositoryPostgres.Row{
+			pgEntity.NewUserRow().FromEntity(user),
+			pgEntity.NewUserPermissionsRow().FromEntity(user),
+		} {
+			if err := r.Create(ctx, row); err != nil {
+				return errors.Wrapf(err, "failed to create row in table %s", row.Table())
+			}
 		}
+		return nil
+	}); err != nil {
+		return errors.WithStack(err)
 	}
 
 	log.Printf("successfuly create user uid: %s, name: %s, email: %s, permissions: %v\n", user.Uid, user.Name, user.Email, user.Permissions)
@@ -59,32 +49,29 @@ func (r *UsersRepository) GetUserByUid(ctx context.Context, uid uuid.UUID) (enti
 	return user, nil
 }
 
-func (r *UsersRepository) UpdateUser(ctx context.Context, user entity.User) (err error) {
-	if !r.DB().HasTxInCtx(ctx) {
-		var (
-			tx         contract.Transaction
-			beginTxErr error
-		)
-		ctx, tx, beginTxErr = r.DB().BeginTxWithContext(ctx)
-		if beginTxErr != nil {
-			return errors.Wrap(beginTxErr, "failed to start transaction")
+func (r *UsersRepository) UpdateUserWithPermissions(ctx context.Context, user entity.User) error {
+	if err := r.WithTx(ctx, func(ctx context.Context) error {
+		for _, row := range []repositoryPostgres.Row{
+			pgEntity.NewUserRow().FromEntity(user),
+			pgEntity.NewUserPermissionsRow().FromEntity(user),
+		} {
+			if err := r.Update(ctx, row); err != nil {
+				return errors.Wrapf(err, "failed to update table %s", row.Table())
+			}
 		}
-
-		defer func() {
-			err = HandleTxEnd(ctx, tx, err)
-		}()
-	}
-
-	for _, row := range []repositoryPostgres.Row{
-		pgEntity.NewUserRow().FromEntity(user),
-		pgEntity.NewUserPermissionsRow().FromEntity(user),
-	} {
-		if err := r.Update(ctx, row); err != nil {
-			return errors.Wrapf(err, "failed to update table %s", row.Table())
-		}
+		return nil
+	}); err != nil {
+		return errors.WithStack(err)
 	}
 
 	log.Printf("update user with uid: %d", user.Uid)
+	return nil
+}
+
+func (r *UsersRepository) UpdateUser(ctx context.Context, user entity.User) error {
+	if err := r.Update(ctx, pgEntity.NewUserRow().FromEntity(user)); err != nil {
+		return errors.Wrapf(err, "failed to update user with uid %s", user.Uid)
+	}
 	return nil
 }
 
