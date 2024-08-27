@@ -5,6 +5,7 @@ import (
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/jackc/pgx/v4"
+	"github.com/pkg/errors"
 )
 
 type Row interface {
@@ -17,6 +18,10 @@ type Row interface {
 	Scan(row pgx.Row) error
 	ColumnsForUpdate() []string
 	ValuesForUpdate() []interface{}
+}
+
+type Rows interface {
+	Scan(row pgx.Row) error
 }
 
 func (r *BasePgRepository) Create(ctx context.Context, row Row) error {
@@ -71,4 +76,27 @@ func (r *BasePgRepository) Delete(ctx context.Context, row Row) error {
 	}
 	_, err = r.DB().Exec(ctx, stmt, args...)
 	return err
+}
+
+func (r *BasePgRepository) GetByCondition(ctx context.Context, row Row, dest Rows, condition sq.Sqlizer) error {
+	stmt, args, err := sq.Select(row.Columns()...).
+		From(row.Table()).
+		PlaceholderFormat(sq.Dollar).
+		Where(condition).ToSql()
+	if err != nil {
+		return err
+	}
+
+	rows, err := r.DB().Query(ctx, stmt, args...)
+	if err != nil {
+		return err
+	}
+
+	for rows.Next() {
+		if err := dest.Scan(rows); err != nil {
+			return errors.Wrapf(err, "failed to scan result")
+		}
+	}
+
+	return nil
 }

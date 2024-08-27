@@ -1,6 +1,7 @@
 package pgEntity
 
 import (
+	sq "github.com/Masterminds/squirrel"
 	"github.com/balobas/auth_service/internal/entity"
 	"github.com/jackc/pgtype"
 	"github.com/jackc/pgx/v4"
@@ -102,4 +103,40 @@ func (d *DeviceRow) ColumnsForUpdate() []string {
 
 func (d *DeviceRow) ValuesForUpdate() []interface{} {
 	return nil
+}
+
+func (d *DeviceRow) GetByUserUidCondition() sq.Eq {
+	return sq.Eq{"user_uid": d.UserUid}
+}
+
+type DeviceRows struct {
+	rows []DeviceRow
+}
+
+func NewDeviceRows() *DeviceRows {
+	return &DeviceRows{}
+}
+
+func (dr *DeviceRows) Scan(row pgx.Row) error {
+	newRow := &DeviceRow{}
+
+	if err := newRow.Scan(row); err != nil {
+		return err
+	}
+
+	dr.rows = append(dr.rows, *newRow)
+	return nil
+}
+
+func (dr *DeviceRows) ToEntities() []entity.UserDevice {
+	if dr.rows == nil {
+		return nil
+	}
+	res := make([]entity.UserDevice, len(dr.rows))
+
+	for i := 0; i < len(dr.rows); i++ {
+		res[i] = dr.rows[i].ToEntity()
+	}
+
+	return res
 }
