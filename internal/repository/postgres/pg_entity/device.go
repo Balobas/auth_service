@@ -105,27 +105,39 @@ func (d *DeviceRow) ConditionDeviceUidEqual() sq.Eq {
 	return sq.Eq{"uid": d.Uid}
 }
 
+func (d *DeviceRow) ValuesForScan() []interface{} {
+	return []interface{}{
+		&d.Uid,
+		&d.UserUid,
+		&d.Name,
+		&d.OS,
+		&d.ConnectedAt,
+	}
+}
+
 type DeviceRows struct {
-	rows []DeviceRow
+	rows []*DeviceRow
 }
 
 func NewDeviceRows() *DeviceRows {
 	return &DeviceRows{}
 }
 
-func (dr *DeviceRows) Scan(row pgx.Row) error {
-	newRow := &DeviceRow{}
+func (dr *DeviceRows) ScanAll(rows pgx.Rows) error {
+	for rows.Next() {
+		newRow := &DeviceRow{}
 
-	if err := newRow.Scan(row); err != nil {
-		return err
+		if err := newRow.Scan(rows); err != nil {
+			return err
+		}
+		dr.rows = append(dr.rows, newRow)
 	}
 
-	dr.rows = append(dr.rows, *newRow)
 	return nil
 }
 
 func (dr *DeviceRows) ToEntities() []entity.UserDevice {
-	if dr.rows == nil {
+	if len(dr.rows) == 0 {
 		return nil
 	}
 	res := make([]entity.UserDevice, len(dr.rows))

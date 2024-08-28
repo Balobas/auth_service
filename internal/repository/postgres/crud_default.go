@@ -5,7 +5,6 @@ import (
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/jackc/pgx/v4"
-	"github.com/pkg/errors"
 )
 
 type Row interface {
@@ -19,7 +18,7 @@ type Row interface {
 }
 
 type Rows interface {
-	Scan(row pgx.Row) error
+	ScanAll(rows pgx.Rows) error
 }
 
 func (r *BasePgRepository) Create(ctx context.Context, row Row) error {
@@ -90,11 +89,5 @@ func (r *BasePgRepository) GetSome(ctx context.Context, row Row, dest Rows, cond
 		return err
 	}
 
-	for rows.Next() {
-		if err := dest.Scan(rows); err != nil {
-			return errors.Wrapf(err, "failed to scan result")
-		}
-	}
-
-	return nil
+	return dest.ScanAll(rows)
 }

@@ -64,7 +64,7 @@ func (r *BlacklistRepository) GetBlackListUsers(ctx context.Context, limit, offs
 		strings.Join(makePreffix(blackListUserPreffix, blackListUserRow.Columns()), ","),
 		userRow.Table(), userPreffix,
 		blackListUserRow.Table(), blackListUserPreffix,
-		userRow.IdColumnName(), blackListUserRow.IdColumnName(),
+		userPreffix+"."+userRow.IdColumnName(), blackListUserPreffix+"."+blackListUserRow.IdColumnName(),
 		limit, offset,
 	)
 

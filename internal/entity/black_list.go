@@ -12,3 +12,7 @@ type BlackListUser struct {
 	Reason string
 }
 
+type BlackListDevice struct {
+	Device UserDevice
+	Reason string
+}

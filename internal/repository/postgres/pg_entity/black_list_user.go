@@ -83,8 +83,8 @@ func (u *UsersBlackListRow) ValuesForUpdate() []interface{} {
 
 func (u *UsersBlackListRow) ValuesForScan() []interface{} {
 	return []interface{}{
-		u.UserUid,
-		u.Reason,
+		&u.UserUid,
+		&u.Reason,
 	}
 }
 
