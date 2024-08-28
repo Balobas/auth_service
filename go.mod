@@ -5,6 +5,7 @@ go 1.21.4
 require (
 	github.com/Masterminds/squirrel v1.5.4
 	github.com/georgysavva/scany v1.2.2
+	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/jackc/pgconn v1.14.3
 	github.com/jackc/pgtype v1.14.0
 	github.com/jackc/pgx/v4 v4.18.3

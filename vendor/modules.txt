@@ -5,6 +5,9 @@ github.com/Masterminds/squirrel
 ## explicit; go 1.14
 github.com/georgysavva/scany/dbscan
 github.com/georgysavva/scany/pgxscan
+# github.com/golang-jwt/jwt/v5 v5.2.1
+## explicit; go 1.18
+github.com/golang-jwt/jwt/v5
 # github.com/jackc/chunkreader/v2 v2.0.1
 ## explicit; go 1.12
 github.com/jackc/chunkreader/v2
