@@ -92,9 +92,7 @@ func (ur *UserRow) ToEntity() entity.User {
 }
 
 func (ur *UserRow) Columns() []string {
-	columns := make([]string, len(usersTableColumns))
-	copy(columns, usersTableColumns)
-	return columns
+	return usersTableColumns
 }
 
 func (ur *UserRow) Values() []interface{} {
@@ -133,6 +131,19 @@ func (ur *UserRow) Scan(row pgx.Row) error {
 		&ur.CreatedAt,
 		&ur.UpdatedAt,
 	)
+}
+
+func (ur *UserRow) ValuesForScan() []interface{} {
+	return []interface{}{
+		&ur.Uid,
+		&ur.Name,
+		&ur.Email,
+		&ur.Phone,
+		&ur.Password,
+		&ur.Role,
+		&ur.CreatedAt,
+		&ur.UpdatedAt,
+	}
 }
 
 func (ur *UserRow) ColumnsForUpdate() []string {

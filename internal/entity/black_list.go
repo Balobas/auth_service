@@ -6,3 +6,9 @@ type BlackListElement struct {
 	Uid    uuid.UUID
 	Reason string
 }
+
+type BlackListUser struct {
+	User   User
+	Reason string
+}
+

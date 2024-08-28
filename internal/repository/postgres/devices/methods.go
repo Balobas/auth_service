@@ -11,11 +11,9 @@ import (
 
 func (r *DevicesRepository) CreateDevice(ctx context.Context, device entity.UserDevice) error {
 	deviceRow := pgEntity.NewDeviceRow().FromEntity(device)
-
 	if err := r.Create(ctx, deviceRow); err != nil {
 		return errors.Wrapf(err, "failed to create device with uid %s and user uid %s", device.Uid, device.UserUid)
 	}
-
 	return nil
 }
 
@@ -38,4 +36,12 @@ func (r *DevicesRepository) GetUserDevices(ctx context.Context, userUid uuid.UUI
 	}
 
 	return resultRows.ToEntities(), nil
+}
+
+func (r *DevicesRepository) DeleteDevice(ctx context.Context, uid uuid.UUID) error {
+	deviceRow := pgEntity.NewDeviceRow().FromEntity(entity.UserDevice{Uid: uid})
+	if err := r.Delete(ctx, deviceRow); err != nil {
+		return errors.WithStack(err)
+	}
+	return nil
 }
