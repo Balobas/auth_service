@@ -20,7 +20,7 @@ func (r *DevicesRepository) CreateDevice(ctx context.Context, device entity.User
 func (r *DevicesRepository) GetDeviceByUid(ctx context.Context, uid uuid.UUID) (entity.UserDevice, error) {
 	deviceRow := pgEntity.NewDeviceRow().FromEntity(entity.UserDevice{Uid: uid})
 
-	if err := r.Get(ctx, deviceRow); err != nil {
+	if err := r.GetOne(ctx, deviceRow, deviceRow.ConditionDeviceUidEqual()); err != nil {
 		return entity.UserDevice{}, errors.Wrapf(err, "failed to get device by uid %s", uid)
 	}
 
@@ -31,7 +31,7 @@ func (r *DevicesRepository) GetUserDevices(ctx context.Context, userUid uuid.UUI
 	deviceRow := pgEntity.NewDeviceRow().FromEntity(entity.UserDevice{UserUid: userUid})
 	resultRows := pgEntity.NewDeviceRows()
 
-	if err := r.GetByCondition(ctx, deviceRow, resultRows, deviceRow.GetByUserUidCondition()); err != nil {
+	if err := r.GetSome(ctx, deviceRow, resultRows, deviceRow.ConditionUserUidEqual()); err != nil {
 		return nil, errors.WithStack(err)
 	}
 
@@ -40,7 +40,7 @@ func (r *DevicesRepository) GetUserDevices(ctx context.Context, userUid uuid.UUI
 
 func (r *DevicesRepository) DeleteDevice(ctx context.Context, uid uuid.UUID) error {
 	deviceRow := pgEntity.NewDeviceRow().FromEntity(entity.UserDevice{Uid: uid})
-	if err := r.Delete(ctx, deviceRow); err != nil {
+	if err := r.Delete(ctx, deviceRow, deviceRow.ConditionDeviceUidEqual()); err != nil {
 		return errors.WithStack(err)
 	}
 	return nil

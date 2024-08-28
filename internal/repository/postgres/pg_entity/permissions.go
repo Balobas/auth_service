@@ -1,6 +1,7 @@
 package pgEntity
 
 import (
+	sq "github.com/Masterminds/squirrel"
 	"github.com/balobas/auth_service/internal/entity"
 	"github.com/jackc/pgtype"
 	"github.com/jackc/pgx/v4"
@@ -67,14 +68,6 @@ func (p *UserPermissionsRow) Table() string {
 	return userPermissionsTableName
 }
 
-func (p *UserPermissionsRow) GetId() interface{} {
-	return p.UserUid
-}
-
-func (p *UserPermissionsRow) ScanId(row pgx.Row) error {
-	return row.Scan(&p.UserUid)
-}
-
 func (p *UserPermissionsRow) Scan(row pgx.Row) error {
 	return row.Scan(&p.UserUid, &p.Permissions)
 }
@@ -85,4 +78,10 @@ func (p *UserPermissionsRow) ColumnsForUpdate() []string {
 
 func (p *UserPermissionsRow) ValuesForUpdate() []interface{} {
 	return []interface{}{pq.Array(p.Permissions)}
+}
+
+func (p *UserPermissionsRow) ConditionUidEqual() sq.Eq {
+	return sq.Eq{
+		"user_uid": p.UserUid,
+	}
 }

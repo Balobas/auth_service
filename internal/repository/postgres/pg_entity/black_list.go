@@ -1,6 +1,7 @@
 package pgEntity
 
 import (
+	sq "github.com/Masterminds/squirrel"
 	"github.com/balobas/auth_service/internal/entity"
 	"github.com/jackc/pgtype"
 	"github.com/jackc/pgx/v4"
@@ -68,14 +69,6 @@ func (u *UsersBlackListRow) Table() string {
 	return usersBlackListTableName
 }
 
-func (u *UsersBlackListRow) GetId() interface{} {
-	return u.UserUid
-}
-
-func (u *UsersBlackListRow) ScanId(row pgx.Row) error {
-	return row.Scan(&u.UserUid)
-}
-
 func (u *UsersBlackListRow) Scan(row pgx.Row) error {
 	return row.Scan(&u.UserUid, &u.Reason)
 }
@@ -92,5 +85,11 @@ func (u *UsersBlackListRow) ValuesForScan() []interface{} {
 	return []interface{}{
 		u.UserUid,
 		u.Reason,
+	}
+}
+
+func (u *UsersBlackListRow) ConditionUserUidEqual() sq.Eq {
+	return sq.Eq{
+		"user_uid": u.UserUid,
 	}
 }

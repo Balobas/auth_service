@@ -1,6 +1,7 @@
 package pgEntity
 
 import (
+	sq "github.com/Masterminds/squirrel"
 	"github.com/balobas/auth_service/internal/entity"
 	"github.com/jackc/pgtype"
 	"github.com/jackc/pgx/v4"
@@ -112,14 +113,6 @@ func (ur *UserRow) IdColumnName() string {
 	return "uid"
 }
 
-func (ur *UserRow) ScanId(row pgx.Row) error {
-	return row.Scan(&ur.Uid)
-}
-
-func (ur *UserRow) GetId() interface{} {
-	return ur.Uid
-}
-
 func (ur *UserRow) Scan(row pgx.Row) error {
 	return row.Scan(
 		&ur.Uid,
@@ -161,5 +154,11 @@ func (ur *UserRow) ValuesForUpdate() []interface{} {
 		ur.Phone,
 		ur.Email,
 		ur.UpdatedAt,
+	}
+}
+
+func (ur *UserRow) ConditionUserUidEqual() sq.Eq {
+	return sq.Eq{
+		"uid": ur.Uid,
 	}
 }

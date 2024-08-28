@@ -13,8 +13,6 @@ type Row interface {
 	Values() []interface{}
 	Columns() []string
 	Table() string
-	GetId() interface{}
-	ScanId(row pgx.Row) error
 	Scan(row pgx.Row) error
 	ColumnsForUpdate() []string
 	ValuesForUpdate() []interface{}
@@ -37,18 +35,18 @@ func (r *BasePgRepository) Create(ctx context.Context, row Row) error {
 	return err
 }
 
-func (r *BasePgRepository) Get(ctx context.Context, row Row) error {
+func (r *BasePgRepository) GetOne(ctx context.Context, row Row, condition sq.Sqlizer) error {
 	stmt, args, err := sq.Select(row.Columns()...).
 		From(row.Table()).
 		PlaceholderFormat(sq.Dollar).
-		Where(sq.Eq{row.IdColumnName(): row.GetId()}).ToSql()
+		Where(condition).ToSql()
 	if err != nil {
 		return err
 	}
 	return row.Scan(r.DB().QueryRow(ctx, stmt, args...))
 }
 
-func (r *BasePgRepository) Update(ctx context.Context, row Row) error {
+func (r *BasePgRepository) Update(ctx context.Context, row Row, condition sq.Sqlizer) error {
 	columnsForUpdate := row.ColumnsForUpdate()
 	valuesForUpdate := row.ValuesForUpdate()
 
@@ -58,7 +56,7 @@ func (r *BasePgRepository) Update(ctx context.Context, row Row) error {
 		sqlBuilder = sqlBuilder.Set(columnsForUpdate[i], valuesForUpdate[i])
 	}
 
-	sqlBuilder = sqlBuilder.Where(sq.Eq{row.IdColumnName(): row.GetId()})
+	sqlBuilder = sqlBuilder.Where(condition)
 
 	stmt, args, err := sqlBuilder.ToSql()
 	if err != nil {
@@ -69,8 +67,8 @@ func (r *BasePgRepository) Update(ctx context.Context, row Row) error {
 	return err
 }
 
-func (r *BasePgRepository) Delete(ctx context.Context, row Row) error {
-	stmt, args, err := sq.Delete(row.Table()).PlaceholderFormat(sq.Dollar).Where(sq.Eq{row.IdColumnName(): row.GetId()}).ToSql()
+func (r *BasePgRepository) Delete(ctx context.Context, row Row, condition sq.Sqlizer) error {
+	stmt, args, err := sq.Delete(row.Table()).PlaceholderFormat(sq.Dollar).Where(condition).ToSql()
 	if err != nil {
 		return err
 	}
@@ -78,7 +76,7 @@ func (r *BasePgRepository) Delete(ctx context.Context, row Row) error {
 	return err
 }
 
-func (r *BasePgRepository) GetByCondition(ctx context.Context, row Row, dest Rows, condition sq.Sqlizer) error {
+func (r *BasePgRepository) GetSome(ctx context.Context, row Row, dest Rows, condition sq.Sqlizer) error {
 	stmt, args, err := sq.Select(row.Columns()...).
 		From(row.Table()).
 		PlaceholderFormat(sq.Dollar).

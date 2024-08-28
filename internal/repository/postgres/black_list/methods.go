@@ -24,17 +24,27 @@ func (r *BlacklistRepository) CreateBlackListUser(ctx context.Context, blackList
 func (r *BlacklistRepository) GetBlackListUser(ctx context.Context, userUid uuid.UUID) (entity.BlackListElement, error) {
 	row := pgEntity.NewUsersBlackListRow().FromBlackListEntity(entity.BlackListElement{Uid: userUid})
 
-	if err := r.Get(ctx, row); err != nil {
+	if err := r.GetOne(ctx, row, row.ConditionUserUidEqual()); err != nil {
 		return entity.BlackListElement{}, errors.Wrapf(err, "failed to get")
 	}
 
 	return row.ToBlackListEntity(), nil
 }
 
+func (r *BlacklistRepository) UpdateBlackListUser(ctx context.Context, elem entity.BlackListElement) error {
+	row := pgEntity.NewUsersBlackListRow().FromBlackListEntity(elem)
+
+	if err := r.Update(ctx, row, row.ConditionUserUidEqual()); err != nil {
+		return errors.Wrapf(err, "failed to update black list user with uid %s", elem.Uid)
+	}
+
+	return nil
+}
+
 func (r *BlacklistRepository) DeleteUserFromBlackList(ctx context.Context, userUid uuid.UUID) error {
 	row := pgEntity.NewUsersBlackListRow().FromBlackListEntity(entity.BlackListElement{Uid: userUid})
 
-	if err := r.Delete(ctx, row); err != nil {
+	if err := r.Delete(ctx, row, row.ConditionUserUidEqual()); err != nil {
 		return errors.Wrapf(err, "failed to delete user with uid %s from black list", userUid)
 	}
 

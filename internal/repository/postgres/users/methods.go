@@ -34,12 +34,12 @@ func (r *UsersRepository) CreateUserWithPermissions(ctx context.Context, user en
 func (r *UsersRepository) GetUserByUid(ctx context.Context, uid uuid.UUID) (entity.User, error) {
 	userRow := pgEntity.NewUserRow().FromEntity(entity.User{Uid: uid})
 
-	if err := r.Get(ctx, userRow); err != nil {
+	if err := r.GetOne(ctx, userRow, userRow.ConditionUserUidEqual()); err != nil {
 		return entity.User{}, errors.WithStack(err)
 	}
 
 	permissionsRow := pgEntity.NewUserPermissionsRow()
-	if err := r.Get(ctx, permissionsRow); err != nil {
+	if err := r.GetOne(ctx, permissionsRow, permissionsRow.ConditionUidEqual()); err != nil {
 		return entity.User{}, errors.WithStack(err)
 	}
 
@@ -51,14 +51,17 @@ func (r *UsersRepository) GetUserByUid(ctx context.Context, uid uuid.UUID) (enti
 
 func (r *UsersRepository) UpdateUserWithPermissions(ctx context.Context, user entity.User) error {
 	if err := r.WithTx(ctx, func(ctx context.Context) error {
-		for _, row := range []repositoryPostgres.Row{
-			pgEntity.NewUserRow().FromEntity(user),
-			pgEntity.NewUserPermissionsRow().FromEntity(user),
-		} {
-			if err := r.Update(ctx, row); err != nil {
-				return errors.Wrapf(err, "failed to update table %s", row.Table())
-			}
+		userRow := pgEntity.NewUserRow().FromEntity(user)
+		permissionsRow := pgEntity.NewUserPermissionsRow().FromEntity(user)
+
+		if err := r.Update(ctx, userRow, userRow.ConditionUserUidEqual()); err != nil {
+			return errors.Wrapf(err, "failed to update user with uid %s", user.Uid)
 		}
+
+		if err := r.Update(ctx, permissionsRow, permissionsRow.ConditionUidEqual()); err != nil {
+			return errors.Wrapf(err, "failed to update user permissions (user uid: %s)", user.Uid)
+		}
+
 		return nil
 	}); err != nil {
 		return errors.WithStack(err)
@@ -69,15 +72,16 @@ func (r *UsersRepository) UpdateUserWithPermissions(ctx context.Context, user en
 }
 
 func (r *UsersRepository) UpdateUser(ctx context.Context, user entity.User) error {
-	if err := r.Update(ctx, pgEntity.NewUserRow().FromEntity(user)); err != nil {
+	userRow := pgEntity.NewUserRow().FromEntity(user)
+	if err := r.Update(ctx, userRow, userRow.ConditionUserUidEqual()); err != nil {
 		return errors.Wrapf(err, "failed to update user with uid %s", user.Uid)
 	}
 	return nil
 }
 
 func (r *UsersRepository) DeleteUser(ctx context.Context, uid uuid.UUID) error {
-
-	if err := r.Delete(ctx, pgEntity.NewUserRow().FromEntity(entity.User{Uid: uid})); err != nil {
+	userRow := pgEntity.NewUserRow().FromEntity(entity.User{Uid: uid})
+	if err := r.Delete(ctx, userRow, userRow.ConditionUserUidEqual()); err != nil {
 		return errors.WithStack(err)
 	}
 

@@ -85,14 +85,6 @@ func (d *DeviceRow) Table() string {
 	return devicesTableName
 }
 
-func (d *DeviceRow) GetId() interface{} {
-	return d.Uid
-}
-
-func (d *DeviceRow) ScanId(row pgx.Row) error {
-	return row.Scan(&d.Uid)
-}
-
 func (d *DeviceRow) Scan(row pgx.Row) error {
 	return row.Scan(&d.Uid, &d.UserUid, &d.Name, &d.OS, &d.ConnectedAt)
 }
@@ -105,8 +97,12 @@ func (d *DeviceRow) ValuesForUpdate() []interface{} {
 	return nil
 }
 
-func (d *DeviceRow) GetByUserUidCondition() sq.Eq {
+func (d *DeviceRow) ConditionUserUidEqual() sq.Eq {
 	return sq.Eq{"user_uid": d.UserUid}
+}
+
+func (d *DeviceRow) ConditionDeviceUidEqual() sq.Eq {
+	return sq.Eq{"uid": d.Uid}
 }
 
 type DeviceRows struct {
