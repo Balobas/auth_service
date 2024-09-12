@@ -13,9 +13,9 @@ func TestTx(t *testing.T) {
 		t.Fail()
 	}
 
-	txManager := NewTxManager()
+	txManager := NewTxManager(pgClient)
 
-	tx := txManager.NewTransaction(pgClient.DB())
+	tx := txManager.NewPgTransaction()
 
 	if err := tx.Execute(context.Background(), func(ctx context.Context) error {
 		_, err := pgClient.DB().Exec(ctx, "Select hui from huis")

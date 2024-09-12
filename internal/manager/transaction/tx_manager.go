@@ -3,18 +3,25 @@ package transaction
 import (
 	"context"
 
+	"github.com/balobas/auth_service/internal/client"
 	"github.com/balobas/auth_service/internal/entity/contract"
 	"github.com/pkg/errors"
 )
 
-type Manager struct{}
+type Manager struct{
+	pgClient client.ClientDB
+}
 
-func NewTxManager() *Manager {
+func NewTxManager(pgClient client.ClientDB) *Manager {
 	return &Manager{}
 }
 
 type Tx struct {
 	transactors []Transactor
+}
+
+func (m *Manager) NewPgTransaction() Tx {
+	return m.NewTransaction(m.pgClient.DB())
 }
 
 func (m *Manager) NewTransaction(transactors ...Transactor) Tx {
