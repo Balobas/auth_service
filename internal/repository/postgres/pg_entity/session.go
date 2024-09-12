@@ -98,11 +98,15 @@ func (s *SessionRow) Scan(row pgx.Row) error {
 	)
 }
 func (s *SessionRow) ColumnsForUpdate() []string {
-	return nil
+	return []string{
+		"updated_at",
+	}
 }
 
 func (s *SessionRow) ValuesForUpdate() []interface{} {
-	return nil
+	return []interface{}{
+		s.UpdatedAt,
+	}
 }
 
 func (s *SessionRow) ConditionUidEqual() sq.Eq {
