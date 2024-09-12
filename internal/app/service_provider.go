@@ -10,7 +10,6 @@ import (
 	deliveryGrpc "github.com/balobas/auth_service/internal/delivery/grpc"
 	"github.com/balobas/auth_service/internal/manager/transaction"
 	repositoryPostgres "github.com/balobas/auth_service/internal/repository/postgres"
-	usersService "github.com/balobas/auth_service/internal/service/users"
 	"github.com/balobas/auth_service/internal/shutdown"
 )
 

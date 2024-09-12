@@ -68,6 +68,10 @@ func (p *pg) Close() {
 }
 
 func (p *pg) BeginTxWithContext(ctx context.Context) (context.Context, contract.Transaction, error) {
+	if tx, ok := ctx.Value(TxKey{}).(pgx.Tx); ok {
+		return ctx, tx, nil
+	}
+
 	tx, err := p.pool.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.ReadCommitted})
 	if err != nil {
 		return ctx, nil, errors.Wrap(err, "failed to begin tx")
