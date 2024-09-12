@@ -41,6 +41,10 @@ func (r *BasePgRepository) WithTx(ctx context.Context, f func(ctx context.Contex
 	return f(ctx)
 }
 
+func (r *BasePgRepository) BeginTxWithContext(ctx context.Context) (context.Context, contract.Transaction, error) {
+	return r.dbc.DB().BeginTxWithContext(ctx)
+}
+
 func HandleTxEnd(ctx context.Context, tx contract.Transaction, err error) error {
 	if err == nil {
 		if commitErr := tx.Commit(ctx); commitErr != nil {

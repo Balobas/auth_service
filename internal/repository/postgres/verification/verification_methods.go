@@ -1,4 +1,4 @@
-package repositoryUsers
+package verification
 
 import (
 	"context"
@@ -9,7 +9,7 @@ import (
 	uuid "github.com/satori/go.uuid"
 )
 
-func (r *UsersRepository) CreateVerification(ctx context.Context, verification entity.Verification) error {
+func (r *VerificationRepository) CreateVerification(ctx context.Context, verification entity.Verification) error {
 	verificationRow := pgEntity.NewVerificationRow().FromEntity(verification)
 
 	if err := r.Create(ctx, verificationRow); err != nil {
@@ -18,7 +18,7 @@ func (r *UsersRepository) CreateVerification(ctx context.Context, verification e
 	return nil
 }
 
-func (r *UsersRepository) GetUserVerification(ctx context.Context, userUid uuid.UUID) (entity.Verification, error) {
+func (r *VerificationRepository) GetUserVerification(ctx context.Context, userUid uuid.UUID) (entity.Verification, error) {
 	verificationRow := pgEntity.NewVerificationRow().FromEntity(entity.Verification{UserUid: userUid})
 
 	if err := r.GetOne(ctx, verificationRow, verificationRow.ConditionUserUidEqual()); err != nil {
@@ -28,7 +28,17 @@ func (r *UsersRepository) GetUserVerification(ctx context.Context, userUid uuid.
 	return verificationRow.ToEntity(), nil
 }
 
-func (r *UsersRepository) DeleteVerification(ctx context.Context, userUid uuid.UUID) error {
+func (r *VerificationRepository) UpdateVerification(ctx context.Context, verification entity.Verification) error {
+	verififcationRow := pgEntity.NewVerificationRow().FromEntity(verification)
+
+	if err := r.Update(ctx, verififcationRow, verififcationRow.ConditionUserUidEqual()); err != nil {
+		return errors.Wrapf(err, "failed to update verification for user %s", verification.UserUid)
+	}
+
+	return nil
+}
+
+func (r *VerificationRepository) DeleteVerification(ctx context.Context, userUid uuid.UUID) error {
 	verificationRow := pgEntity.NewVerificationRow().FromEntity(entity.Verification{UserUid: userUid})
 
 	if err := r.Delete(ctx, verificationRow, verificationRow.ConditionUserUidEqual()); err != nil {

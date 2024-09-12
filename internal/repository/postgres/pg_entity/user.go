@@ -14,10 +14,7 @@ const (
 var (
 	usersTableColumns = []string{
 		"uid",
-		"name",
 		"email",
-		"phone",
-		"password",
 		"role",
 		"created_at",
 		"updated_at",
@@ -26,10 +23,7 @@ var (
 
 type UserRow struct {
 	Uid       pgtype.UUID
-	Name      string
 	Email     string
-	Phone     string
-	Password  string
 	Role      string
 	CreatedAt pgtype.Timestamp
 	UpdatedAt pgtype.Timestamp
@@ -48,11 +42,8 @@ func (ur *UserRow) FromEntity(user entity.User) *UserRow {
 		Bytes:  user.Uid,
 		Status: pgtype.Present,
 	}
-	ur.Name = user.Name
 	ur.Email = user.Email
-	ur.Phone = user.Phone
-	ur.Role = user.Role
-	ur.Password = user.Password
+	ur.Role = string(user.Role)
 
 	if user.CreatedAt.Unix() == 0 {
 		ur.CreatedAt = pgtype.Timestamp{
@@ -82,11 +73,8 @@ func (ur *UserRow) FromEntity(user entity.User) *UserRow {
 func (ur *UserRow) ToEntity() entity.User {
 	return entity.User{
 		Uid:       ur.Uid.Bytes,
-		Name:      ur.Name,
 		Email:     ur.Email,
-		Phone:     ur.Phone,
-		Password:  ur.Password,
-		Role:      ur.Role,
+		Role:      entity.UserRole(ur.Role),
 		CreatedAt: ur.CreatedAt.Time,
 		UpdatedAt: ur.UpdatedAt.Time,
 	}
@@ -99,10 +87,7 @@ func (ur *UserRow) Columns() []string {
 func (ur *UserRow) Values() []interface{} {
 	return []interface{}{
 		ur.Uid,
-		ur.Name,
 		ur.Email,
-		ur.Phone,
-		ur.Password,
 		ur.Role,
 		ur.CreatedAt,
 		ur.UpdatedAt,
@@ -116,10 +101,7 @@ func (ur *UserRow) IdColumnName() string {
 func (ur *UserRow) Scan(row pgx.Row) error {
 	return row.Scan(
 		&ur.Uid,
-		&ur.Name,
 		&ur.Email,
-		&ur.Phone,
-		&ur.Password,
 		&ur.Role,
 		&ur.CreatedAt,
 		&ur.UpdatedAt,
@@ -129,10 +111,7 @@ func (ur *UserRow) Scan(row pgx.Row) error {
 func (ur *UserRow) ValuesForScan() []interface{} {
 	return []interface{}{
 		&ur.Uid,
-		&ur.Name,
 		&ur.Email,
-		&ur.Phone,
-		&ur.Password,
 		&ur.Role,
 		&ur.CreatedAt,
 		&ur.UpdatedAt,
@@ -141,8 +120,6 @@ func (ur *UserRow) ValuesForScan() []interface{} {
 
 func (ur *UserRow) ColumnsForUpdate() []string {
 	return []string{
-		"name",
-		"phone",
 		"email",
 		"updated_at",
 	}
@@ -150,8 +127,6 @@ func (ur *UserRow) ColumnsForUpdate() []string {
 
 func (ur *UserRow) ValuesForUpdate() []interface{} {
 	return []interface{}{
-		ur.Name,
-		ur.Phone,
 		ur.Email,
 		ur.UpdatedAt,
 	}
@@ -160,5 +135,11 @@ func (ur *UserRow) ValuesForUpdate() []interface{} {
 func (ur *UserRow) ConditionUserUidEqual() sq.Eq {
 	return sq.Eq{
 		"uid": ur.Uid,
+	}
+}
+
+func (ur *UserRow) ConditionEmailEqual() sq.Eq {
+	return sq.Eq{
+		"email": ur.Email,
 	}
 }

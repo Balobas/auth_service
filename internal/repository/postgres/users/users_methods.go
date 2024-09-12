@@ -7,6 +7,7 @@ import (
 	"github.com/balobas/auth_service/internal/entity"
 	repositoryPostgres "github.com/balobas/auth_service/internal/repository/postgres"
 	pgEntity "github.com/balobas/auth_service/internal/repository/postgres/pg_entity"
+	"github.com/jackc/pgx/v4"
 	"github.com/pkg/errors"
 	uuid "github.com/satori/go.uuid"
 )
@@ -27,26 +28,56 @@ func (r *UsersRepository) CreateUserWithPermissions(ctx context.Context, user en
 		return errors.WithStack(err)
 	}
 
-	log.Printf("successfuly create user uid: %s, name: %s, email: %s, permissions: %v\n", user.Uid, user.Name, user.Email, user.Permissions)
+	log.Printf("successfuly create user uid: %s, email: %s, permissions: %v\n", user.Uid, user.Email, user.Permissions)
 	return nil
 }
 
-func (r *UsersRepository) GetUserByUid(ctx context.Context, uid uuid.UUID) (entity.User, error) {
+func (r *UsersRepository) GetUserByUid(ctx context.Context, uid uuid.UUID) (entity.User, bool, error) {
 	userRow := pgEntity.NewUserRow().FromEntity(entity.User{Uid: uid})
 
 	if err := r.GetOne(ctx, userRow, userRow.ConditionUserUidEqual()); err != nil {
-		return entity.User{}, errors.WithStack(err)
+		if errors.Is(err, pgx.ErrNoRows) {
+			return entity.User{}, false, nil
+		}
+		return entity.User{}, false, errors.WithStack(err)
 	}
 
 	permissionsRow := pgEntity.NewUserPermissionsRow()
 	if err := r.GetOne(ctx, permissionsRow, permissionsRow.ConditionUidEqual()); err != nil {
-		return entity.User{}, errors.WithStack(err)
+		if errors.Is(err, pgx.ErrNoRows) {
+			return entity.User{}, false, nil
+		}
+		return entity.User{}, false, errors.WithStack(err)
 	}
 
 	user := userRow.ToEntity()
 	permissionsRow.ToEntity(&user)
 
-	return user, nil
+	return user, true, nil
+}
+
+func (r *UsersRepository) GetByEmail(ctx context.Context, email string) (entity.User, bool, error) {
+	userRow := pgEntity.NewUserRow().FromEntity(entity.User{Email: email})
+
+	if err := r.GetOne(ctx, userRow, userRow.ConditionEmailEqual()); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return entity.User{}, false, nil
+		}
+		return entity.User{}, false, errors.WithStack(err)
+	}
+
+	permissionsRow := pgEntity.NewUserPermissionsRow()
+	if err := r.GetOne(ctx, permissionsRow, permissionsRow.ConditionUidEqual()); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return entity.User{}, false, nil
+		}
+		return entity.User{}, false, errors.WithStack(err)
+	}
+
+	user := userRow.ToEntity()
+	permissionsRow.ToEntity(&user)
+
+	return user, true, nil
 }
 
 func (r *UsersRepository) UpdateUserWithPermissions(ctx context.Context, user entity.User) error {
@@ -75,6 +106,14 @@ func (r *UsersRepository) UpdateUser(ctx context.Context, user entity.User) erro
 	userRow := pgEntity.NewUserRow().FromEntity(user)
 	if err := r.Update(ctx, userRow, userRow.ConditionUserUidEqual()); err != nil {
 		return errors.Wrapf(err, "failed to update user with uid %s", user.Uid)
+	}
+	return nil
+}
+
+func (r *UsersRepository) UpdateUserPermissions(ctx context.Context, userUid uuid.UUID, perms []entity.UserPermission) error {
+	permissionsRow := pgEntity.NewUserPermissionsRow().FromEntity(entity.User{Uid: userUid, Permissions: perms})
+	if err := r.Update(ctx, permissionsRow, permissionsRow.ConditionUidEqual()); err != nil {
+		return errors.Wrapf(err, "failed to update permissions for user %s", userUid)
 	}
 	return nil
 }

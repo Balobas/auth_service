@@ -15,8 +15,8 @@ func (r *SessionRepository) CreateSession(ctx context.Context, session entity.Se
 	if err := r.Create(ctx, sessionRow); err != nil {
 		return errors.Wrapf(
 			err,
-			"failed to create session with uid %s, user uid %s, device uid %s",
-			session.Uid, session.UserUid, session.DeviceUid,
+			"failed to create session with uid %s, user uid %s",
+			session.Uid, session.UserUid,
 		)
 	}
 	return nil
@@ -43,16 +43,6 @@ func (r *SessionRepository) GetSessionsByUserUid(ctx context.Context, userUid uu
 	return rows.ToEntities(), nil
 }
 
-func (r *SessionRepository) GetSessionByDeviceUid(ctx context.Context, deviceUid uuid.UUID) (entity.Session, error) {
-	sessionRow := pgEntity.NewSessionRow().FromEntity(entity.Session{DeviceUid: deviceUid})
-
-	if err := r.GetOne(ctx, sessionRow, sessionRow.ConditionDeviceUidEqual()); err != nil {
-		return entity.Session{}, errors.Wrapf(err, "failed to get session by device uid %s", deviceUid)
-	}
-
-	return sessionRow.ToEntity(), nil
-}
-
 func (r *SessionRepository) DeleteSessionByUid(ctx context.Context, uid uuid.UUID) error {
 	sessionRow := pgEntity.NewSessionRow().FromEntity(entity.Session{Uid: uid})
 
@@ -67,15 +57,6 @@ func (r *SessionRepository) DeleteSessionsByUserUid(ctx context.Context, userUid
 
 	if err := r.Delete(ctx, sessionRow, sessionRow.ConditionUserUidEqual()); err != nil {
 		return errors.Wrapf(err, "failed to delete sessions with user uid %s", userUid)
-	}
-	return nil
-}
-
-func (r *SessionRepository) DeleteSessionByDeviceUid(ctx context.Context, deviceUid uuid.UUID) error {
-	sessionRow := pgEntity.NewSessionRow().FromEntity(entity.Session{DeviceUid: deviceUid})
-
-	if err := r.Delete(ctx, sessionRow, sessionRow.ConditionDeviceUidEqual()); err != nil {
-		return errors.Wrapf(err, "failed to delete session with device uid %s", deviceUid)
 	}
 	return nil
 }

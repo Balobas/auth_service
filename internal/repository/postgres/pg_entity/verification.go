@@ -12,11 +12,16 @@ const verificationTableName = "verification"
 var verificationTableColumns = []string{
 	"user_uid",
 	"token",
+	"status",
+	"created_at",
 }
 
 type VerificationRow struct {
-	UserUid pgtype.UUID
-	Token   string
+	UserUid   pgtype.UUID
+	Token     string
+	Status    string
+	CreatedAt pgtype.Timestamp
+	UpdatedAt pgtype.Timestamp
 }
 
 func NewVerificationRow() *VerificationRow {
@@ -29,13 +34,37 @@ func (v *VerificationRow) FromEntity(verification entity.Verification) *Verifica
 		Status: pgtype.Present,
 	}
 	v.Token = verification.Token
+	v.Status = string(verification.Status)
+	if verification.CreatedAt.Unix() == 0 {
+		v.CreatedAt = pgtype.Timestamp{
+			Status: pgtype.Null,
+		}
+	} else {
+		v.CreatedAt = pgtype.Timestamp{
+			Time:   verification.CreatedAt,
+			Status: pgtype.Present,
+		}
+	}
+	if verification.UpdatedAt.Unix() == 0 {
+		v.UpdatedAt = pgtype.Timestamp{
+			Status: pgtype.Null,
+		}
+	} else {
+		v.UpdatedAt = pgtype.Timestamp{
+			Time:   verification.UpdatedAt,
+			Status: pgtype.Present,
+		}
+	}
 	return v
 }
 
 func (v *VerificationRow) ToEntity() entity.Verification {
 	return entity.Verification{
-		UserUid: v.UserUid.Bytes,
-		Token:   v.Token,
+		UserUid:   v.UserUid.Bytes,
+		Token:     v.Token,
+		Status:    entity.VerificationStatus(v.Status),
+		CreatedAt: v.CreatedAt.Time,
+		UpdatedAt: v.UpdatedAt.Time,
 	}
 }
 
@@ -47,6 +76,9 @@ func (v *VerificationRow) Values() []interface{} {
 	return []interface{}{
 		v.UserUid,
 		v.Token,
+		v.Status,
+		v.CreatedAt,
+		v.UpdatedAt,
 	}
 }
 
@@ -59,15 +91,21 @@ func (v *VerificationRow) Table() string {
 }
 
 func (v *VerificationRow) Scan(row pgx.Row) error {
-	return row.Scan(&v.UserUid, &v.Token)
+	return row.Scan(&v.UserUid, &v.Token, &v.Status, &v.CreatedAt, &v.UpdatedAt)
 }
 
 func (v *VerificationRow) ColumnsForUpdate() []string {
-	return nil
+	return []string{
+		"status",
+		"updated_at",
+	}
 }
 
 func (v *VerificationRow) ValuesForUpdate() []interface{} {
-	return nil
+	return []interface{}{
+		v.Status,
+		v.UpdatedAt,
+	}
 }
 
 func (v *VerificationRow) ConditionUserUidEqual() sq.Eq {

@@ -1,16 +1,16 @@
-package blacklistRepository
+package credentials
 
 import (
 	"github.com/balobas/auth_service/internal/client"
 	repositoryPostgres "github.com/balobas/auth_service/internal/repository/postgres"
 )
 
-type BlacklistRepository struct {
+type CredentialsRepository struct {
 	*repositoryPostgres.BasePgRepository
 }
 
-func New(client client.ClientDB) *BlacklistRepository {
-	return &BlacklistRepository{
+func New(client client.ClientDB) *CredentialsRepository {
+	return &CredentialsRepository{
 		repositoryPostgres.New(client),
 	}
 }

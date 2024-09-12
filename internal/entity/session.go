@@ -9,7 +9,6 @@ import (
 type Session struct {
 	Uid       uuid.UUID
 	UserUid   uuid.UUID
-	DeviceUid uuid.UUID
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }
