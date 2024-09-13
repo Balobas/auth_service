@@ -2,18 +2,24 @@ syntax="proto3";
 
 package auth;
 
-option go_package = "github.com/balobas/auth_service_bln/pkg/auth_v1;auth_v1";
+option go_package = "github.com/balobas/auth_service/pkg/auth_v1;auth_v1";
 
 import "google/protobuf/timestamp.proto";
-import "google/protobuf/wrappers.proto";
 import "google/protobuf/empty.proto";
 
 
 service Auth {
-    rpc Create(CreateRequest) returns (CreateResponse);
-    rpc Get(GetRequest) returns (GetResponse);
-    rpc Update(UpdateRequest) returns (google.protobuf.Empty);
-    rpc Delete(DeleteRequest) returns (google.protobuf.Empty);
+    rpc Register(RegisterRequest) returns (RegisterResponse);
+    rpc UpdateUser(UpdateUserRequest) returns (google.protobuf.Empty); // required accessJwt in ctx
+    rpc GetUser(GetUserRequest) returns (GetUserResponse); // required accessJwt in ctx
+    rpc Delete(DeleteUserRequest) returns (google.protobuf.Empty); // required accessJwt in ctx
+
+    rpc Login(LoginRequest) returns (JwtResponse);
+    rpc Logout(LogoutRequest) returns (google.protobuf.Empty); // required accessJwt in ctx
+    rpc Refresh(RefreshRequest) returns (JwtResponse);
+
+    rpc Verify(VerifyRequest) returns (google.protobuf.Empty);
+    rpc VerifyEmail(VerifyEmailRequest) returns (google.protobuf.Empty);
 }
 
 enum Role {
@@ -21,37 +27,61 @@ enum Role {
     admin = 1;
 }
 
-message CreateRequest {
-    string name = 1;
+message RegisterRequest {
+    string email = 1;
+    string password = 2;
+}
+
+message RegisterResponse {
+    string uid = 1;
+}
+
+message UpdateUserRequest {
+    string uid = 1;
     string email = 2;
     string password = 3;
-    string password_confirm = 4;
-    Role role = 5;
 }
 
-message CreateResponse {
-    int64 id = 1;
+message GetUserRequest {
+    string uid = 1;
+    string email = 2;
 }
 
-message GetRequest {
-    int64 id = 1;
-}
-
-message GetResponse {
-    int64 id = 1;
-    string name = 2;
-    string email = 3;
-    Role role = 4;
+message GetUserResponse {
+    string uid = 1;
+    string email = 2;
+    Role role = 3;
+    repeated string permissions = 4;
     google.protobuf.Timestamp created_at = 5;
     google.protobuf.Timestamp updated_at = 6;
 }
 
-message UpdateRequest {
-    int64 id = 1;
-    google.protobuf.StringValue name = 2;
-    google.protobuf.StringValue email = 3;
+message DeleteUserRequest {
+    string uid = 1;
 }
 
-message DeleteRequest {
-    int64 id  = 1;
+message VerifyEmailRequest {
+    string token = 1;
+}
+
+message LoginRequest {
+    string email = 1;
+    string password = 2;
+}
+
+message JwtResponse {
+    string accessJwt = 1;
+    string refreshJwt = 2;
+}
+
+message LogoutRequest {
+    string uid = 1;
+}
+
+message RefreshRequest {
+    string refreshJwt = 1;
+}
+
+message VerifyRequest {
+    string jwt = 1;
 }
