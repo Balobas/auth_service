@@ -5,24 +5,55 @@ import (
 	"log"
 
 	"github.com/balobas/auth_service/internal/client"
+	"github.com/balobas/auth_service/internal/client/email"
 	"github.com/balobas/auth_service/internal/client/pg"
 	"github.com/balobas/auth_service/internal/config"
 	deliveryGrpc "github.com/balobas/auth_service/internal/delivery/grpc"
+	jwtManager "github.com/balobas/auth_service/internal/manager/jwt"
 	"github.com/balobas/auth_service/internal/manager/transaction"
-	repositoryPostgres "github.com/balobas/auth_service/internal/repository/postgres"
+	repositoryKeys "github.com/balobas/auth_service/internal/repository/keys"
+	repositoryConfig "github.com/balobas/auth_service/internal/repository/postgres/config"
+	repositoryCredentials "github.com/balobas/auth_service/internal/repository/postgres/credentials"
+	repositoryPermissions "github.com/balobas/auth_service/internal/repository/postgres/permissions"
+	sessionRepository "github.com/balobas/auth_service/internal/repository/postgres/session"
+	repositoryUsers "github.com/balobas/auth_service/internal/repository/postgres/users"
+	repositoryVerification "github.com/balobas/auth_service/internal/repository/postgres/verification"
 	"github.com/balobas/auth_service/internal/shutdown"
+	useCaseAuth "github.com/balobas/auth_service/internal/usecase/auth"
+	useCaseConfig "github.com/balobas/auth_service/internal/usecase/config"
+	useCaseCredentials "github.com/balobas/auth_service/internal/usecase/credentials"
+	useCaseUsers "github.com/balobas/auth_service/internal/usecase/users"
+	useCaseVerification "github.com/balobas/auth_service/internal/usecase/verification"
+	workerVerification "github.com/balobas/auth_service/internal/worker/verification"
 )
 
 type serviceProvider struct {
-	pgConfig   *config.ConfigPG
-	grpcConfig *config.ConfigGRPC
+	pgConfig      *config.ConfigPG
+	grpcConfig    *config.ConfigGRPC
+	serviceConfig *config.ServiceConfig
 
-	pgClient  client.ClientDB
-	usersRepo *repositoryPostgres.Repository
+	pgClient    client.ClientDB
+	emailClient *email.SmtpClient
 
-	txManager *transaction.Manager
+	keysRepository         *repositoryKeys.KeysRepository
+	usersRepository        *repositoryUsers.UsersRepository
+	permissionsRepository  *repositoryPermissions.PermissionsRepository
+	credentialsRepository  *repositoryCredentials.CredentialsRepository
+	sessionsRepository     *sessionRepository.SessionRepository
+	verificationRepository *repositoryVerification.VerificationRepository
+	configRepository       *repositoryConfig.ConfigRepository
 
-	usersService   *usersService.UsersService
+	txManager  *transaction.Manager
+	jwtManager *jwtManager.JwtManager
+
+	useCaseConfig       *useCaseConfig.UseCaseConfig
+	useCaseUsers        *useCaseUsers.UseCaseUsers
+	useCaseCredentials  *useCaseCredentials.UseCaseCredentials
+	useCaseVerification *useCaseVerification.UseCaseVerification
+	useCaseAuth         *useCaseAuth.UseCaseAuth
+
+	workerVerification *workerVerification.Worker
+
 	authServerGrpc *deliveryGrpc.AuthServerGrpc
 }
 
@@ -61,35 +92,4 @@ func (sp *serviceProvider) PgClient(ctx context.Context) client.ClientDB {
 		sp.pgClient = client
 	}
 	return sp.pgClient
-}
-
-func (sp *serviceProvider) UsersRepo(ctx context.Context) *repositoryPostgres.Repository {
-	if sp.usersRepo == nil {
-		sp.usersRepo = repositoryPostgres.New(sp.PgClient(ctx))
-	}
-	return sp.usersRepo
-}
-
-func (sp *serviceProvider) TxManager() *transaction.Manager {
-	if sp.txManager == nil {
-		sp.txManager = transaction.NewTxManager()
-	}
-	return sp.txManager
-}
-
-func (sp *serviceProvider) UsersService(ctx context.Context) *usersService.UsersService {
-	if sp.usersService == nil {
-		sp.usersService = usersService.New(sp.UsersRepo(ctx))
-	}
-	return sp.usersService
-}
-
-func (sp *serviceProvider) AuthServerGrpc(ctx context.Context) *deliveryGrpc.AuthServerGrpc {
-	if sp.authServerGrpc == nil {
-		sp.authServerGrpc = deliveryGrpc.NewAuthServerGRPC(
-			sp.GrpcConfig(),
-			sp.UsersService(ctx),
-		)
-	}
-	return sp.authServerGrpc
 }
