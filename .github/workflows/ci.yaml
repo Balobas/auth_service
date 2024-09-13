@@ -72,6 +72,6 @@ jobs:
             docker run -d --name=migrator --network db_network --restart on-failure -t $REGISTRY/migrator:$TAG_NAME
             
             # Run a new container from a new image
-            docker run -d --network db_network -p $EXTERNAL_PORT:$CONTAINER_PORT --name $CONTAINER_NAME -t $REGISTRY/$IMAGE_NAME:$TAG_NAME
+            docker run -d -e PK=${{ secrets.AUTH_PK }} --network db_network -p $EXTERNAL_PORT:$CONTAINER_PORT --name $CONTAINER_NAME -t $REGISTRY/$IMAGE_NAME:$TAG_NAME
 
 

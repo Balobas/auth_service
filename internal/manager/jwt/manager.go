@@ -16,7 +16,7 @@ type JwtManager struct {
 }
 
 type KeysProvider interface {
-	Key() []byte
+	GetPrivateKey() ([]byte, error)
 }
 
 func New(keysProvider KeysProvider) *JwtManager {
@@ -47,7 +47,12 @@ func (p *JwtManager) NewToken(info entity.TokenInfo, ttl time.Duration) (string,
 	claims[tokenFieldSessionUid] = info.SessionUid
 	claims[tokenFieldExpiredAt] = ttl
 
-	signedToken, err := token.SignedString(p.keysProvider.Key())
+	pk, err := p.keysProvider.GetPrivateKey()
+	if err != nil {
+		return "", errors.WithStack(err)
+	}
+
+	signedToken, err := token.SignedString(pk)
 	if err != nil {
 		return "", errors.Wrapf(err, "cant sign token")
 	}
@@ -60,7 +65,13 @@ func (p *JwtManager) ParseToken(tokenStr string) (entity.TokenInfo, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
-		return p.keysProvider.Key(), nil
+
+		pk, err := p.keysProvider.GetPrivateKey()
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+
+		return pk, nil
 	})
 	if err != nil {
 		return entity.TokenInfo{}, errors.Wrap(err, "cant parse jwt token")
