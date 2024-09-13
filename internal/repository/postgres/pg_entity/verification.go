@@ -11,6 +11,7 @@ const verificationTableName = "verification"
 
 var verificationTableColumns = []string{
 	"user_uid",
+	"email",
 	"token",
 	"status",
 	"created_at",
@@ -18,6 +19,7 @@ var verificationTableColumns = []string{
 
 type VerificationRow struct {
 	UserUid   pgtype.UUID
+	Email     string
 	Token     string
 	Status    string
 	CreatedAt pgtype.Timestamp
@@ -34,6 +36,7 @@ func (v *VerificationRow) FromEntity(verification entity.Verification) *Verifica
 		Status: pgtype.Present,
 	}
 	v.Token = verification.Token
+	v.Email = verification.Email
 	v.Status = string(verification.Status)
 	if verification.CreatedAt.Unix() == 0 {
 		v.CreatedAt = pgtype.Timestamp{
@@ -61,6 +64,7 @@ func (v *VerificationRow) FromEntity(verification entity.Verification) *Verifica
 func (v *VerificationRow) ToEntity() entity.Verification {
 	return entity.Verification{
 		UserUid:   v.UserUid.Bytes,
+		Email:     v.Email,
 		Token:     v.Token,
 		Status:    entity.VerificationStatus(v.Status),
 		CreatedAt: v.CreatedAt.Time,
@@ -75,6 +79,7 @@ func (v *VerificationRow) IdColumnName() string {
 func (v *VerificationRow) Values() []interface{} {
 	return []interface{}{
 		v.UserUid,
+		v.Email,
 		v.Token,
 		v.Status,
 		v.CreatedAt,
@@ -91,7 +96,7 @@ func (v *VerificationRow) Table() string {
 }
 
 func (v *VerificationRow) Scan(row pgx.Row) error {
-	return row.Scan(&v.UserUid, &v.Token, &v.Status, &v.CreatedAt, &v.UpdatedAt)
+	return row.Scan(&v.UserUid, &v.Email, &v.Token, &v.Status, &v.CreatedAt, &v.UpdatedAt)
 }
 
 func (v *VerificationRow) ColumnsForUpdate() []string {
@@ -112,4 +117,45 @@ func (v *VerificationRow) ConditionUserUidEqual() sq.Eq {
 	return sq.Eq{
 		"user_uid": v.UserUid,
 	}
+}
+
+func (v *VerificationRow) ConditionsStatusEqual() sq.Eq {
+	return sq.Eq{
+		"status": v.Status,
+	}
+}
+
+type VerificationRows struct {
+	verifications []*VerificationRow
+}
+
+func NewVerificationRows() *VerificationRows {
+	return &VerificationRows{}
+}
+
+func (s *VerificationRows) ScanAll(rows pgx.Rows) error {
+	for rows.Next() {
+		newRow := &VerificationRow{}
+
+		if err := newRow.Scan(rows); err != nil {
+			return err
+		}
+		s.verifications = append(s.verifications, newRow)
+	}
+
+	return nil
+}
+
+func (s *VerificationRows) ToEntities() []entity.Verification {
+	if len(s.verifications) == 0 {
+		return nil
+	}
+
+	res := make([]entity.Verification, len(s.verifications))
+
+	for i := 0; i < len(s.verifications); i++ {
+		res[i] = s.verifications[i].ToEntity()
+	}
+
+	return res
 }

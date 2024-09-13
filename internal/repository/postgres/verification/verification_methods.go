@@ -38,6 +38,15 @@ func (r *VerificationRepository) UpdateVerification(ctx context.Context, verific
 	return nil
 }
 
+func (r *VerificationRepository) GetVerificationsInStatus(ctx context.Context, status entity.VerificationStatus, limit uint64) ([]entity.Verification, error) {
+	verificationRow := pgEntity.NewVerificationRow().FromEntity(entity.Verification{Status: status})
+	rows := pgEntity.NewVerificationRows()
+	if err := r.GetWithLimit(ctx, verificationRow, rows, verificationRow.ConditionsStatusEqual(), limit, 0); err != nil {
+		return nil, errors.Wrapf(err, "failed to get verifications in status %s", status)
+	}
+	return rows.ToEntities(), nil
+}
+
 func (r *VerificationRepository) DeleteVerification(ctx context.Context, userUid uuid.UUID) error {
 	verificationRow := pgEntity.NewVerificationRow().FromEntity(entity.Verification{UserUid: userUid})
 

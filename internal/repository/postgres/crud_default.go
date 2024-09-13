@@ -42,7 +42,25 @@ func (r *BasePgRepository) GetOne(ctx context.Context, row Row, condition sq.Sql
 	if err != nil {
 		return err
 	}
+
 	return row.Scan(r.DB().QueryRow(ctx, stmt, args...))
+}
+
+func (r *BasePgRepository) GetWithLimit(ctx context.Context, row Row, dest Rows, condition sq.Sqlizer, limit uint64, offset uint64) error {
+	stmt, args, err := sq.Select(row.Columns()...).
+		From(row.Table()).
+		PlaceholderFormat(sq.Dollar).
+		Where(condition).Limit(limit).Offset(offset).ToSql()
+	if err != nil {
+		return err
+	}
+
+	rows, err := r.DB().Query(ctx, stmt, args...)
+	if err != nil {
+		return err
+	}
+
+	return dest.ScanAll(rows)
 }
 
 func (r *BasePgRepository) Update(ctx context.Context, row Row, condition sq.Sqlizer) error {
