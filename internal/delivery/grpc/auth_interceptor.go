@@ -35,11 +35,11 @@ func (s *AuthServerGrpc) UnaryAuthInterceptor() grpc.UnaryServerInterceptor {
 
 var (
 	withoutAuth = map[string]struct{}{
-		"/auth.Auth/VerifyEmail": struct{}{},
-		"/auth.Auth/Verify":      struct{}{},
-		"/auth.Auth/Login":       struct{}{},
-		"/auth.Auth/Register":    struct{}{},
-		"/auth.Auth/Refresh":     struct{}{},
+		"/auth.Auth/VerifyEmail": {},
+		"/auth.Auth/Verify":      {},
+		"/auth.Auth/Login":       {},
+		"/auth.Auth/Register":    {},
+		"/auth.Auth/Refresh":     {},
 	}
 )
 
@@ -56,11 +56,11 @@ func accessJwtFromContext(ctx context.Context) (string, error) {
 	return token, nil
 }
 
-var userCtxKey = "user"
+type userCtxKey struct{}
 
 func contextWithUserInfo(ctx context.Context, tokenInfo entity.TokenInfo) context.Context {
 	return context.WithValue(
-		ctx, userCtxKey,
+		ctx, userCtxKey{},
 		UserInfo{
 			UserUid: tokenInfo.UserUid,
 			Role:    entity.UserRole(tokenInfo.Role),
@@ -69,7 +69,7 @@ func contextWithUserInfo(ctx context.Context, tokenInfo entity.TokenInfo) contex
 }
 
 func userInfoFromContext(ctx context.Context) UserInfo {
-	info, ok := ctx.Value(userCtxKey).(UserInfo)
+	info, ok := ctx.Value(userCtxKey{}).(UserInfo)
 	if !ok {
 		return UserInfo{}
 	}
