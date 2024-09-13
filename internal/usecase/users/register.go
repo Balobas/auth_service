@@ -5,11 +5,15 @@ import (
 	"time"
 
 	"github.com/balobas/auth_service/internal/entity"
+	"github.com/balobas/auth_service/pkg/validations"
 	"github.com/pkg/errors"
 	uuid "github.com/satori/go.uuid"
 )
 
 func (uc *UseCaseUsers) Register(ctx context.Context, user entity.User, password string) (uuid.UUID, error) {
+	if err := validations.ValidateEmail(user.Email); err != nil {
+		return uuid.UUID{}, errors.Wrap(err, "invalid email")
+	}
 
 	_, isFound, err := uc.usersRepo.GetByEmail(ctx, user.Email)
 	if err != nil {
