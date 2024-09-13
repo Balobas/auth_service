@@ -12,6 +12,7 @@ type Config interface {
 	SendVerificationInterval() time.Duration
 	VerificationWorkerBatchSize() uint64
 	EmailVerificationTemplate() string
+	HttpVerificationScheme() string
 }
 
 type VerificationRepository interface {

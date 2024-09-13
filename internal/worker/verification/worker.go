@@ -47,10 +47,12 @@ func (w *Worker) Run(ctx context.Context) {
 				timer.Reset(w.cfg.SendVerificationInterval())
 				break
 			}
+
 			templ := w.cfg.EmailVerificationTemplate()
+			httpScheme := w.cfg.HttpVerificationScheme()
 			for _, verification := range verifications {
 
-				body, err := buildEmailBody(templ, verification.Token)
+				body, err := buildEmailBody(templ, httpScheme, verification.Token)
 				if err != nil {
 					log.Printf("failed to build email body %v\n", err)
 					continue
@@ -74,14 +76,22 @@ func (w *Worker) Run(ctx context.Context) {
 	}
 }
 
-func buildEmailBody(tmpl string, token string) ([]byte, error) {
+type TemplateParams struct {
+	Scheme string
+	Token  string
+}
+
+func buildEmailBody(tmpl string, httpScheme string, token string) ([]byte, error) {
 	t, err := template.New("msg").Parse(tmpl)
 	if err != nil {
 		return nil, err
 	}
 	buff := bytes.NewBuffer(make([]byte, 0, len(tmpl)+len(token)))
 
-	if err := t.Execute(buff, struct{ Token string }{Token: token}); err != nil {
+	if err := t.Execute(buff, TemplateParams{
+		Scheme: httpScheme,
+		Token:  token,
+	}); err != nil {
 		return nil, err
 	}
 
