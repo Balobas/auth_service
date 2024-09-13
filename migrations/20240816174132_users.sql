@@ -36,6 +36,7 @@ create type verification_status as enum('created', 'waiting');
 
 create table verification (
     user_uid varchar not null primary key,
+    email varchar not null unique,
     token varchar not null,
     status verification_status not null,
     created_at timestamp,
