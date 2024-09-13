@@ -6,6 +6,8 @@ import (
 	"reflect"
 	"sync"
 	"time"
+
+	"github.com/pkg/errors"
 )
 
 type ServiceConfig struct {
@@ -137,4 +139,35 @@ func (c *ServiceConfig) ToMap() map[string]json.RawMessage {
 		res[tag] = bts
 	}
 	return res
+}
+
+func (c *ServiceConfig) Validate(cfg map[string]json.RawMessage) error {
+	c.model.mu.Lock()
+	defer c.model.mu.Unlock()
+
+	crt := reflect.TypeOf(&c.model).Elem()
+	crv := reflect.ValueOf(&c.model).Elem()
+
+	for idx := 0; idx < crt.NumField(); idx++ {
+
+		crtf := crt.Field(idx)
+		tag, ok := crtf.Tag.Lookup("setting_name")
+		if !ok {
+			continue
+		}
+
+		value, cfgHasTag := cfg[tag]
+		if !cfgHasTag {
+			continue
+		}
+
+		crvf := crv.Field(idx)
+
+		space := reflect.New(crvf.Type())
+		intrfc := space.Interface()
+		if err := json.Unmarshal(value, &intrfc); err != nil {
+			return errors.Errorf("failed to unmarshal value %s\n", tag)
+		}
+	}
+	return nil
 }
