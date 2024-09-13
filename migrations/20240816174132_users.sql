@@ -43,8 +43,24 @@ create table verification (
     foreign key(user_uid) references users(uid)
 );
 
+create table config (
+    key json not null primary key,
+    value json
+);
+
+insert into config(key, value) values
+('"min_password_len"', '6'),
+('"access_jwt_ttl"', '1h'),
+('"refresh_jwt_ttl"', '24h'),
+('"verification_token_len"', '16'),
+('"send_verification_interval"', '3m'),
+('"verification_worker_batch_size"', '10'),
+('"email_verification_template"', '"{{Подтвердите вашу почту перейдя по ссылке .Scheme/.Token }}"'),
+('"http_verification_scheme"', 'null');
+
 -- +goose Down
 
+drop table config;
 drop table verification;
 drop type verification_status;
 drop table sessions;
