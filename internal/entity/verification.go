@@ -8,6 +8,7 @@ import (
 
 type Verification struct {
 	UserUid   uuid.UUID
+	Email     string
 	Token     string
 	Status    VerificationStatus
 	CreatedAt time.Time
