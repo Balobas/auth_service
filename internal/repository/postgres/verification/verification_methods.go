@@ -5,6 +5,7 @@ import (
 
 	"github.com/balobas/auth_service/internal/entity"
 	pgEntity "github.com/balobas/auth_service/internal/repository/postgres/pg_entity"
+	"github.com/jackc/pgx/v4"
 	"github.com/pkg/errors"
 	uuid "github.com/satori/go.uuid"
 )
@@ -45,6 +46,18 @@ func (r *VerificationRepository) GetVerificationsInStatus(ctx context.Context, s
 		return nil, errors.Wrapf(err, "failed to get verifications in status %s", status)
 	}
 	return rows.ToEntities(), nil
+}
+
+func (r *VerificationRepository) GetVerificationByToken(ctx context.Context, token string) (entity.Verification, bool, error) {
+	row := pgEntity.NewVerificationRow().FromEntity(entity.Verification{Token: token})
+	if err := r.GetOne(ctx, row, row.ConditionTokenEqual()); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return entity.Verification{}, false, nil
+		}
+
+		return entity.Verification{}, false, errors.Wrapf(err, "failed to get verification by token %s", token)
+	}
+	return row.ToEntity(), true, nil
 }
 
 func (r *VerificationRepository) DeleteVerification(ctx context.Context, userUid uuid.UUID) error {

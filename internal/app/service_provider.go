@@ -80,6 +80,13 @@ func (sp *serviceProvider) GrpcConfig() *config.ConfigGRPC {
 	return sp.grpcConfig
 }
 
+func (sp *serviceProvider) ServiceConfig() *config.ServiceConfig {
+	if sp.serviceConfig == nil {
+		sp.serviceConfig = config.NewServiceConfig()
+	}
+	return sp.serviceConfig
+}
+
 func (sp *serviceProvider) PgClient(ctx context.Context) client.ClientDB {
 	if sp.pgClient == nil {
 		client, err := pg.NewClient(ctx, sp.PgConfig().DSN())
@@ -92,4 +99,160 @@ func (sp *serviceProvider) PgClient(ctx context.Context) client.ClientDB {
 		sp.pgClient = client
 	}
 	return sp.pgClient
+}
+
+func (sp *serviceProvider) EmailClient(ctx context.Context) *email.SmtpClient {
+	if sp.emailClient == nil {
+		sp.emailClient = email.NewClient(ctx, sp.ServiceConfig())
+	}
+	return sp.emailClient
+}
+
+func (sp *serviceProvider) KeysRepository(ctx context.Context) *repositoryKeys.KeysRepository {
+	if sp.keysRepository == nil {
+		sp.keysRepository = repositoryKeys.New()
+	}
+	return sp.keysRepository
+}
+
+func (sp *serviceProvider) UsersRepository(ctx context.Context) *repositoryUsers.UsersRepository {
+	if sp.usersRepository == nil {
+		sp.usersRepository = repositoryUsers.New(sp.PgClient(ctx))
+	}
+	return sp.usersRepository
+}
+
+func (sp *serviceProvider) PermissionsRepository(ctx context.Context) *repositoryPermissions.PermissionsRepository {
+	if sp.permissionsRepository == nil {
+		sp.permissionsRepository = repositoryPermissions.New(sp.PgClient(ctx))
+	}
+	return sp.permissionsRepository
+}
+
+func (sp *serviceProvider) CredentialsRepository(ctx context.Context) *repositoryCredentials.CredentialsRepository {
+	if sp.credentialsRepository == nil {
+		sp.credentialsRepository = repositoryCredentials.New(sp.PgClient(ctx))
+	}
+	return sp.credentialsRepository
+}
+
+func (sp *serviceProvider) SessionsRepository(ctx context.Context) *sessionRepository.SessionRepository {
+	if sp.sessionsRepository == nil {
+		sp.sessionsRepository = sessionRepository.New(sp.PgClient(ctx))
+	}
+	return sp.sessionsRepository
+}
+
+func (sp *serviceProvider) VerificationRepository(ctx context.Context) *repositoryVerification.VerificationRepository {
+	if sp.verificationRepository == nil {
+		sp.verificationRepository = repositoryVerification.New(sp.PgClient(ctx))
+	}
+	return sp.verificationRepository
+}
+
+func (sp *serviceProvider) ConfigRepository(ctx context.Context) *repositoryConfig.ConfigRepository {
+	if sp.configRepository == nil {
+		sp.configRepository = repositoryConfig.New(sp.PgClient(ctx))
+	}
+	return sp.configRepository
+}
+
+func (sp *serviceProvider) TxManager(ctx context.Context) *transaction.Manager {
+	if sp.txManager == nil {
+		sp.txManager = transaction.NewTxManager(sp.PgClient(ctx))
+	}
+	return sp.txManager
+}
+
+func (sp *serviceProvider) JwtManager(ctx context.Context) *jwtManager.JwtManager {
+	if sp.jwtManager == nil {
+		sp.jwtManager = jwtManager.New(sp.KeysRepository(ctx))
+	}
+	return sp.jwtManager
+}
+
+func (sp *serviceProvider) UseCaseConfig(ctx context.Context) *useCaseConfig.UseCaseConfig {
+	if sp.useCaseConfig == nil {
+		sp.useCaseConfig = useCaseConfig.New(sp.ServiceConfig(), sp.ConfigRepository(ctx))
+	}
+	return sp.useCaseConfig
+}
+
+func (sp *serviceProvider) initConfig(ctx context.Context) {
+	if err := sp.UseCaseConfig(ctx).InitFromDB(ctx); err != nil {
+		log.Fatal("failed to init service config")
+	}
+}
+
+func (sp *serviceProvider) UseCaseUsers(ctx context.Context) *useCaseUsers.UseCaseUsers {
+	if sp.useCaseUsers == nil {
+		sp.useCaseUsers = useCaseUsers.New(
+			sp.UsersRepository(ctx),
+			sp.PermissionsRepository(ctx),
+			sp.UseCaseVerification(ctx),
+			*sp.TxManager(ctx),
+			sp.UseCaseCredentials(ctx),
+		)
+	}
+	return sp.useCaseUsers
+}
+
+func (sp *serviceProvider) UseCaseCredentials(ctx context.Context) *useCaseCredentials.UseCaseCredentials {
+	if sp.useCaseCredentials == nil {
+		sp.useCaseCredentials = useCaseCredentials.New(
+			sp.ServiceConfig(),
+			sp.CredentialsRepository(ctx),
+		)
+	}
+	return sp.useCaseCredentials
+}
+
+func (sp *serviceProvider) UseCaseVerification(ctx context.Context) *useCaseVerification.UseCaseVerification {
+	if sp.useCaseVerification == nil {
+		sp.useCaseVerification = useCaseVerification.New(
+			sp.ServiceConfig(),
+			sp.VerificationRepository(ctx),
+			sp.PermissionsRepository(ctx),
+		)
+	}
+	return sp.useCaseVerification
+}
+
+func (sp *serviceProvider) UseCaseAuth(ctx context.Context) *useCaseAuth.UseCaseAuth {
+	if sp.useCaseAuth == nil {
+		sp.useCaseAuth = useCaseAuth.New(
+			sp.ServiceConfig(),
+			sp.SessionsRepository(ctx),
+			sp.PermissionsRepository(ctx),
+			sp.UseCaseUsers(ctx),
+			sp.UseCaseCredentials(ctx),
+			sp.JwtManager(ctx),
+		)
+	}
+	return sp.useCaseAuth
+}
+
+func (sp *serviceProvider) WorkerVerification(ctx context.Context) *workerVerification.Worker {
+	if sp.workerVerification == nil {
+		sp.workerVerification = workerVerification.New(
+			sp.ServiceConfig(),
+			sp.VerificationRepository(ctx),
+			sp.EmailClient(ctx),
+		)
+	}
+	return sp.workerVerification
+}
+
+func (sp *serviceProvider) AuthServerGrpc(ctx context.Context) *deliveryGrpc.AuthServerGrpc {
+	if sp.authServerGrpc == nil {
+		sp.initConfig(ctx)
+
+		sp.authServerGrpc = deliveryGrpc.NewAuthServerGRPC(
+			sp.ServiceConfig(),
+			sp.UseCaseUsers(ctx),
+			sp.UseCaseAuth(ctx),
+			sp.UseCaseVerification(ctx),
+		)
+	}
+	return sp.authServerGrpc
 }

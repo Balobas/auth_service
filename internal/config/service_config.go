@@ -11,11 +11,16 @@ import (
 )
 
 type ServiceConfig struct {
-	model *serviceConfigModel
+	model     *serviceConfigModel
+	configEnv configEnv
 }
 
 func NewServiceConfig() *ServiceConfig {
-	return &ServiceConfig{}
+	envCfg := configEnv{}
+	ParseEnv(&envCfg)
+	return &ServiceConfig{
+		configEnv: envCfg,
+	}
 }
 
 type serviceConfigModel struct {
@@ -77,6 +82,22 @@ func (c *ServiceConfig) HttpVerificationScheme() string {
 	c.model.mu.RLock()
 	defer c.model.mu.RUnlock()
 	return c.model.httpVerificationScheme
+}
+
+func (c *ServiceConfig) SenderEmail() string {
+	return c.configEnv.SenderEmail
+}
+
+func (c *ServiceConfig) SenderPassword() string {
+	return c.configEnv.SenderPassword
+}
+
+func (c *ServiceConfig) HostSMTP() string {
+	return c.configEnv.HostSMTP
+}
+
+func (c *ServiceConfig) PortSMTP() string {
+	return c.configEnv.PortSMTP
 }
 
 func (c *ServiceConfig) LoadFromMap(config map[string]json.RawMessage) error {

@@ -125,6 +125,12 @@ func (v *VerificationRow) ConditionsStatusEqual() sq.Eq {
 	}
 }
 
+func (v *VerificationRow) ConditionTokenEqual() sq.Eq {
+	return sq.Eq{
+		"token": v.Token,
+	}
+}
+
 type VerificationRows struct {
 	verifications []*VerificationRow
 }
