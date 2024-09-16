@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [ main, master, clean, DI_container]
+    branches: [ main, master, clean, DI_container, v1]
 
 env:
   REGISTRY: "cr.selcloud.ru/balobas"
