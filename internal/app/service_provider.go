@@ -5,12 +5,12 @@ import (
 	"log"
 
 	"github.com/balobas/auth_service/internal/client"
-	"github.com/balobas/auth_service/internal/client/email"
 	"github.com/balobas/auth_service/internal/client/pg"
 	"github.com/balobas/auth_service/internal/config"
 	deliveryGrpc "github.com/balobas/auth_service/internal/delivery/grpc"
 	jwtManager "github.com/balobas/auth_service/internal/manager/jwt"
 	"github.com/balobas/auth_service/internal/manager/transaction"
+	emailMock "github.com/balobas/auth_service/internal/mocks/email"
 	repositoryKeys "github.com/balobas/auth_service/internal/repository/keys"
 	repositoryConfig "github.com/balobas/auth_service/internal/repository/postgres/config"
 	repositoryCredentials "github.com/balobas/auth_service/internal/repository/postgres/credentials"
@@ -33,7 +33,7 @@ type serviceProvider struct {
 	serviceConfig *config.ServiceConfig
 
 	pgClient    client.ClientDB
-	emailClient *email.SmtpClient
+	emailClient EmailClient
 
 	keysRepository         *repositoryKeys.KeysRepository
 	usersRepository        *repositoryUsers.UsersRepository
@@ -101,9 +101,10 @@ func (sp *serviceProvider) PgClient(ctx context.Context) client.ClientDB {
 	return sp.pgClient
 }
 
-func (sp *serviceProvider) EmailClient(ctx context.Context) *email.SmtpClient {
+func (sp *serviceProvider) EmailClient(ctx context.Context) EmailClient {
 	if sp.emailClient == nil {
-		sp.emailClient = email.NewClient(ctx, sp.ServiceConfig())
+		// sp.emailClient = email.NewClient(ctx, sp.ServiceConfig())
+		sp.emailClient = emailMock.NewClient(ctx, sp.ServiceConfig())
 	}
 	return sp.emailClient
 }
@@ -255,4 +256,8 @@ func (sp *serviceProvider) AuthServerGrpc(ctx context.Context) *deliveryGrpc.Aut
 		)
 	}
 	return sp.authServerGrpc
+}
+
+type EmailClient interface {
+	SendEmail(receiverEmail string, body []byte) error
 }

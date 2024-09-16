@@ -8,7 +8,7 @@ RUN go build -o ./bin/auth_service cmd/main.go
 FROM alpine:latest
 
 WORKDIR /root/
-COPY --from=builder /github.com/balobasta/auth_service_bln/src/bin/auth_service .
-COPY --from=builder /github.com/balobasta/auth_service_bln/src/.env .
+COPY --from=builder /github.com/balobasta/auth_service/src/bin/auth_service .
+COPY --from=builder /github.com/balobasta/auth_service/src/.env .
 
 ENTRYPOINT ["./auth_service", "-config-path=.env"]
