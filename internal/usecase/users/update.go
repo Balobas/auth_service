@@ -47,7 +47,7 @@ func (uc *UseCaseUsers) UpdateUser(ctx context.Context, user entity.User, passwo
 				return err
 			}
 
-			if err := uc.ucVerification.CreateVerification(ctx, oldUser.Uid); err != nil {
+			if err := uc.ucVerification.CreateVerification(ctx, oldUser.Uid, user.Email); err != nil {
 				return err
 			}
 		}

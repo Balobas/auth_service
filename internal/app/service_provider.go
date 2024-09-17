@@ -180,6 +180,7 @@ func (sp *serviceProvider) UseCaseConfig(ctx context.Context) *useCaseConfig.Use
 }
 
 func (sp *serviceProvider) initConfig(ctx context.Context) {
+	
 	if err := sp.UseCaseConfig(ctx).InitFromDB(ctx); err != nil {
 		log.Fatal("failed to init service config")
 	}

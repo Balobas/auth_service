@@ -69,7 +69,7 @@ func (p *UserPermissionsRow) Table() string {
 }
 
 func (p *UserPermissionsRow) Scan(row pgx.Row) error {
-	return row.Scan(&p.UserUid, &p.Permissions)
+	return row.Scan(&p.UserUid, pq.Array(&p.Permissions))
 }
 
 func (p *UserPermissionsRow) ColumnsForUpdate() []string {

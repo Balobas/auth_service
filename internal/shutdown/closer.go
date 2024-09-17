@@ -52,6 +52,7 @@ func CloseAll(ctx context.Context) {
 			log.Printf("shutdown successfuly finished")
 		case <-ctx.Done():
 			log.Printf("failed to finish shutdown: %v", ctx.Err())
+			<-done
 			return
 		}
 	})

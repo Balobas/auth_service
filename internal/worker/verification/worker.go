@@ -30,12 +30,13 @@ func New(
 }
 
 func (w *Worker) Run(ctx context.Context) {
+	log.Printf("start verification worker\n")
 	timer := time.NewTimer(w.cfg.SendVerificationInterval())
 	for {
 		select {
 		case <-ctx.Done():
 			timer.Stop()
-			log.Printf("ctx done %v\n", ctx.Err())
+			log.Printf("stop verification worker. ctx done %v\n", ctx.Err())
 			return
 		case <-timer.C:
 

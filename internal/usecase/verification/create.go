@@ -11,10 +11,11 @@ import (
 	uuid "github.com/satori/go.uuid"
 )
 
-func (uc *UseCaseVerification) CreateVerification(ctx context.Context, userUid uuid.UUID) error {
+func (uc *UseCaseVerification) CreateVerification(ctx context.Context, userUid uuid.UUID, email string) error {
 	verification := entity.Verification{
 		UserUid:   userUid,
 		Token:     randomToken(uc.cfg.VerificationTokenLen()),
+		Email:     email,
 		Status:    entity.VerificationStatusCreated,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),

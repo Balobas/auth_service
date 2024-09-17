@@ -51,7 +51,7 @@ func (ur *UserRow) FromEntity(user entity.User) *UserRow {
 		}
 	} else {
 		ur.CreatedAt = pgtype.Timestamp{
-			Time:   user.CreatedAt,
+			Time:   user.CreatedAt.UTC(),
 			Status: pgtype.Present,
 		}
 	}
@@ -62,7 +62,7 @@ func (ur *UserRow) FromEntity(user entity.User) *UserRow {
 		}
 	} else {
 		ur.UpdatedAt = pgtype.Timestamp{
-			Time:   user.UpdatedAt,
+			Time:   user.UpdatedAt.UTC(),
 			Status: pgtype.Present,
 		}
 	}

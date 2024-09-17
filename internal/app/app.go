@@ -83,6 +83,7 @@ func (a *App) initGrpcServer(ctx context.Context) error {
 	a.grpcServer = grpc.NewServer(grpc.Creds(insecure.NewCredentials()))
 	reflection.Register(a.grpcServer)
 	auth_v1.RegisterAuthServer(a.grpcServer, a.serviceProvider.AuthServerGrpc(ctx))
+	
 	return nil
 }
 
@@ -94,24 +95,26 @@ func (a *App) runGrpcServer(ctx context.Context) {
 		log.Fatalf("failed to listen tcp: %v", err)
 	}
 
-	done := make(chan struct{}, 1)
 	go func() {
-		err := a.grpcServer.Serve(lis)
-		if err != nil {
-			log.Default().Printf("grpc server cancelled with error: %v\n", err)
-		} else {
-			log.Default().Println("grpc server cancelled without errors")
-		}
-		done <- struct{}{}
-	}()
+		done := make(chan struct{}, 1)
+		go func() {
+			err := a.grpcServer.Serve(lis)
+			if err != nil {
+				log.Default().Printf("grpc server cancelled with error: %v\n", err)
+			} else {
+				log.Default().Println("grpc server cancelled without errors")
+			}
+			done <- struct{}{}
+		}()
 
-	select {
-	case <-ctx.Done():
-		log.Printf("grpc server cancelled, ctx.Done, error: %v", ctx.Err())
-		return
-	case <-done:
-		log.Printf("grpc server cancelled")
-	}
+		select {
+		case <-ctx.Done():
+			log.Printf("grpc server cancelled, ctx.Done, error: %v", ctx.Err())
+			return
+		case <-done:
+			log.Printf("grpc server cancelled")
+		}
+	}()
 }
 
 func (a *App) runVerificationWorker(ctx context.Context) {

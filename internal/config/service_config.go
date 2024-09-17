@@ -11,7 +11,7 @@ import (
 )
 
 type ServiceConfig struct {
-	model     *serviceConfigModel
+	model     serviceConfigModel
 	configEnv configEnv
 }
 
@@ -19,6 +19,9 @@ func NewServiceConfig() *ServiceConfig {
 	envCfg := configEnv{}
 	ParseEnv(&envCfg)
 	return &ServiceConfig{
+		model: serviceConfigModel{
+			mu: &sync.RWMutex{},
+		},
 		configEnv: envCfg,
 	}
 }
@@ -26,62 +29,62 @@ func NewServiceConfig() *ServiceConfig {
 type serviceConfigModel struct {
 	mu *sync.RWMutex
 
-	minPasswordLen              int           `setting_name:"min_password_len" default:"6"`
-	accessJwtTTL                time.Duration `setting_name:"access_jwt_ttl" default:"1h"`
-	refreshJwtTTL               time.Duration `setting_name:"refresh_jwt_ttl" default:"24h"`
-	verificationTokenLen        int64         `setting_name:"verification_token_len" default:"16"`
-	sendVerificationInterval    time.Duration `setting_name:"send_verification_interval" default:"3m"`
-	verificationWorkerBatchSize uint64        `setting_name:"verification_worker_batch_size" default:"10"`
-	emailVerificationTemplate   string        `setting_name:"email_verification_template" default:"{{Подтвердите вашу почту перейдя по ссылке .Scheme/.Token }}"`
-	httpVerificationScheme      string        `setting_name:"http_verification_scheme"`
+	MinPasswordLen              int      `setting_name:"min_password_len" default:"6"`
+	AccessJwtTTL                Duration `setting_name:"access_jwt_ttl" default:"\"1h\""`
+	RefreshJwtTTL               Duration `setting_name:"refresh_jwt_ttl" default:"\"24h\""`
+	VerificationTokenLen        int64    `setting_name:"verification_token_len" default:"16"`
+	SendVerificationInterval    Duration `setting_name:"send_verification_interval" default:"\"3m\""`
+	VerificationWorkerBatchSize uint64   `setting_name:"verification_worker_batch_size" default:"10"`
+	EmailVerificationTemplate   string   `setting_name:"email_verification_template" default:"\"{{Подтвердите вашу почту перейдя по ссылке .Scheme/.Token }}\""`
+	HttpVerificationScheme      string   `setting_name:"http_verification_scheme"`
 }
 
 func (c *ServiceConfig) MinPasswordLen() int {
 	c.model.mu.RLock()
 	defer c.model.mu.RUnlock()
-	return c.model.minPasswordLen
+	return c.model.MinPasswordLen
 }
 
 func (c *ServiceConfig) AccessJwtTTL() time.Duration {
 	c.model.mu.RLock()
 	defer c.model.mu.RUnlock()
-	return c.model.accessJwtTTL
+	return c.model.AccessJwtTTL.Duration
 }
 
 func (c *ServiceConfig) RefreshJwtTTL() time.Duration {
 	c.model.mu.RLock()
 	defer c.model.mu.RUnlock()
-	return c.model.refreshJwtTTL
+	return c.model.RefreshJwtTTL.Duration
 }
 
 func (c *ServiceConfig) VerificationTokenLen() int64 {
 	c.model.mu.RLock()
 	defer c.model.mu.RUnlock()
-	return c.model.verificationTokenLen
+	return c.model.VerificationTokenLen
 }
 
 func (c *ServiceConfig) SendVerificationInterval() time.Duration {
 	c.model.mu.RLock()
 	defer c.model.mu.RUnlock()
-	return c.model.sendVerificationInterval
+	return c.model.SendVerificationInterval.Duration
 }
 
 func (c *ServiceConfig) VerificationWorkerBatchSize() uint64 {
 	c.model.mu.RLock()
 	defer c.model.mu.RUnlock()
-	return c.model.verificationWorkerBatchSize
+	return c.model.VerificationWorkerBatchSize
 }
 
 func (c *ServiceConfig) EmailVerificationTemplate() string {
 	c.model.mu.RLock()
 	defer c.model.mu.RUnlock()
-	return c.model.emailVerificationTemplate
+	return c.model.EmailVerificationTemplate
 }
 
 func (c *ServiceConfig) HttpVerificationScheme() string {
 	c.model.mu.RLock()
 	defer c.model.mu.RUnlock()
-	return c.model.httpVerificationScheme
+	return c.model.HttpVerificationScheme
 }
 
 func (c *ServiceConfig) SenderEmail() string {
@@ -108,7 +111,6 @@ func (c *ServiceConfig) LoadFromMap(config map[string]json.RawMessage) error {
 	crv := reflect.ValueOf(&c.model).Elem()
 
 	for idx := 0; idx < crt.NumField(); idx++ {
-
 		crtf := crt.Field(idx)
 		nameTag := crtf.Tag.Get("setting_name")
 		tagDefault, hasTagDefault := crtf.Tag.Lookup("default")
@@ -131,8 +133,9 @@ func (c *ServiceConfig) LoadFromMap(config map[string]json.RawMessage) error {
 
 		space := reflect.New(crvf.Type())
 		intrfc := space.Interface()
+
 		if err := json.Unmarshal(value, &intrfc); err != nil {
-			log.Printf("failed to unmarshal value %s\n", nameTag)
+			log.Printf("failed to unmarshal value %s error: %v\n", nameTag, err)
 			continue
 		}
 		crvf.Set(space.Elem())

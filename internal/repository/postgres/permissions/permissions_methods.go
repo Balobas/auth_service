@@ -23,7 +23,9 @@ func (r *PermissionsRepository) GetUserPermissions(ctx context.Context, userUid 
 	if err := r.GetOne(ctx, permissionsRow, permissionsRow.ConditionUidEqual()); err != nil {
 		return nil, errors.Wrapf(err, "failed to get user %s permissions", userUid)
 	}
-	return pgEntity.NewUserRow().ToEntity().Permissions, nil
+	usr := &entity.User{}
+	permissionsRow.ToEntity(usr)
+	return usr.Permissions, nil
 }
 
 func (r *PermissionsRepository) UpdateUserPermissions(ctx context.Context, userUid uuid.UUID, perms []entity.UserPermission) error {

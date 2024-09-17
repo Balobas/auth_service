@@ -3,3 +3,4 @@ docker-compose.yaml
 local.env
 local_migration.sh
 local.Dockerfile
+Makefile

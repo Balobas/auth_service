@@ -21,7 +21,7 @@ type PermissionsRepository interface {
 }
 
 type UcVerification interface {
-	CreateVerification(ctx context.Context, userUid uuid.UUID) error
+	CreateVerification(ctx context.Context, userUid uuid.UUID, email string) error
 }
 
 type UcCredentials interface {

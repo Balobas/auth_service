@@ -42,7 +42,7 @@ func (s *SessionRow) FromEntity(session entity.Session) *SessionRow {
 		}
 	} else {
 		s.CreatedAt = pgtype.Timestamp{
-			Time:   session.CreatedAt,
+			Time:   session.CreatedAt.UTC(),
 			Status: pgtype.Present,
 		}
 	}
@@ -52,7 +52,7 @@ func (s *SessionRow) FromEntity(session entity.Session) *SessionRow {
 		}
 	} else {
 		s.UpdatedAt = pgtype.Timestamp{
-			Time:   session.UpdatedAt,
+			Time:   session.UpdatedAt.UTC(),
 			Status: pgtype.Present,
 		}
 	}

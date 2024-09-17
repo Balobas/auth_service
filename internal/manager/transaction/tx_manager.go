@@ -8,12 +8,14 @@ import (
 	"github.com/pkg/errors"
 )
 
-type Manager struct{
+type Manager struct {
 	pgClient client.ClientDB
 }
 
 func NewTxManager(pgClient client.ClientDB) *Manager {
-	return &Manager{}
+	return &Manager{
+		pgClient: pgClient,
+	}
 }
 
 type Tx struct {

@@ -15,6 +15,7 @@ var verificationTableColumns = []string{
 	"token",
 	"status",
 	"created_at",
+	"updated_at",
 }
 
 type VerificationRow struct {
@@ -44,7 +45,7 @@ func (v *VerificationRow) FromEntity(verification entity.Verification) *Verifica
 		}
 	} else {
 		v.CreatedAt = pgtype.Timestamp{
-			Time:   verification.CreatedAt,
+			Time:   verification.CreatedAt.UTC(),
 			Status: pgtype.Present,
 		}
 	}
@@ -54,7 +55,7 @@ func (v *VerificationRow) FromEntity(verification entity.Verification) *Verifica
 		}
 	} else {
 		v.UpdatedAt = pgtype.Timestamp{
-			Time:   verification.UpdatedAt,
+			Time:   verification.UpdatedAt.UTC(),
 			Status: pgtype.Present,
 		}
 	}

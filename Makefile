@@ -43,9 +43,9 @@ copy-to-server:
 	scp service_linux root@45.94.123.176:
 
 docker-build-and-push:
-	docker buildx build --no-cache --platform linux/amd64 -t cr.selcloud.ru/balobas/test-server:v0.0.1 .
-	docker login -u token -p CRgAAAAALQGqDv-AQ8pfkvBmqWUIl79J4X6UDkBq cr.selcloud.ru/balobas
-	docker push cr.selcloud.ru/balobas/test-server:v0.0.1
+	docker buildx build --no-cache --platform linux/amd64 -t cr.selcloud.ru/balobas/auth_service:v0.0.99 .
+	docker login -u token -p CRgAAAAAqee55tigoaTs0lTOU2LAqGaQ0oGXa30D cr.selcloud.ru/balobas
+	docker push cr.selcloud.ru/balobas/auth_service:v0.0.99
 
 
 LOCAL_MIGRATION_DIR=$(MIGRATION_DIR)
