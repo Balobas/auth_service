@@ -20,7 +20,7 @@ create type user_permission as enum('not_verified', 'base');
 
 create table user_permissions (
     user_uid varchar primary key,
-    permissions []user_permission,
+    permissions user_permission[],
     foreign key(user_uid) references users(uid)
 );
 
