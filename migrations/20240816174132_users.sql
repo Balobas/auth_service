@@ -11,7 +11,7 @@ create table users (
 );
 
 create table users_credentials (
-    user_uid not null primary key,
+    user_uid varchar not null primary key,
     h_password varchar,
     foreign key(user_uid) references users(uid)
 );
