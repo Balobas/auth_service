@@ -80,10 +80,13 @@ func (a *App) initServiceProvider(ctx context.Context) error {
 }
 
 func (a *App) initGrpcServer(ctx context.Context) error {
-	a.grpcServer = grpc.NewServer(grpc.Creds(insecure.NewCredentials()))
+	a.grpcServer = grpc.NewServer(
+		grpc.Creds(insecure.NewCredentials()),
+		grpc.UnaryInterceptor(a.serviceProvider.AuthServerGrpc(ctx).UnaryAuthInterceptor()),
+	)
 	reflection.Register(a.grpcServer)
 	auth_v1.RegisterAuthServer(a.grpcServer, a.serviceProvider.AuthServerGrpc(ctx))
-	
+
 	return nil
 }
 

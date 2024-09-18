@@ -2,6 +2,7 @@ package jwtManager
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -40,12 +41,12 @@ func (p *JwtManager) NewToken(info entity.TokenInfo, ttl time.Duration) (string,
 	token := jwt.New(jwt.SigningMethodHS256)
 	claims := token.Claims.(jwt.MapClaims)
 
-	claims[tokenFieldUserUid] = info.UserUid
+	claims[tokenFieldUserUid] = info.UserUid.String()
 	claims[tokenFieldEmail] = info.Email
 	claims[tokenFieldPermissions] = strings.Join(info.Permissions, permissionsSeparator)
 	claims[tokenFieldRole] = info.Role
-	claims[tokenFieldSessionUid] = info.SessionUid
-	claims[tokenFieldExpiredAt] = ttl
+	claims[tokenFieldSessionUid] = info.SessionUid.String()
+	claims[tokenFieldExpiredAt] = strconv.FormatInt(int64(ttl), 10)
 
 	pk, err := p.keysProvider.GetPrivateKey()
 	if err != nil {
@@ -78,7 +79,7 @@ func (p *JwtManager) ParseToken(tokenStr string) (entity.TokenInfo, error) {
 	}
 
 	if !tk.Valid {
-		return entity.TokenInfo{}, errors.New("invalid token")
+		return entity.TokenInfo{}, errors.New("token is invalid")
 	}
 
 	claims, ok := tk.Claims.(jwt.MapClaims)
@@ -92,10 +93,8 @@ func (p *JwtManager) ParseToken(tokenStr string) (entity.TokenInfo, error) {
 	if !ok {
 		return entity.TokenInfo{}, errors.New("empty uid in token")
 	}
-	tokenInfo.UserUid, ok = userUid.(uuid.UUID)
-	if !ok {
-		return entity.TokenInfo{}, errors.New("invalid token")
-	}
+
+	tokenInfo.UserUid = uuid.FromStringOrNil(userUid.(string))
 
 	userEmail, ok := claims[tokenFieldEmail]
 	if !ok {
@@ -103,7 +102,7 @@ func (p *JwtManager) ParseToken(tokenStr string) (entity.TokenInfo, error) {
 	}
 	tokenInfo.Email, ok = userEmail.(string)
 	if !ok {
-		return entity.TokenInfo{}, errors.New("invalid token")
+		return entity.TokenInfo{}, errors.New("invalid token user email")
 	}
 
 	perms, ok := claims[tokenFieldPermissions]
@@ -130,19 +129,23 @@ func (p *JwtManager) ParseToken(tokenStr string) (entity.TokenInfo, error) {
 		return entity.TokenInfo{}, errors.New("invalid session uid")
 	}
 
-	tokenInfo.SessionUid, ok = sessionUid.(uuid.UUID)
-	if !ok {
-		return entity.TokenInfo{}, errors.New("invalid session uid")
-	}
+	tokenInfo.SessionUid = uuid.FromStringOrNil(sessionUid.(string))
 
 	expiredAt, ok := claims[tokenFieldExpiredAt]
 	if !ok {
 		return entity.TokenInfo{}, errors.New("empty expired_at in token")
 	}
-	tokenInfo.ExpiredAt, ok = expiredAt.(int64)
+
+	exp, ok := expiredAt.(string)
 	if !ok {
-		return entity.TokenInfo{}, errors.New("invalid expired_at")
+		return entity.TokenInfo{}, errors.New("invalid expired_at to string")
 	}
+	expInt, err := strconv.ParseInt(exp, 10, 0)
+	if err != nil {
+		return entity.TokenInfo{}, errors.Errorf("invalid expired_at: %v", err)
+	}
+
+	tokenInfo.ExpiredAt = int64(expInt)
 
 	return tokenInfo, nil
 }

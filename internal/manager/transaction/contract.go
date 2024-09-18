@@ -8,4 +8,5 @@ import (
 
 type Transactor interface {
 	BeginTxWithContext(ctx context.Context) (context.Context, contract.Transaction, error)
+	HasTxInCtx(ctx context.Context) bool
 }

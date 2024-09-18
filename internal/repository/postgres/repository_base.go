@@ -2,6 +2,7 @@ package repositoryPostgres
 
 import (
 	"context"
+	"log"
 
 	"github.com/balobas/auth_service/internal/client"
 	"github.com/balobas/auth_service/internal/entity/contract"
@@ -23,6 +24,7 @@ func (r *BasePgRepository) DB() client.DB {
 }
 
 func (r *BasePgRepository) WithTx(ctx context.Context, f func(ctx context.Context) error) (err error) {
+	log.Printf("with tx")
 	if !r.DB().HasTxInCtx(ctx) {
 		var (
 			tx         contract.Transaction
@@ -48,13 +50,17 @@ func (r *BasePgRepository) BeginTxWithContext(ctx context.Context) (context.Cont
 func HandleTxEnd(ctx context.Context, tx contract.Transaction, err error) error {
 	if err == nil {
 		if commitErr := tx.Commit(ctx); commitErr != nil {
+			log.Printf("with tx: failed to commit tx")
 			return errors.Wrap(commitErr, "failed to commit transaction")
 		}
+		log.Printf("with tx: successfully commit tx")
 		return nil
 	}
 
 	if rollbackErr := tx.Rollback(ctx); rollbackErr != nil {
+		log.Printf("with tx: failed to rollback tx")
 		return errors.Wrap(rollbackErr, "failed to rollback transaction")
 	}
+	log.Printf("with tx: successfully rollback tx")
 	return nil
 }

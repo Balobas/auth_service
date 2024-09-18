@@ -16,6 +16,7 @@ type Config interface {
 
 type UcUsers interface {
 	GetUserByEmail(ctx context.Context, email string) (entity.User, bool, error)
+	UpdateUser(ctx context.Context, user entity.User, password string) error
 }
 
 type UcCredentials interface {

@@ -1,5 +1,7 @@
 package useCaseAuth
 
+import "github.com/balobas/auth_service/internal/manager/transaction"
+
 type UseCaseAuth struct {
 	cfg Config
 
@@ -10,6 +12,7 @@ type UseCaseAuth struct {
 	ucCredentials UcCredentials
 
 	jwtManager JwtManager
+	txManager  *transaction.Manager
 }
 
 func New(
@@ -19,6 +22,7 @@ func New(
 	ucUsers UcUsers,
 	ucCreds UcCredentials,
 	jwtManager JwtManager,
+	txManager *transaction.Manager,
 ) *UseCaseAuth {
 	return &UseCaseAuth{
 		cfg:           cfg,
@@ -27,5 +31,6 @@ func New(
 		ucUsers:       ucUsers,
 		ucCredentials: ucCreds,
 		jwtManager:    jwtManager,
+		txManager:     txManager,
 	}
 }

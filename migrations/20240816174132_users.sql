@@ -56,7 +56,7 @@ insert into config(key, value) values
 ('verification_token_len', '16'),
 ('send_verification_interval', '"3m"'),
 ('verification_worker_batch_size', '10'),
-('email_verification_template', '"{{Подтвердите вашу почту перейдя по ссылке .Scheme\/.Token }}"'),
+('email_verification_template', '"Подтвердите вашу почту перейдя по ссылке {{.Scheme}}\/{{.Token }}"'),
 ('http_verification_scheme', 'null');
 
 -- +goose Down

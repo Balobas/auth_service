@@ -8,14 +8,14 @@ type UseCaseUsers struct {
 
 	ucVerification UcVerification
 	ucCredentials  UcCredentials
-	txManager      transaction.Manager
+	txManager      *transaction.Manager
 }
 
 func New(
 	usersRepo UsersRepository,
 	permsRepo PermissionsRepository,
 	ucVerification UcVerification,
-	txManager transaction.Manager,
+	txManager *transaction.Manager,
 	ucCreds UcCredentials,
 ) *UseCaseUsers {
 	return &UseCaseUsers{

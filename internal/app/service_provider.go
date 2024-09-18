@@ -180,7 +180,7 @@ func (sp *serviceProvider) UseCaseConfig(ctx context.Context) *useCaseConfig.Use
 }
 
 func (sp *serviceProvider) initConfig(ctx context.Context) {
-	
+
 	if err := sp.UseCaseConfig(ctx).InitFromDB(ctx); err != nil {
 		log.Fatal("failed to init service config")
 	}
@@ -192,7 +192,7 @@ func (sp *serviceProvider) UseCaseUsers(ctx context.Context) *useCaseUsers.UseCa
 			sp.UsersRepository(ctx),
 			sp.PermissionsRepository(ctx),
 			sp.UseCaseVerification(ctx),
-			*sp.TxManager(ctx),
+			sp.TxManager(ctx),
 			sp.UseCaseCredentials(ctx),
 		)
 	}
@@ -215,6 +215,7 @@ func (sp *serviceProvider) UseCaseVerification(ctx context.Context) *useCaseVeri
 			sp.ServiceConfig(),
 			sp.VerificationRepository(ctx),
 			sp.PermissionsRepository(ctx),
+			sp.TxManager(ctx),
 		)
 	}
 	return sp.useCaseVerification
@@ -229,6 +230,7 @@ func (sp *serviceProvider) UseCaseAuth(ctx context.Context) *useCaseAuth.UseCase
 			sp.UseCaseUsers(ctx),
 			sp.UseCaseCredentials(ctx),
 			sp.JwtManager(ctx),
+			sp.TxManager(ctx),
 		)
 	}
 	return sp.useCaseAuth

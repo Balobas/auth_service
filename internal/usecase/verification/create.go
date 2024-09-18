@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/rand"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/balobas/auth_service/internal/entity"
@@ -21,37 +22,32 @@ func (uc *UseCaseVerification) CreateVerification(ctx context.Context, userUid u
 		UpdatedAt: time.Now(),
 	}
 
-	if verification.Status == entity.VerificationStatusWaiting {
-		verification.Status = entity.VerificationStatusCreated
-		verification.UpdatedAt = time.Now()
+	tx := uc.txManager.NewPgTransaction()
+	if err := tx.Execute(ctx, func(ctx context.Context) error {
+		
+		oldVerification, isFound, err := uc.verificationRepository.GetUserVerification(ctx, userUid)
+		if err != nil {
+			return err
+		}
+		if oldVerification.Email == email {
+			log.Printf("verification for user with email %s already exists", email)
+			return nil
+		}
 
-		if err := uc.verificationRepository.UpdateVerification(ctx, verification); err != nil {
-			return errors.WithStack(err)
+		if isFound {
+			if err := uc.verificationRepository.DeleteVerification(ctx, userUid); err != nil {
+				return err
+			}
+		}
+		if err := uc.verificationRepository.CreateVerification(ctx, verification); err != nil {
+			return err
 		}
 		return nil
+	}); err != nil {
+		return errors.WithStack(err)
 	}
 
-	for {
-		ticker := time.NewTicker(30 * time.Millisecond)
-
-		select {
-		case <-ctx.Done():
-			return errors.Wrap(ctx.Err(), "timeout reached")
-		case <-ticker.C:
-			_, isFound, err := uc.verificationRepository.GetVerificationByToken(ctx, verification.Token)
-			if err != nil {
-				ticker.Stop()
-				return errors.WithStack(err)
-			}
-			if !isFound {
-				defer ticker.Stop()
-				if err := uc.verificationRepository.CreateVerification(ctx, verification); err != nil {
-					return errors.WithStack(err)
-				}
-				return nil
-			}
-		}
-	}
+	return nil
 }
 
 func randomToken(length int64) string {

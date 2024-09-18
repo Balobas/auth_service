@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/balobas/auth_service/internal/entity"
-	uuid "github.com/satori/go.uuid"
 )
 
 type Config interface {
@@ -17,7 +16,6 @@ type Config interface {
 
 type VerificationRepository interface {
 	UpdateVerification(ctx context.Context, verification entity.Verification) error
-	GetUserVerification(ctx context.Context, userUid uuid.UUID) (entity.Verification, error)
 	GetVerificationsInStatus(ctx context.Context, status entity.VerificationStatus, limit uint64) ([]entity.Verification, error)
 }
 

@@ -20,6 +20,7 @@ type UcAuth interface {
 	Logout(ctx context.Context, userUid uuid.UUID) error
 	Refresh(ctx context.Context, token string) (string, string, error)
 	VerifyAuth(ctx context.Context, token string) (entity.TokenInfo, error)
+	UpdateUserCreds(ctx context.Context, user entity.User, password string) (string, string, error)
 }
 
 type UcVerification interface {

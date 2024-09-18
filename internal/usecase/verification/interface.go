@@ -13,7 +13,7 @@ type Config interface {
 
 type VerificationRepository interface {
 	CreateVerification(ctx context.Context, verification entity.Verification) error
-	GetUserVerification(ctx context.Context, userUid uuid.UUID) (entity.Verification, error)
+	GetUserVerification(ctx context.Context, userUid uuid.UUID) (entity.Verification, bool, error)
 	GetVerificationByToken(ctx context.Context, token string) (entity.Verification, bool, error)
 	UpdateVerification(ctx context.Context, verification entity.Verification) error
 	DeleteVerification(ctx context.Context, userUid uuid.UUID) error

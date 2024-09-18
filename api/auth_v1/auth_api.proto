@@ -10,7 +10,7 @@ import "google/protobuf/empty.proto";
 
 service Auth {
     rpc Register(RegisterRequest) returns (RegisterResponse);
-    rpc UpdateUser(UpdateUserRequest) returns (google.protobuf.Empty); // required accessJwt in ctx
+    rpc UpdateUser(UpdateUserRequest) returns (JwtResponse); // required accessJwt in ctx
     rpc GetUser(GetUserRequest) returns (GetUserResponse); // required accessJwt in ctx
     rpc Delete(DeleteUserRequest) returns (google.protobuf.Empty); // required accessJwt in ctx
 

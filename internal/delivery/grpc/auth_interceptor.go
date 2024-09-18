@@ -3,28 +3,43 @@ package deliveryGrpc
 import (
 	"context"
 	"errors"
+	"log"
 
 	"github.com/balobas/auth_service/internal/entity"
 	uuid "github.com/satori/go.uuid"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
 )
 
 func (s *AuthServerGrpc) UnaryAuthInterceptor() grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
 
 		if _, allowWithoutAuth := withoutAuth[info.FullMethod]; allowWithoutAuth {
+			log.Printf("method %s allowed without auth", info.FullMethod)
 			return handler(ctx, req)
 		}
+		md, ok := metadata.FromIncomingContext(ctx)
+		if !ok {
+			log.Printf("empty metadata")
+			return nil, errors.New("token not provided")
+		}
+		accessJwtMd := md.Get("accessJwt")
+		if len(accessJwtMd) == 0 {
+			return nil, errors.New("empty token")
+		}
 
-		accessJwt, err := accessJwtFromContext(ctx)
-		if err != nil {
-			return nil, err
+		accessJwt := accessJwtMd[0]
+		if len(accessJwt) == 0 {
+			return nil, errors.New("invalid access jwt")
 		}
 
 		tokenInfo, err := s.ucAuth.VerifyAuth(ctx, accessJwt)
 		if err != nil {
+			log.Printf("failed to verify token: %v", err)
 			return nil, err
 		}
+
+		log.Printf("user %s successfully verified", tokenInfo.UserUid)
 
 		return handler(
 			contextWithUserInfo(ctx, tokenInfo),
@@ -42,19 +57,6 @@ var (
 		"/auth.Auth/Refresh":     {},
 	}
 )
-
-func accessJwtFromContext(ctx context.Context) (string, error) {
-	token, ok := (ctx.Value("accessJwt")).(string)
-	if !ok {
-		return "", errors.New("invalid access jwt")
-	}
-
-	if len(token) == 0 {
-		return "", errors.New("invalid access jwt")
-	}
-
-	return token, nil
-}
 
 type userCtxKey struct{}
 

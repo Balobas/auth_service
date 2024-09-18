@@ -24,7 +24,7 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type AuthClient interface {
 	Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*RegisterResponse, error)
-	UpdateUser(ctx context.Context, in *UpdateUserRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	UpdateUser(ctx context.Context, in *UpdateUserRequest, opts ...grpc.CallOption) (*JwtResponse, error)
 	GetUser(ctx context.Context, in *GetUserRequest, opts ...grpc.CallOption) (*GetUserResponse, error)
 	Delete(ctx context.Context, in *DeleteUserRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*JwtResponse, error)
@@ -51,8 +51,8 @@ func (c *authClient) Register(ctx context.Context, in *RegisterRequest, opts ...
 	return out, nil
 }
 
-func (c *authClient) UpdateUser(ctx context.Context, in *UpdateUserRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
-	out := new(emptypb.Empty)
+func (c *authClient) UpdateUser(ctx context.Context, in *UpdateUserRequest, opts ...grpc.CallOption) (*JwtResponse, error) {
+	out := new(JwtResponse)
 	err := c.cc.Invoke(ctx, "/auth.Auth/UpdateUser", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -128,7 +128,7 @@ func (c *authClient) VerifyEmail(ctx context.Context, in *VerifyEmailRequest, op
 // for forward compatibility
 type AuthServer interface {
 	Register(context.Context, *RegisterRequest) (*RegisterResponse, error)
-	UpdateUser(context.Context, *UpdateUserRequest) (*emptypb.Empty, error)
+	UpdateUser(context.Context, *UpdateUserRequest) (*JwtResponse, error)
 	GetUser(context.Context, *GetUserRequest) (*GetUserResponse, error)
 	Delete(context.Context, *DeleteUserRequest) (*emptypb.Empty, error)
 	Login(context.Context, *LoginRequest) (*JwtResponse, error)
@@ -146,7 +146,7 @@ type UnimplementedAuthServer struct {
 func (UnimplementedAuthServer) Register(context.Context, *RegisterRequest) (*RegisterResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Register not implemented")
 }
-func (UnimplementedAuthServer) UpdateUser(context.Context, *UpdateUserRequest) (*emptypb.Empty, error) {
+func (UnimplementedAuthServer) UpdateUser(context.Context, *UpdateUserRequest) (*JwtResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateUser not implemented")
 }
 func (UnimplementedAuthServer) GetUser(context.Context, *GetUserRequest) (*GetUserResponse, error) {

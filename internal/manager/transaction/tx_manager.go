@@ -2,6 +2,7 @@ package transaction
 
 import (
 	"context"
+	"log"
 
 	"github.com/balobas/auth_service/internal/client"
 	"github.com/balobas/auth_service/internal/entity/contract"
@@ -31,16 +32,19 @@ func (m *Manager) NewTransaction(transactors ...Transactor) Tx {
 }
 
 func (tx Tx) Execute(ctx context.Context, f func(ctx context.Context) error) (err error) {
+	log.Printf("txManager: execute tx call")
 	internalTransactions := make([]contract.Transaction, 0, len(tx.transactors))
 
+	ctxTx := ctx
 	for _, tr := range tx.transactors {
-		ctxTx, internalTx, err := tr.BeginTxWithContext(ctx)
+		var internalTx contract.Transaction
+
+		ctxTx, internalTx, err = tr.BeginTxWithContext(ctx)
 		if err != nil {
 			return errors.WithStack(errors.Wrap(err, "failed to begin internal tx"))
 		}
 
 		internalTransactions = append(internalTransactions, internalTx)
-		ctx = ctxTx
 	}
 
 	defer func() {
@@ -49,26 +53,35 @@ func (tx Tx) Execute(ctx context.Context, f func(ctx context.Context) error) (er
 		}()
 
 		if r := recover(); r != nil {
+			log.Printf("panic recovered")
 			err = errors.Wrapf(err, "panic recovered: %v", r)
 		}
 
 		if err != nil {
-			for _, tx := range internalTransactions {
-				if rollbackErr := tx.Rollback(ctx); rollbackErr != nil {
-					err = errors.Wrapf(err, "rollback error: %v", rollbackErr)
+			for idx, txn := range internalTransactions {
+				if !tx.transactors[idx].HasTxInCtx(ctx) {
+
+					if rollbackErr := txn.Rollback(ctxTx); rollbackErr != nil {
+						err = errors.Wrapf(err, "rollback error: %v", rollbackErr)
+					}
+
+					log.Printf("rollback tx")
 				}
 			}
 			return
 		}
 
-		for _, tx := range internalTransactions {
-			if commitErr := tx.Commit(ctx); commitErr != nil {
-				err = errors.Wrapf(err, "commit error: %v", commitErr)
+		for idx, txn := range internalTransactions {
+			if !tx.transactors[idx].HasTxInCtx(ctx) {
+				if commitErr := txn.Commit(ctxTx); commitErr != nil {
+					err = errors.Wrapf(err, "commit error: %v", commitErr)
+				}
+				log.Printf("commit tx")
 			}
 		}
 	}()
 
-	if err := f(ctx); err != nil {
+	if err := f(ctxTx); err != nil {
 		return errors.WithStack(err)
 	}
 
