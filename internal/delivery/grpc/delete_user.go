@@ -10,7 +10,7 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
-func (s *AuthServerGrpc) Delete(ctx context.Context, req *auth_v1.DeleteUserRequest) (*emptypb.Empty, error) {
+func (s *AuthServerGrpc) DeleteUser(ctx context.Context, req *auth_v1.DeleteUserRequest) (*emptypb.Empty, error) {
 	userInfo := userInfoFromContext(ctx)
 
 	userUid := uuid.FromStringOrNil(req.GetUid())
