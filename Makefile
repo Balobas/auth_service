@@ -69,18 +69,21 @@ push-and-run-pg:
 	scp docker-compose.yaml root@45.94.123.176:postgres/
 	ssh root@45.94.123.176 "cd postgres;docker-compose up -d;exit"
 
-docker-down:
+down:
 	docker-compose down
-	docker image rm auth_service-migrator
+	docker image rm auth_service_migrator
 	docker volume rm auth_service_postgres_volume
 
-build-and-run:
+build:
 	make get-deps
 	make install-deps
 	make generate
 	go mod tidy
 	go mod vendor
 	docker-compose up -d
+
+restart-migrations:
+	docker-compose restart migrator
 
 run:
 	go run cmd/main.go
