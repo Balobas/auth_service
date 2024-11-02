@@ -69,3 +69,12 @@ push-and-run-pg:
 	scp docker-compose.yaml root@45.94.123.176:postgres/
 	ssh root@45.94.123.176 "cd postgres;docker-compose up -d;exit"
 
+build-and-run-local:
+	make get-deps
+	make install-deps
+	make generate
+	go mod tidy
+	go mod vendor
+	docker-compose up -d
+	make local-migration-up
+	go run cmd/main.go
