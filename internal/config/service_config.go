@@ -33,7 +33,7 @@ type serviceConfigModel struct {
 	AccessJwtTTL                Duration `setting_name:"access_jwt_ttl" default:"\"1h\""`
 	RefreshJwtTTL               Duration `setting_name:"refresh_jwt_ttl" default:"\"24h\""`
 	VerificationTokenLen        int64    `setting_name:"verification_token_len" default:"16"`
-	SendVerificationInterval    Duration `setting_name:"send_verification_interval" default:"\"3m\""`
+	SendVerificationInterval    Duration `setting_name:"send_verification_interval" default:"\"10s\""`
 	VerificationWorkerBatchSize uint64   `setting_name:"verification_worker_batch_size" default:"10"`
 	EmailVerificationTemplate   string   `setting_name:"email_verification_template" default:"\"{{Подтвердите вашу почту перейдя по ссылке .Scheme/.Token }}\""`
 	HttpVerificationScheme      string   `setting_name:"http_verification_scheme"`

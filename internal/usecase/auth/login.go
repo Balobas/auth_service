@@ -51,10 +51,12 @@ func (uc *UseCaseAuth) Login(ctx context.Context, params entity.LoginParams) (st
 		log.Printf("failed to get session %v", err)
 		return emptyTokensWithError(errors.WithStack(err))
 	}
-	if isFound {
-		log.Printf("user already authorized")
-		return emptyTokensWithError(errors.New("user already authorized"))
-	}
+
+	// Uncomment when ready
+	// if isFound {
+	// 	log.Printf("user already authorized")
+	// 	return emptyTokensWithError(errors.New("user already authorized"))
+	// }
 
 	session := entity.Session{
 		Uid:       uuid.NewV4(),

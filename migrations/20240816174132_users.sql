@@ -54,7 +54,7 @@ insert into config(key, value) values
 ('access_jwt_ttl', '"1h"'),
 ('refresh_jwt_ttl', '"24h"'),
 ('verification_token_len', '16'),
-('send_verification_interval', '"3m"'),
+('send_verification_interval', '"10s"'),
 ('verification_worker_batch_size', '10'),
 ('email_verification_template', '"Подтвердите вашу почту перейдя по ссылке {{.Scheme}}\/{{.Token }}"'),
 ('http_verification_scheme', 'null');

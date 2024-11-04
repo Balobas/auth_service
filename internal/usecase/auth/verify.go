@@ -12,7 +12,7 @@ import (
 )
 
 func (uc *UseCaseAuth) VerifyAuth(ctx context.Context, token string) (entity.TokenInfo, error) {
-	log.Printf("auth.VerifyAuth")
+	log.Printf("auth.VerifyAuth, token: %v", token)
 
 	tokenInfo, err := uc.jwtManager.ParseToken(token)
 	if err != nil {

@@ -71,7 +71,7 @@ push-and-run-pg:
 
 down:
 	docker-compose down
-	docker image rm auth_service_migrator
+	docker image rm auth_service-migrator
 	docker volume rm auth_service_postgres_volume
 
 build:

@@ -46,7 +46,7 @@ func (p *JwtManager) NewToken(info entity.TokenInfo, ttl time.Duration) (string,
 	claims[tokenFieldPermissions] = strings.Join(info.Permissions, permissionsSeparator)
 	claims[tokenFieldRole] = info.Role
 	claims[tokenFieldSessionUid] = info.SessionUid.String()
-	claims[tokenFieldExpiredAt] = strconv.FormatInt(int64(ttl), 10)
+	claims[tokenFieldExpiredAt] = ttl.Milliseconds()
 
 	pk, err := p.keysProvider.GetPrivateKey()
 	if err != nil {
@@ -63,17 +63,20 @@ func (p *JwtManager) NewToken(info entity.TokenInfo, ttl time.Duration) (string,
 
 func (p *JwtManager) ParseToken(tokenStr string) (entity.TokenInfo, error) {
 	tk, err := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
+
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
 
 		pk, err := p.keysProvider.GetPrivateKey()
+
 		if err != nil {
 			return nil, errors.WithStack(err)
 		}
 
 		return pk, nil
 	})
+
 	if err != nil {
 		return entity.TokenInfo{}, errors.Wrap(err, "cant parse jwt token")
 	}
