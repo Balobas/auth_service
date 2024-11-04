@@ -2,7 +2,6 @@ package jwtManager
 
 import (
 	"fmt"
-	"strconv"
 	"strings"
 	"time"
 
@@ -46,7 +45,7 @@ func (p *JwtManager) NewToken(info entity.TokenInfo, ttl time.Duration) (string,
 	claims[tokenFieldPermissions] = strings.Join(info.Permissions, permissionsSeparator)
 	claims[tokenFieldRole] = info.Role
 	claims[tokenFieldSessionUid] = info.SessionUid.String()
-	claims[tokenFieldExpiredAt] = ttl.Milliseconds()
+	claims[tokenFieldExpiredAt] = time.Now().Add(ttl).Unix()
 
 	pk, err := p.keysProvider.GetPrivateKey()
 	if err != nil {
@@ -134,21 +133,12 @@ func (p *JwtManager) ParseToken(tokenStr string) (entity.TokenInfo, error) {
 
 	tokenInfo.SessionUid = uuid.FromStringOrNil(sessionUid.(string))
 
-	expiredAt, ok := claims[tokenFieldExpiredAt]
+	expiredAt, ok := claims[tokenFieldExpiredAt].(float64)
 	if !ok {
 		return entity.TokenInfo{}, errors.New("empty expired_at in token")
 	}
 
-	exp, ok := expiredAt.(string)
-	if !ok {
-		return entity.TokenInfo{}, errors.New("invalid expired_at to string")
-	}
-	expInt, err := strconv.ParseInt(exp, 10, 0)
-	if err != nil {
-		return entity.TokenInfo{}, errors.Errorf("invalid expired_at: %v", err)
-	}
-
-	tokenInfo.ExpiredAt = int64(expInt)
+	tokenInfo.ExpiredAt = int64(expiredAt)
 
 	return tokenInfo, nil
 }

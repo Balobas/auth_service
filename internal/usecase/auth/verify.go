@@ -19,6 +19,7 @@ func (uc *UseCaseAuth) VerifyAuth(ctx context.Context, token string) (entity.Tok
 		log.Printf("verifyAuth: failed to parse token\n")
 		return entity.TokenInfo{}, errors.WithStack(err)
 	}
+
 	if tokenInfo.ExpiredAt <= time.Now().Unix() {
 		log.Printf("token expired")
 		return entity.TokenInfo{}, errors.New("token expired")
