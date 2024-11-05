@@ -52,7 +52,7 @@ func (uc *UseCaseAuth) Login(ctx context.Context, params entity.LoginParams) (st
 		return emptyTokensWithError(errors.WithStack(err))
 	}
 
-	// Uncomment when ready
+	// TODO: Return when many sessions are ready
 	// if isFound {
 	// 	log.Printf("user already authorized")
 	// 	return emptyTokensWithError(errors.New("user already authorized"))
