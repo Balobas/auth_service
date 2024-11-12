@@ -29,7 +29,7 @@ func (uc *UseCaseUsers) UpdateUser(ctx context.Context, user entity.User, passwo
 	needUpdatePassword := len(password) != 0 && uc.ucCredentials.Validate(ctx, user.Uid, password) != nil
 
 	if !needUpdateEmail && !needUpdatePassword {
-		return errors.New("nothing to update")
+		return nil
 	}
 
 	tx := uc.txManager.NewPgTransaction()
