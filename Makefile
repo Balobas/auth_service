@@ -86,4 +86,4 @@ restart-migrations:
 	docker-compose restart migrator
 
 run:
-	go run cmd/main.go
+	nodemon --watch './internal/**/*.go' --signal SIGTERM --exec 'go' run ./cmd/main.go
