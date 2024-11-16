@@ -14,6 +14,14 @@ func (uc *UseCaseUsers) UpdateUser(ctx context.Context, user entity.User, passwo
 		if err := validations.ValidateEmail(user.Email); err != nil {
 			return errors.WithStack(err)
 		}
+		
+		if _, isFound, err := uc.usersRepo.GetByEmail(ctx, user.Email); err == nil {
+			if isFound {
+				return errors.New("user with email already exists")
+			}
+		} else {
+			return errors.WithStack(err)
+		}
 	}
 
 	oldUser, isFound, err := uc.usersRepo.GetUserByUid(ctx, user.Uid)
