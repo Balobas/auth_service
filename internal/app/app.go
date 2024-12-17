@@ -4,9 +4,6 @@ import (
 	"context"
 	"log"
 	"net"
-	"os"
-	"os/signal"
-	"syscall"
 	"time"
 
 	"github.com/balobas/auth_service/internal/config"
@@ -30,24 +27,37 @@ func NewApp(configPath string) *App {
 }
 
 func (a *App) Run(ctx context.Context) error {
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-	defer stop()
+	done := make(chan struct{}, 2)
 
 	defer func() {
-		shutdownCtx, cancel := context.WithTimeout(ctx, 2*time.Minute)
+		if err := recover(); err != nil {
+			log.Printf("recovered panic in app: %v", err)
+		}
+
+		log.Printf("start shutdown")
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 		defer cancel()
 
 		shutdown.CloseAll(shutdownCtx)
+		close(done)
 	}()
+
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
 
 	if err := a.initDeps(ctx); err != nil {
 		return errors.Wrap(err, "failed to init app deps")
 	}
 
-	a.runGrpcServer(ctx)
+	a.runGrpcServer(ctx, done)
 	a.runVerificationWorker(ctx)
+	a.runMqPublisherWorker(ctx)
 
-	<-ctx.Done()
+	select {
+	case <-ctx.Done():
+	case <-done:
+		log.Printf("one of the critical components stopped")
+	}
 	return nil
 }
 
@@ -90,16 +100,23 @@ func (a *App) initGrpcServer(ctx context.Context) error {
 	return nil
 }
 
-func (a *App) runGrpcServer(ctx context.Context) {
+func (a *App) runGrpcServer(ctx context.Context, done chan<- struct{}) {
 	log.Printf("grpc server is running on %v\n", a.serviceProvider.GrpcConfig())
 
-	lis, err := net.Listen("tcp", a.serviceProvider.GrpcConfig().Address())
-	if err != nil {
-		log.Fatalf("failed to listen tcp: %v", err)
-	}
-
 	go func() {
-		done := make(chan struct{}, 1)
+		lis, err := net.Listen("tcp", a.serviceProvider.GrpcConfig().Address())
+		if err != nil {
+			log.Printf("failed to listen tcp: %v", err)
+			done <- struct{}{}
+			return
+		}
+
+		shutdown.Add(func(ctx context.Context) error {
+			a.grpcServer.Stop()
+			return nil
+		})
+
+		serverStopped := make(chan struct{})
 		go func() {
 			err := a.grpcServer.Serve(lis)
 			if err != nil {
@@ -107,19 +124,29 @@ func (a *App) runGrpcServer(ctx context.Context) {
 			} else {
 				log.Default().Println("grpc server cancelled without errors")
 			}
-			done <- struct{}{}
+			close(serverStopped)
 		}()
 
 		select {
 		case <-ctx.Done():
 			log.Printf("grpc server cancelled, ctx.Done, error: %v", ctx.Err())
 			return
-		case <-done:
+		case <-serverStopped:
 			log.Printf("grpc server cancelled")
+			done <- struct{}{}
 		}
 	}()
 }
 
 func (a *App) runVerificationWorker(ctx context.Context) {
 	go a.serviceProvider.WorkerVerification(ctx).Run(ctx)
+}
+
+func (a *App) runMqPublisherWorker(ctx context.Context) {
+	if !a.serviceProvider.ServiceConfig().EnableMqMessages() {
+		log.Printf("mq messages disabled. dont run mqPublisherWorker")
+		return
+	}
+
+	go a.serviceProvider.WorkerMqPublisher(ctx).Run(ctx)
 }

@@ -30,3 +30,7 @@ type UcCredentials interface {
 	Update(ctx context.Context, userUid uuid.UUID, password string) error
 	Create(ctx context.Context, userUid uuid.UUID, password string) error
 }
+
+type UcOutboxMessages interface {
+	CreateUserRegisteredMessage(ctx context.Context, user entity.User) error
+}

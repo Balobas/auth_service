@@ -5,15 +5,20 @@ import (
 	"log"
 
 	"github.com/balobas/auth_service/internal/client"
+	natsClient "github.com/balobas/auth_service/internal/client/nats"
 	"github.com/balobas/auth_service/internal/client/pg"
 	"github.com/balobas/auth_service/internal/config"
 	deliveryGrpc "github.com/balobas/auth_service/internal/delivery/grpc"
+	"github.com/balobas/auth_service/internal/entity"
 	jwtManager "github.com/balobas/auth_service/internal/manager/jwt"
 	"github.com/balobas/auth_service/internal/manager/transaction"
 	emailMock "github.com/balobas/auth_service/internal/mocks/email"
+	mqMock "github.com/balobas/auth_service/internal/mocks/mq"
+	outboxMessagesMockRepository "github.com/balobas/auth_service/internal/mocks/repository/outbox_messages"
 	repositoryKeys "github.com/balobas/auth_service/internal/repository/keys"
 	repositoryConfig "github.com/balobas/auth_service/internal/repository/postgres/config"
 	repositoryCredentials "github.com/balobas/auth_service/internal/repository/postgres/credentials"
+	outboxRepository "github.com/balobas/auth_service/internal/repository/postgres/outbox"
 	repositoryPermissions "github.com/balobas/auth_service/internal/repository/postgres/permissions"
 	sessionRepository "github.com/balobas/auth_service/internal/repository/postgres/session"
 	repositoryUsers "github.com/balobas/auth_service/internal/repository/postgres/users"
@@ -22,8 +27,10 @@ import (
 	useCaseAuth "github.com/balobas/auth_service/internal/usecase/auth"
 	useCaseConfig "github.com/balobas/auth_service/internal/usecase/config"
 	useCaseCredentials "github.com/balobas/auth_service/internal/usecase/credentials"
+	useCaseOutboxMessages "github.com/balobas/auth_service/internal/usecase/outbox_messages"
 	useCaseUsers "github.com/balobas/auth_service/internal/usecase/users"
 	useCaseVerification "github.com/balobas/auth_service/internal/usecase/verification"
+	workerPublisher "github.com/balobas/auth_service/internal/worker/publisher"
 	workerVerification "github.com/balobas/auth_service/internal/worker/verification"
 )
 
@@ -34,25 +41,29 @@ type serviceProvider struct {
 
 	pgClient    client.ClientDB
 	emailClient EmailClient
+	mqClient    client.MqClient
 
-	keysRepository         *repositoryKeys.KeysRepository
-	usersRepository        *repositoryUsers.UsersRepository
-	permissionsRepository  *repositoryPermissions.PermissionsRepository
-	credentialsRepository  *repositoryCredentials.CredentialsRepository
-	sessionsRepository     *sessionRepository.SessionRepository
-	verificationRepository *repositoryVerification.VerificationRepository
-	configRepository       *repositoryConfig.ConfigRepository
+	keysRepository           *repositoryKeys.KeysRepository
+	usersRepository          *repositoryUsers.UsersRepository
+	permissionsRepository    *repositoryPermissions.PermissionsRepository
+	credentialsRepository    *repositoryCredentials.CredentialsRepository
+	sessionsRepository       *sessionRepository.SessionRepository
+	verificationRepository   *repositoryVerification.VerificationRepository
+	configRepository         *repositoryConfig.ConfigRepository
+	outboxMessagesRepository OutboxMessagesRepository
 
 	txManager  *transaction.Manager
 	jwtManager *jwtManager.JwtManager
 
-	useCaseConfig       *useCaseConfig.UseCaseConfig
-	useCaseUsers        *useCaseUsers.UseCaseUsers
-	useCaseCredentials  *useCaseCredentials.UseCaseCredentials
-	useCaseVerification *useCaseVerification.UseCaseVerification
-	useCaseAuth         *useCaseAuth.UseCaseAuth
+	useCaseConfig         *useCaseConfig.UseCaseConfig
+	useCaseUsers          *useCaseUsers.UseCaseUsers
+	useCaseCredentials    *useCaseCredentials.UseCaseCredentials
+	useCaseVerification   *useCaseVerification.UseCaseVerification
+	useCaseAuth           *useCaseAuth.UseCaseAuth
+	useCaseOutboxMessages *useCaseOutboxMessages.UseCaseOutboxMessages
 
 	workerVerification *workerVerification.Worker
+	workerMqPublisher  *workerPublisher.Worker
 
 	authServerGrpc *deliveryGrpc.AuthServerGrpc
 }
@@ -72,7 +83,8 @@ func (sp *serviceProvider) GrpcConfig() *config.ConfigGRPC {
 	if sp.grpcConfig == nil {
 		cfg, err := config.NewConfigGRPC()
 		if err != nil {
-			log.Fatalf("failed to get grpc config: %v", err)
+			log.Printf("failed to get grpc config: %v", err)
+			panic("failed to get grpc config")
 		}
 
 		sp.grpcConfig = cfg
@@ -91,7 +103,8 @@ func (sp *serviceProvider) PgClient(ctx context.Context) client.ClientDB {
 	if sp.pgClient == nil {
 		client, err := pg.NewClient(ctx, sp.PgConfig().DSN())
 		if err != nil {
-			log.Fatalf("failed to create pgClient: %v", err)
+			log.Printf("failed to create pgClient: %v", err)
+			panic("failed to create pgClient")
 		}
 
 		shutdown.Add(client.Close)
@@ -107,6 +120,27 @@ func (sp *serviceProvider) EmailClient(ctx context.Context) EmailClient {
 		sp.emailClient = emailMock.NewClient(ctx, sp.ServiceConfig())
 	}
 	return sp.emailClient
+}
+
+func (sp *serviceProvider) MqClient(ctx context.Context) client.MqClient {
+	if sp.mqClient == nil {
+		cfg := sp.ServiceConfig()
+		if cfg.EnableMqMessages() {
+			client, err := natsClient.New(sp.ServiceConfig())
+			if err != nil {
+				log.Printf("failed to create nats client: %v", err)
+				panic("failed to create nats client")
+			}
+			shutdown.Add(client.Close)
+
+			sp.mqClient = client
+			return sp.mqClient
+		}
+
+		log.Printf("mq messages disabled")
+		sp.mqClient = mqMock.NewEmptyMqClientMock()
+	}
+	return sp.mqClient
 }
 
 func (sp *serviceProvider) KeysRepository(ctx context.Context) *repositoryKeys.KeysRepository {
@@ -158,6 +192,19 @@ func (sp *serviceProvider) ConfigRepository(ctx context.Context) *repositoryConf
 	return sp.configRepository
 }
 
+func (sp *serviceProvider) OutboxMessagesRepository(ctx context.Context) OutboxMessagesRepository {
+	if sp.outboxMessagesRepository == nil {
+		if sp.ServiceConfig().EnableMqMessages() {
+			sp.outboxMessagesRepository = outboxRepository.New(sp.PgClient(ctx))
+			return sp.outboxMessagesRepository
+		}
+
+		log.Printf("mq messages disabled. use empty mock outbox messages repository")
+		sp.outboxMessagesRepository = outboxMessagesMockRepository.New()
+	}
+	return sp.outboxMessagesRepository
+}
+
 func (sp *serviceProvider) TxManager(ctx context.Context) *transaction.Manager {
 	if sp.txManager == nil {
 		sp.txManager = transaction.NewTxManager(sp.PgClient(ctx))
@@ -182,7 +229,8 @@ func (sp *serviceProvider) UseCaseConfig(ctx context.Context) *useCaseConfig.Use
 func (sp *serviceProvider) initConfig(ctx context.Context) {
 
 	if err := sp.UseCaseConfig(ctx).InitFromDB(ctx); err != nil {
-		log.Fatal("failed to init service config", err)
+		log.Printf("failed to init service config: %v", err)
+		panic("failed to init service config")
 	}
 }
 
@@ -194,6 +242,7 @@ func (sp *serviceProvider) UseCaseUsers(ctx context.Context) *useCaseUsers.UseCa
 			sp.UseCaseVerification(ctx),
 			sp.TxManager(ctx),
 			sp.UseCaseCredentials(ctx),
+			sp.UseCaseOutboxMessages(ctx),
 		)
 	}
 	return sp.useCaseUsers
@@ -236,6 +285,16 @@ func (sp *serviceProvider) UseCaseAuth(ctx context.Context) *useCaseAuth.UseCase
 	return sp.useCaseAuth
 }
 
+func (sp *serviceProvider) UseCaseOutboxMessages(ctx context.Context) *useCaseOutboxMessages.UseCaseOutboxMessages {
+	if sp.useCaseOutboxMessages == nil {
+		sp.useCaseOutboxMessages = useCaseOutboxMessages.New(
+			sp.ServiceConfig(),
+			sp.OutboxMessagesRepository(ctx),
+		)
+	}
+	return sp.useCaseOutboxMessages
+}
+
 func (sp *serviceProvider) WorkerVerification(ctx context.Context) *workerVerification.Worker {
 	if sp.workerVerification == nil {
 		sp.workerVerification = workerVerification.New(
@@ -245,6 +304,17 @@ func (sp *serviceProvider) WorkerVerification(ctx context.Context) *workerVerifi
 		)
 	}
 	return sp.workerVerification
+}
+
+func (sp *serviceProvider) WorkerMqPublisher(ctx context.Context) *workerPublisher.Worker {
+	if sp.workerMqPublisher == nil {
+		sp.workerMqPublisher = workerPublisher.New(
+			sp.ServiceConfig(),
+			sp.OutboxMessagesRepository(ctx),
+			sp.MqClient(ctx),
+		)
+	}
+	return sp.workerMqPublisher
 }
 
 func (sp *serviceProvider) AuthServerGrpc(ctx context.Context) *deliveryGrpc.AuthServerGrpc {
@@ -263,4 +333,10 @@ func (sp *serviceProvider) AuthServerGrpc(ctx context.Context) *deliveryGrpc.Aut
 
 type EmailClient interface {
 	SendEmail(receiverEmail string, body []byte) error
+}
+
+type OutboxMessagesRepository interface {
+	CreateMessage(ctx context.Context, message entity.MqMessage) error
+	GetReadyMessagesForPublish(ctx context.Context, batchSize int64) ([]entity.MqMessage, error)
+	UpdateMessage(ctx context.Context, msg entity.MqMessage) error
 }

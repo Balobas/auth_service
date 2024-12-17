@@ -37,6 +37,9 @@ type serviceConfigModel struct {
 	VerificationWorkerBatchSize uint64   `setting_name:"verification_worker_batch_size" default:"10"`
 	EmailVerificationTemplate   string   `setting_name:"email_verification_template" default:"\"{{Подтвердите вашу почту перейдя по ссылке .Scheme/.Token }}\""`
 	HttpVerificationScheme      string   `setting_name:"http_verification_scheme"`
+
+	MqPublishMsgsInterval  time.Duration `setting_name:"mq_publish_messages_interval" default:"\"10s\""`
+	MqPublishMsgsBatchSize int64         `setting_name:"mq_publish_messages_batch_size" default:"10"`
 }
 
 func (c *ServiceConfig) MinPasswordLen() int {
@@ -101,6 +104,34 @@ func (c *ServiceConfig) HostSMTP() string {
 
 func (c *ServiceConfig) PortSMTP() string {
 	return c.configEnv.PortSMTP
+}
+
+func (c *ServiceConfig) EnableMqMessages() bool {
+	return c.configEnv.EnableMqMessages
+}
+
+func (c *ServiceConfig) NatsUrl() string {
+	return c.configEnv.NatsUrl
+}
+
+func (c *ServiceConfig) NatsClientName() string {
+	return c.configEnv.NatsClientName
+}
+
+func (c *ServiceConfig) UserRegisteredMessageSubject() string {
+	return c.configEnv.UserRegisteredMessageSubject
+}
+
+func (c *ServiceConfig) MqPublishMessagesInterval() time.Duration {
+	c.model.mu.RLock()
+	defer c.model.mu.RUnlock()
+	return c.model.MqPublishMsgsInterval
+}
+
+func (c *ServiceConfig) MqPublishMessagesBatchSize() int64 {
+	c.model.mu.RLock()
+	defer c.model.mu.RUnlock()
+	return c.model.MqPublishMsgsBatchSize
 }
 
 func (c *ServiceConfig) LoadFromMap(config map[string]json.RawMessage) error {
