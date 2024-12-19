@@ -1,12 +1,21 @@
 package config
 
-import "os"
+import (
+	"os"
+	"strconv"
+)
 
 type configEnv struct {
 	SenderEmail    string
 	SenderPassword string
 	HostSMTP       string
 	PortSMTP       string
+
+	EnableMqMessages bool
+	NatsUrl          string
+	NatsClientName   string
+
+	UserRegisteredMessageSubject string
 }
 
 func ParseEnv(cfg *configEnv) {
@@ -14,4 +23,9 @@ func ParseEnv(cfg *configEnv) {
 	cfg.SenderPassword = os.Getenv("SENDER_PASSWORD")
 	cfg.HostSMTP = os.Getenv("HOST_SMTP")
 	cfg.PortSMTP = os.Getenv("PORT_SMTP")
+
+	cfg.EnableMqMessages, _ = strconv.ParseBool(os.Getenv("ENABLE_MQ_MESSAGES"))
+	cfg.NatsUrl = os.Getenv("NATS_URL")
+	cfg.NatsClientName = os.Getenv("NATS_CLIENT_NAME")
+	cfg.UserRegisteredMessageSubject = os.Getenv("USER_REGISTERED_MESSAGE_SUBJECT")
 }

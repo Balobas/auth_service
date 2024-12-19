@@ -6,10 +6,11 @@ type UseCaseUsers struct {
 	usersRepo UsersRepository
 	permsRepo PermissionsRepository
 
-	ucVerification UcVerification
-	ucCredentials  UcCredentials
-	jwtManager     JwtManager
-	txManager      *transaction.Manager
+	ucVerification   UcVerification
+	ucCredentials    UcCredentials
+	ucOutboxMessages UcOutboxMessages
+	jwtManager       JwtManager
+	txManager        *transaction.Manager
 }
 
 func New(
@@ -19,13 +20,15 @@ func New(
 	txManager *transaction.Manager,
 	ucCreds UcCredentials,
 	jwtManager JwtManager,
+	ucOutboxMessages UcOutboxMessages,
 ) *UseCaseUsers {
 	return &UseCaseUsers{
-		usersRepo:      usersRepo,
-		permsRepo:      permsRepo,
-		ucVerification: ucVerification,
-		ucCredentials:  ucCreds,
-		txManager:      txManager,
-		jwtManager:     jwtManager,
+		usersRepo:        usersRepo,
+		permsRepo:        permsRepo,
+		ucVerification:   ucVerification,
+		ucCredentials:    ucCreds,
+		ucOutboxMessages: ucOutboxMessages,
+		txManager:        txManager,
+		jwtManager:       jwtManager,
 	}
 }
