@@ -30,3 +30,7 @@ type UcCredentials interface {
 	Update(ctx context.Context, userUid uuid.UUID, password string) error
 	Create(ctx context.Context, userUid uuid.UUID, password string) error
 }
+
+type JwtManager interface {
+	ParseToken(tokenStr string) (entity.TokenInfo, error)
+}

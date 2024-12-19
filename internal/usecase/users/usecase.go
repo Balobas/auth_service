@@ -8,6 +8,7 @@ type UseCaseUsers struct {
 
 	ucVerification UcVerification
 	ucCredentials  UcCredentials
+	jwtManager     JwtManager
 	txManager      *transaction.Manager
 }
 
@@ -17,6 +18,7 @@ func New(
 	ucVerification UcVerification,
 	txManager *transaction.Manager,
 	ucCreds UcCredentials,
+	jwtManager JwtManager,
 ) *UseCaseUsers {
 	return &UseCaseUsers{
 		usersRepo:      usersRepo,
@@ -24,5 +26,6 @@ func New(
 		ucVerification: ucVerification,
 		ucCredentials:  ucCreds,
 		txManager:      txManager,
+		jwtManager:     jwtManager,
 	}
 }

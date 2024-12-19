@@ -29,7 +29,6 @@ func (uc *UseCaseUsers) Register(ctx context.Context, user entity.User, password
 
 	user.Uid = uuid.NewV4()
 	user.Permissions = []entity.UserPermission{entity.UserPermissionNotVerified}
-	user.Role = entity.UserRoleUser
 	user.CreatedAt = time.Now()
 
 	tx := uc.txManager.NewPgTransaction()
