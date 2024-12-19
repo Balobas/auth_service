@@ -38,8 +38,8 @@ type serviceConfigModel struct {
 	EmailVerificationTemplate   string   `setting_name:"email_verification_template" default:"\"{{Подтвердите вашу почту перейдя по ссылке .Scheme/.Token }}\""`
 	HttpVerificationScheme      string   `setting_name:"http_verification_scheme"`
 
-	MqPublishMsgsInterval  time.Duration `setting_name:"mq_publish_messages_interval" default:"\"10s\""`
-	MqPublishMsgsBatchSize int64         `setting_name:"mq_publish_messages_batch_size" default:"10"`
+	MqPublishMsgsInterval  Duration `setting_name:"mq_publish_messages_interval" default:"\"1m\""`
+	MqPublishMsgsBatchSize int64    `setting_name:"mq_publish_messages_batch_size" default:"10"`
 }
 
 func (c *ServiceConfig) MinPasswordLen() int {
@@ -122,10 +122,14 @@ func (c *ServiceConfig) UserRegisteredMessageSubject() string {
 	return c.configEnv.UserRegisteredMessageSubject
 }
 
+func (c *ServiceConfig) UserDeletedMessageSubject() string {
+	return c.configEnv.UserDeletedMessageSubject
+}
+
 func (c *ServiceConfig) MqPublishMessagesInterval() time.Duration {
 	c.model.mu.RLock()
 	defer c.model.mu.RUnlock()
-	return c.model.MqPublishMsgsInterval
+	return c.model.MqPublishMsgsInterval.Duration
 }
 
 func (c *ServiceConfig) MqPublishMessagesBatchSize() int64 {

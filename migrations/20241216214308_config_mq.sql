@@ -2,7 +2,7 @@
 -- +goose StatementBegin
 
 insert into config(key, value) values
-('mq_publish_messages_interval', '"1m"'),
+('mq_publish_messages_interval', '"15s"'),
 ('mq_publish_messages_batch_size', '10');
 
 -- +goose StatementEnd

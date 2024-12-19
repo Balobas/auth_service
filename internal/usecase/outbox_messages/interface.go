@@ -8,6 +8,7 @@ import (
 
 type Config interface {
 	UserRegisteredMessageSubject() string
+	UserDeletedMessageSubject() string
 	EnableMqMessages() bool
 }
 

@@ -19,9 +19,28 @@ type NatsClient struct {
 }
 
 func New(cfg Config) (client.MqClient, error) {
-	conn, err := nats.Connect(cfg.NatsUrl(), nats.Name(cfg.NatsClientName()))
+	conn, err := nats.Connect(
+		cfg.NatsUrl(), nats.Name(cfg.NatsClientName()),
+		nats.ReconnectHandler(func(c *nats.Conn) {
+			log.Printf("nats has been recconected")
+		}),
+		nats.ErrorHandler(func(c *nats.Conn, s *nats.Subscription, err error) {
+			log.Printf("nats error handler: error occured: sub %s : %v", s.Subject, err)
+		}),
+		nats.DisconnectHandler(func(c *nats.Conn) {
+			log.Printf("nats disconnect")
+		}),
+		nats.ClosedHandler(func(c *nats.Conn) {
+			log.Printf("nats closed")
+		}),
+		nats.ConnectHandler(func(c *nats.Conn) {
+			log.Printf("nats successfully connected to %s", c.ConnectedAddr())
+		}),
+		nats.RetryOnFailedConnect(true),
+	)
 	if err != nil {
 		log.Printf("failed to connect to nats (url: %s): %v", cfg.NatsUrl(), err)
+		return nil, err
 	}
 
 	return &NatsClient{conn: conn}, nil

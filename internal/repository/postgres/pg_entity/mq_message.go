@@ -1,6 +1,8 @@
 package pgEntity
 
 import (
+	"time"
+
 	sq "github.com/Masterminds/squirrel"
 	"github.com/balobas/auth_service/internal/entity"
 	"github.com/jackc/pgtype"
@@ -39,11 +41,11 @@ func (m *MqMessageRow) FromEntity(mqMessage entity.MqMessage) *MqMessageRow {
 		Status: pgtype.Present,
 	}
 	m.UpdatedAt = pgtype.Timestamp{Time: mqMessage.UpdatedAt, Status: pgtype.Present}
-	if mqMessage.UpdatedAt.Unix() == 0 {
+	if mqMessage.UpdatedAt.Equal(time.Time{}) {
 		m.UpdatedAt.Status = pgtype.Null
 	}
 	m.SendAt = pgtype.Timestamp{Time: mqMessage.SendAt, Status: pgtype.Present}
-	if mqMessage.SendAt.Unix() == 0 {
+	if mqMessage.SendAt.Equal(time.Time{}) {
 		m.SendAt.Status = pgtype.Null
 	}
 

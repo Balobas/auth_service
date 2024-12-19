@@ -33,4 +33,5 @@ type UcCredentials interface {
 
 type UcOutboxMessages interface {
 	CreateUserRegisteredMessage(ctx context.Context, user entity.User) error
+	CreateUserDeletedMessage(ctx context.Context, user entity.User) error
 }
