@@ -11,7 +11,7 @@ import (
 )
 
 func (r *OutboxRepository) GetReadyMessagesForPublish(ctx context.Context, batchSize int64) ([]entity.MqMessage, error) {
-	log.Printf("outboxRepository.GetReadyMessagesForPublish: batch size %d", batchSize)
+	// log.Printf("outboxRepository.GetReadyMessagesForPublish: batch size %d", batchSize)
 
 	msgRow := pgEntity.NewMqMessageRow()
 
@@ -28,8 +28,6 @@ func (r *OutboxRepository) GetReadyMessagesForPublish(ctx context.Context, batch
 		log.Printf("failed to build sql query for GetReadyMessagesForPublish: %v", err)
 		return nil, errors.WithStack(err)
 	}
-
-	log.Println(sql)
 
 	rows, err := r.DB().Query(ctx, sql, args...)
 	if err != nil {

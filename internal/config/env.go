@@ -16,6 +16,7 @@ type configEnv struct {
 	NatsClientName   string
 
 	UserRegisteredMessageSubject string
+	UserDeletedMessageSubject    string
 }
 
 func ParseEnv(cfg *configEnv) {
@@ -28,4 +29,5 @@ func ParseEnv(cfg *configEnv) {
 	cfg.NatsUrl = os.Getenv("NATS_URL")
 	cfg.NatsClientName = os.Getenv("NATS_CLIENT_NAME")
 	cfg.UserRegisteredMessageSubject = os.Getenv("USER_REGISTERED_MESSAGE_SUBJECT")
+	cfg.UserDeletedMessageSubject = os.Getenv("USER_DELETED_MESSAGE_SUBJECT")
 }
