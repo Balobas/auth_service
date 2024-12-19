@@ -242,6 +242,7 @@ func (sp *serviceProvider) UseCaseUsers(ctx context.Context) *useCaseUsers.UseCa
 			sp.UseCaseVerification(ctx),
 			sp.TxManager(ctx),
 			sp.UseCaseCredentials(ctx),
+			sp.JwtManager(ctx),
 			sp.UseCaseOutboxMessages(ctx),
 		)
 	}

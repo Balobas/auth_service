@@ -14,6 +14,7 @@ func (s *AuthServerGrpc) Register(ctx context.Context, req *auth_v1.RegisterRequ
 	uid, err := s.ucUsers.Register(
 		ctx, entity.User{
 			Email: req.GetEmail(),
+			Role:  entity.UserRoleUser,
 		},
 		req.GetPassword(),
 	)

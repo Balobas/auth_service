@@ -9,6 +9,7 @@ type UseCaseUsers struct {
 	ucVerification   UcVerification
 	ucCredentials    UcCredentials
 	ucOutboxMessages UcOutboxMessages
+	jwtManager       JwtManager
 	txManager        *transaction.Manager
 }
 
@@ -18,6 +19,7 @@ func New(
 	ucVerification UcVerification,
 	txManager *transaction.Manager,
 	ucCreds UcCredentials,
+	jwtManager JwtManager,
 	ucOutboxMessages UcOutboxMessages,
 ) *UseCaseUsers {
 	return &UseCaseUsers{
@@ -27,5 +29,6 @@ func New(
 		ucCredentials:    ucCreds,
 		ucOutboxMessages: ucOutboxMessages,
 		txManager:        txManager,
+		jwtManager:       jwtManager,
 	}
 }

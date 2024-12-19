@@ -13,6 +13,7 @@ service Auth {
     rpc UpdateUser(UpdateUserRequest) returns (JwtResponse); // required accessJwt in ctx
     rpc GetUser(GetUserRequest) returns (GetUserResponse); // required accessJwt in ctx
     rpc DeleteUser(DeleteUserRequest) returns (google.protobuf.Empty); // required accessJwt in ctx
+    rpc CreateAdmin(AdminCreateRequest) returns (AdminCreateResponse);
 
     rpc Login(LoginRequest) returns (JwtResponse);
     rpc Logout(LogoutRequest) returns (google.protobuf.Empty); // required accessJwt in ctx
@@ -35,6 +36,15 @@ message RegisterRequest {
 }
 
 message RegisterResponse {
+    string uid = 1;
+}
+
+message AdminCreateRequest {
+    string email = 1;
+    string password = 2;
+}
+
+message AdminCreateResponse {
     string uid = 1;
 }
 
