@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 
+	"github.com/Masterminds/squirrel"
 	"github.com/balobas/auth_service/internal/entity"
 	pgEntity "github.com/balobas/auth_service/internal/repository/postgres/pg_entity"
 	"github.com/jackc/pgx/v4"
@@ -40,7 +41,7 @@ func (r *UsersRepository) GetAdminUsers(ctx context.Context) ([]entity.User, err
 	userRow := pgEntity.NewUserRow().FromEntity(entity.User{})
 	userRows := pgEntity.NewUserRows()
 
-	if err := r.GetSome(ctx, userRow, userRows, nil); err != nil {
+	if err := r.GetSome(ctx, userRow, userRows, squirrel.Eq{"role": entity.UserRoleAdmin}); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return []entity.User{}, nil
 		}
