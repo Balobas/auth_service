@@ -3,6 +3,7 @@ package deliveryGrpc
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log"
 
 	"github.com/balobas/auth_service/internal/entity"
@@ -18,6 +19,8 @@ func (s *AuthServerGrpc) CreateAdmin(ctx context.Context, req *auth_v1.AdminCrea
 		log.Printf("failed to get token\n")
 		return nil, errors.New("failed to get token")
 	}
+
+	fmt.Println("EMAIL ", req.GetEmail())
 
 	uid, err := s.ucUsers.CreateAdmin(
 		ctx, entity.User{

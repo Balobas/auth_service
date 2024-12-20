@@ -17,7 +17,7 @@ func (uc *UseCaseUsers) CreateAdmin(ctx context.Context, user entity.User, passw
 		return uuid.UUID{}, errors.WithStack(err)
 	}
 
-	user, isFound, err := uc.usersRepo.GetByEmail(ctx, tokenInfo.Email)
+	creatingUser, isFound, err := uc.usersRepo.GetByEmail(ctx, tokenInfo.Email)
 	if err != nil {
 		log.Printf("CreateAdmin: failed to get user\n")
 		return uuid.UUID{}, fmt.Errorf("failed to get user")
@@ -28,12 +28,14 @@ func (uc *UseCaseUsers) CreateAdmin(ctx context.Context, user entity.User, passw
 		return uuid.UUID{}, fmt.Errorf("failed to find user")
 	}
 
-	if user.Role != entity.UserRoleAdmin || user.Role != entity.UserRole(tokenInfo.Role) {
+	if creatingUser.Role != entity.UserRoleAdmin || creatingUser.Role != entity.UserRole(tokenInfo.Role) {
 		log.Printf("role from token is invalid: cannot create admin with this role")
 		return uuid.UUID{}, fmt.Errorf("role is invalid")
 	}
 
 	user.Role = entity.UserRoleAdmin
+
+	log.Printf("CreateAdmin: registering user\n")
 
 	uid, err := uc.Register(ctx, user, password)
 	if err != nil {
