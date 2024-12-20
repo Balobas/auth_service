@@ -3,7 +3,6 @@ package deliveryGrpc
 import (
 	"context"
 	"errors"
-	"fmt"
 	"log"
 
 	"github.com/balobas/auth_service/internal/entity"
@@ -16,18 +15,23 @@ func (s *AuthServerGrpc) CreateAdmin(ctx context.Context, req *auth_v1.AdminCrea
 
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
-		log.Printf("failed to get token\n")
-		return nil, errors.New("failed to get token")
+		log.Printf("failed to get token context\n")
+		return nil, errors.New("failed to get token context")
 	}
 
-	fmt.Println("EMAIL ", req.GetEmail())
+	var token string
+
+	accessJwtSlice := md.Get("accessJwt")
+	if len(accessJwtSlice) != 0 {
+		token = accessJwtSlice[0]
+	}
 
 	uid, err := s.ucUsers.CreateAdmin(
 		ctx, entity.User{
 			Email: req.GetEmail(),
 		},
 		req.GetPassword(),
-		md.Get("accessJwt")[0],
+		token,
 	)
 	if err != nil {
 		log.Printf("failed to create admin user\n")

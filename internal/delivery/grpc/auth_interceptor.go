@@ -55,6 +55,7 @@ var (
 		"/auth.Auth/Login":       {},
 		"/auth.Auth/Register":    {},
 		"/auth.Auth/Refresh":     {},
+		"/auth.Auth/CreateAdmin": {},
 	}
 )
 
