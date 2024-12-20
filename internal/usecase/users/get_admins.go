@@ -2,35 +2,35 @@ package useCaseUsers
 
 import (
 	"context"
+	"log"
 
 	"github.com/balobas/auth_service/internal/entity"
+	"github.com/pkg/errors"
 )
 
 func (uc *UseCaseUsers) GetAdmins(ctx context.Context, token string) ([]entity.User, error) {
-	// var userToRegister entity.User
+	tokenInfo, err := uc.jwtManager.ParseToken(token)
+	if err != nil {
+		log.Printf("GetAdmins: failed to parse token\n")
+		return []entity.User{}, errors.WithStack(err)
+	}
 
-	// if token == "" {
-	// 	superAdmin, err := uc.createSuperAdmin(ctx, user)
-	// 	if err != nil {
-	// 		return uuid.UUID{}, errors.WithStack(err)
-	// 	}
+	_, isFound, err := uc.getAdminUser(ctx, tokenInfo.Email)
+	if err != nil {
+		log.Printf("GetAdmins: failed to parse token\n")
+		return []entity.User{}, errors.WithStack(err)
+	}
 
-	// 	userToRegister = superAdmin
-	// } else {
-	// 	admin, err := uc.createAdmin(ctx, user, token)
-	// 	if err != nil {
-	// 		return uuid.UUID{}, errors.WithStack(err)
-	// 	}
+	if !isFound {
+		log.Printf("GetAdmins: failed to find user\n")
+		return []entity.User{}, errors.WithStack(err)
+	}
 
-	// 	userToRegister = admin
-	// }
+	users, err := uc.usersRepo.GetAdminUsers(ctx)
+	if err != nil {
+		log.Printf("GetAdmins: failed to get admin users\n")
+		return []entity.User{}, errors.WithStack(err)
+	}
 
-	// log.Printf("CreateAdmin: registering user\n")
-
-	// uid, err := uc.Register(ctx, userToRegister, password)
-	// if err != nil {
-	// 	return uuid.UUID{}, errors.WithStack(err)
-	// }
-
-	return []entity.User{}, nil
+	return users, nil
 }

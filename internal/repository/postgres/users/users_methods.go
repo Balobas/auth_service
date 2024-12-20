@@ -36,6 +36,22 @@ func (r *UsersRepository) GetUserByUid(ctx context.Context, uid uuid.UUID) (enti
 	return userRow.ToEntity(), true, nil
 }
 
+func (r *UsersRepository) GetAdminUsers(ctx context.Context) ([]entity.User, error) {
+	userRow := pgEntity.NewUserRow().FromEntity(entity.User{})
+	userRows := pgEntity.NewUserRows()
+
+	if err := r.GetSome(ctx, userRow, userRows, nil); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return []entity.User{}, nil
+		}
+		log.Printf("failed to get admin users %v", err)
+		return []entity.User{}, errors.WithStack(err)
+	}
+
+	log.Printf("successfully get admin users")
+	return userRows.ToEntity(), nil
+}
+
 func (r *UsersRepository) GetByEmail(ctx context.Context, email string) (entity.User, bool, error) {
 	userRow := pgEntity.NewUserRow().FromEntity(entity.User{Email: email})
 

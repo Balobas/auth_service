@@ -10,6 +10,7 @@ import (
 type UsersRepository interface {
 	CreateUser(ctx context.Context, user entity.User) error
 	GetUserByUid(ctx context.Context, uid uuid.UUID) (entity.User, bool, error)
+	GetAdminUsers(ctx context.Context) ([]entity.User, error)
 	GetByEmail(ctx context.Context, email string) (entity.User, bool, error)
 	UpdateUser(ctx context.Context, userParams entity.User) error
 	DeleteUser(ctx context.Context, uid uuid.UUID) error

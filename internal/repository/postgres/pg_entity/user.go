@@ -33,6 +33,27 @@ func NewUserRow() *UserRow {
 	return &UserRow{}
 }
 
+type UserRows struct {
+	users []*UserRow
+}
+
+func NewUserRows() *UserRows {
+	return &UserRows{}
+}
+
+func (s *UserRows) ScanAll(rows pgx.Rows) error {
+	for rows.Next() {
+		newRow := &UserRow{}
+
+		if err := newRow.Scan(rows); err != nil {
+			return err
+		}
+		s.users = append(s.users, newRow)
+	}
+
+	return nil
+}
+
 func (ur *UserRow) Table() string {
 	return usersTableName
 }
@@ -142,4 +163,18 @@ func (ur *UserRow) ConditionEmailEqual() sq.Eq {
 	return sq.Eq{
 		"email": ur.Email,
 	}
+}
+
+func (s *UserRows) ToEntity() []entity.User {
+	if len(s.users) == 0 {
+		return nil
+	}
+
+	res := make([]entity.User, len(s.users))
+
+	for i := 0; i < len(s.users); i++ {
+		res[i] = s.users[i].ToEntity()
+	}
+
+	return res
 }
