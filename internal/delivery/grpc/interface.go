@@ -10,6 +10,7 @@ import (
 type UcUsers interface {
 	Register(ctx context.Context, user entity.User, password string) (uuid.UUID, error)
 	CreateAdmin(ctx context.Context, user entity.User, password string, token string) (uuid.UUID, error)
+	GetAdmins(ctx context.Context, token string) ([]entity.User, error)
 	UpdateUser(ctx context.Context, user entity.User, password string) error
 	GetUserByUid(ctx context.Context, uid uuid.UUID) (entity.User, bool, error)
 	GetUserByEmail(ctx context.Context, email string) (entity.User, bool, error)
