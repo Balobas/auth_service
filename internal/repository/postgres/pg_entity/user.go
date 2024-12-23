@@ -1,6 +1,8 @@
 package pgEntity
 
 import (
+	"os"
+
 	sq "github.com/Masterminds/squirrel"
 	"github.com/balobas/auth_service/internal/entity"
 	"github.com/jackc/pgtype"
@@ -156,6 +158,12 @@ func (ur *UserRow) ValuesForUpdate() []interface{} {
 func (ur *UserRow) ConditionUserUidEqual() sq.Eq {
 	return sq.Eq{
 		"uid": ur.Uid,
+	}
+}
+
+func (ur *UserRow) ConditionNotSuperAdmin() sq.NotEq {
+	return sq.NotEq{
+		"email": os.Getenv("SUPER_ADMIN_EMAIL"),
 	}
 }
 

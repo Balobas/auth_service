@@ -41,7 +41,8 @@ func (r *UsersRepository) GetAdminUsers(ctx context.Context) ([]entity.User, err
 	userRow := pgEntity.NewUserRow().FromEntity(entity.User{})
 	userRows := pgEntity.NewUserRows()
 
-	if err := r.GetSome(ctx, userRow, userRows, squirrel.Eq{"role": entity.UserRoleAdmin}); err != nil {
+	if err := r.GetSome(ctx, userRow, userRows,
+		squirrel.And{squirrel.Eq{"role": entity.UserRoleAdmin}, userRow.ConditionNotSuperAdmin()}); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return []entity.User{}, nil
 		}
@@ -82,7 +83,7 @@ func (r *UsersRepository) UpdateUser(ctx context.Context, user entity.User) erro
 func (r *UsersRepository) DeleteUser(ctx context.Context, uid uuid.UUID) error {
 	userRow := pgEntity.NewUserRow().FromEntity(entity.User{Uid: uid})
 
-	if err := r.Delete(ctx, userRow, userRow.ConditionUserUidEqual()); err != nil {
+	if err := r.Delete(ctx, userRow, squirrel.And{userRow.ConditionUserUidEqual(), userRow.ConditionNotSuperAdmin()}); err != nil {
 		log.Printf("failed to delete user with uid %s. error: %v", uid, err)
 		return errors.WithStack(err)
 	}
