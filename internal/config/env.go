@@ -3,6 +3,7 @@ package config
 import (
 	"os"
 	"strconv"
+	"strings"
 )
 
 type configEnv struct {
@@ -15,6 +16,8 @@ type configEnv struct {
 	NatsUrl          string
 	NatsClientName   string
 
+	UsersStreamSubjects          []string
+	UsersStreamName              string
 	UserRegisteredMessageSubject string
 	UserDeletedMessageSubject    string
 }
@@ -30,4 +33,8 @@ func ParseEnv(cfg *configEnv) {
 	cfg.NatsClientName = os.Getenv("NATS_CLIENT_NAME")
 	cfg.UserRegisteredMessageSubject = os.Getenv("USER_REGISTERED_MESSAGE_SUBJECT")
 	cfg.UserDeletedMessageSubject = os.Getenv("USER_DELETED_MESSAGE_SUBJECT")
+	cfg.UsersStreamName = os.Getenv("USERS_STREAM_NAME")
+
+	usersStreamSubjects := os.Getenv("USERS_STREAM_SUBJECTS")
+	cfg.UsersStreamSubjects = strings.Split(usersStreamSubjects, ",")
 }

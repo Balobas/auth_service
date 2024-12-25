@@ -11,11 +11,6 @@ import (
 	uuid "github.com/satori/go.uuid"
 )
 
-type UserDeletedPayload struct {
-	Uid   uuid.UUID `json:"uid"`
-	Email string    `json:"email"`
-}
-
 func (uc *UseCaseOutboxMessages) CreateUserDeletedMessage(ctx context.Context, user entity.User) error {
 	log.Printf("UseCaseOutboxMessages.CreateUserDeletedMessage: userUid %s", user.Uid)
 
@@ -29,15 +24,20 @@ func (uc *UseCaseOutboxMessages) CreateUserDeletedMessage(ctx context.Context, u
 		return errors.New("empty user uid")
 	}
 
-	bts, err := json.Marshal(UserDeletedPayload{Uid: user.Uid, Email: user.Email})
+	msgUid := uuid.NewV4()
+
+	payload := UserDeletedPayload{Uid: user.Uid, Email: user.Email}
+	payload.MsgUid = msgUid
+
+	bts, err := json.Marshal(payload)
 	if err != nil {
 		log.Printf("failed to marshal payload for userDeletedMessage: %v", err)
 		return errors.WithStack(err)
 	}
 
 	userRegisteredMessage := entity.MqMessage{
-		Uid:         uuid.NewV4(),
-		SubjectName: uc.cfg.UserRegisteredMessageSubject(),
+		Uid:         msgUid,
+		SubjectName: uc.cfg.UsersStreamName() + "." + uc.cfg.UserDeletedMessageSubject(),
 		Payload:     bts,
 		CreatedAt:   time.Now().UTC(),
 	}

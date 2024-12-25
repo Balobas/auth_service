@@ -126,7 +126,7 @@ func (sp *serviceProvider) MqClient(ctx context.Context) client.MqClient {
 	if sp.mqClient == nil {
 		cfg := sp.ServiceConfig()
 		if cfg.EnableMqMessages() {
-			client, err := natsClient.New(sp.ServiceConfig())
+			client, err := natsClient.NewJs(ctx, sp.ServiceConfig())
 			if err != nil {
 				log.Printf("failed to create nats client: %v", err)
 				panic("failed to create nats client")

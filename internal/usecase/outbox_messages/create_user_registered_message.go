@@ -11,11 +11,6 @@ import (
 	uuid "github.com/satori/go.uuid"
 )
 
-type UserCreatedPayload struct {
-	Uid   uuid.UUID `json:"uid"`
-	Email string    `json:"email"`
-}
-
 func (uc *UseCaseOutboxMessages) CreateUserRegisteredMessage(ctx context.Context, user entity.User) error {
 	log.Printf("UseCaseOutboxMessages.CreateUserRegisteredMessage: userUid %s", user.Uid)
 
@@ -29,15 +24,23 @@ func (uc *UseCaseOutboxMessages) CreateUserRegisteredMessage(ctx context.Context
 		return errors.New("empty user uid")
 	}
 
-	bts, err := json.Marshal(UserCreatedPayload{Uid: user.Uid, Email: user.Email})
+	msgUid := uuid.NewV4()
+
+	payload := UserCreatedPayload{
+		Uid:   user.Uid,
+		Email: user.Email,
+	}
+	payload.MsgUid = msgUid
+
+	bts, err := json.Marshal(payload)
 	if err != nil {
 		log.Printf("failed to marshal payload for userRegisteredMessage: %v", err)
 		return errors.WithStack(err)
 	}
 
 	userRegisteredMessage := entity.MqMessage{
-		Uid:         uuid.NewV4(),
-		SubjectName: uc.cfg.UserRegisteredMessageSubject(),
+		Uid:         msgUid,
+		SubjectName: uc.cfg.UsersStreamName() + "." + uc.cfg.UserRegisteredMessageSubject(),
 		Payload:     bts,
 		CreatedAt:   time.Now().UTC(),
 	}

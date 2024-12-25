@@ -45,7 +45,7 @@ func (w *Worker) Run(ctx context.Context) {
 			}
 
 			for _, msg := range msgs {
-				if err := w.publisher.Publish(msg.SubjectName, msg.Payload); err != nil {
+				if err := w.publisher.Publish(ctx, msg.SubjectName, msg.Payload); err != nil {
 					log.Printf("failed to publish message %s into %s: %v", msg.Uid, msg.SubjectName, err)
 
 					msg.UpdatedAt = time.Now().UTC()

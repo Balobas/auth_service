@@ -118,6 +118,14 @@ func (c *ServiceConfig) NatsClientName() string {
 	return c.configEnv.NatsClientName
 }
 
+func (c *ServiceConfig) UsersStreamName() string {
+	return c.configEnv.UsersStreamName
+}
+
+func (c *ServiceConfig) UsersStreamSubjects() []string {
+	return c.configEnv.UsersStreamSubjects
+}
+
 func (c *ServiceConfig) UserRegisteredMessageSubject() string {
 	return c.configEnv.UserRegisteredMessageSubject
 }

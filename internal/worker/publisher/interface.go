@@ -13,7 +13,7 @@ type Config interface {
 }
 
 type Publisher interface {
-	Publish(subjectName string, data []byte) error
+	Publish(ctx context.Context, subjectName string, data []byte) error
 }
 
 type OutboxRepository interface {
