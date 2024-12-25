@@ -37,7 +37,7 @@ func (uc *UseCaseOutboxMessages) CreateUserDeletedMessage(ctx context.Context, u
 
 	userRegisteredMessage := entity.MqMessage{
 		Uid:         msgUid,
-		SubjectName: uc.cfg.UsersStreamName() + "." + uc.cfg.UserDeletedMessageSubject(),
+		SubjectName: uc.cfg.UserDeletedMessageSubject(),
 		Payload:     bts,
 		CreatedAt:   time.Now().UTC(),
 	}

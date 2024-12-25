@@ -40,7 +40,7 @@ func (uc *UseCaseOutboxMessages) CreateUserRegisteredMessage(ctx context.Context
 
 	userRegisteredMessage := entity.MqMessage{
 		Uid:         msgUid,
-		SubjectName: uc.cfg.UsersStreamName() + "." + uc.cfg.UserRegisteredMessageSubject(),
+		SubjectName: uc.cfg.UserRegisteredMessageSubject(),
 		Payload:     bts,
 		CreatedAt:   time.Now().UTC(),
 	}

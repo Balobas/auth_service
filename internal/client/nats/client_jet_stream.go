@@ -3,6 +3,7 @@ package natsClient
 import (
 	"context"
 	"log"
+	"strings"
 
 	"github.com/balobas/auth_service/internal/client"
 	"github.com/nats-io/nats.go"
@@ -84,7 +85,7 @@ func (nc *NatsClientJetStream) Subscribe(ctx context.Context, handlersStreams ma
 				return errors.WithStack(err)
 			}
 
-			consumer, err := stream.Consumer(ctx, subject+"_consumer")
+			consumer, err := stream.Consumer(ctx, strings.ReplaceAll(subject, ".", "_")+"_consumer")
 			if err != nil {
 				log.Printf("failed to create consumer on stream %s subject %s: %v", streamName, subject, err)
 				return errors.WithStack(err)

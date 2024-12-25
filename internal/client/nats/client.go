@@ -13,7 +13,6 @@ type Config interface {
 	NatsUrl() string
 	NatsClientName() string
 	UsersStreamName() string
-	UsersStreamSubjects() []string
 }
 
 // на данный момент не используется
