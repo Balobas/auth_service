@@ -237,6 +237,7 @@ func (sp *serviceProvider) initConfig(ctx context.Context) {
 func (sp *serviceProvider) UseCaseUsers(ctx context.Context) *useCaseUsers.UseCaseUsers {
 	if sp.useCaseUsers == nil {
 		sp.useCaseUsers = useCaseUsers.New(
+			sp.ServiceConfig(),
 			sp.UsersRepository(ctx),
 			sp.PermissionsRepository(ctx),
 			sp.UseCaseVerification(ctx),

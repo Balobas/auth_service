@@ -17,6 +17,11 @@ func (uc *UseCaseUsers) Register(ctx context.Context, user entity.User, password
 		return uuid.UUID{}, errors.Wrap(err, "invalid email")
 	}
 
+	if len(password) < uc.cfg.MinPasswordLen() {
+		log.Printf("password shoud have >= %d symbols", uc.cfg.MinPasswordLen())
+		return uuid.UUID{}, errors.Errorf("password shoud have >= %d symbols", uc.cfg.MinPasswordLen())
+	}
+
 	_, isFound, err := uc.usersRepo.GetByEmail(ctx, user.Email)
 	if err != nil {
 		log.Printf("failed to get user by email: %v\n", errors.WithStack(err))
