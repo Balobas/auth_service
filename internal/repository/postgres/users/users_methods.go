@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 
+	"github.com/Masterminds/squirrel"
 	"github.com/balobas/auth_service/internal/entity"
 	pgEntity "github.com/balobas/auth_service/internal/repository/postgres/pg_entity"
 	"github.com/jackc/pgx/v4"
@@ -36,6 +37,23 @@ func (r *UsersRepository) GetUserByUid(ctx context.Context, uid uuid.UUID) (enti
 	return userRow.ToEntity(), true, nil
 }
 
+func (r *UsersRepository) GetAdminUsers(ctx context.Context) ([]entity.User, error) {
+	userRow := pgEntity.NewUserRow().FromEntity(entity.User{})
+	userRows := pgEntity.NewUserRows()
+
+	if err := r.GetSome(ctx, userRow, userRows,
+		squirrel.And{squirrel.Eq{"role": entity.UserRoleAdmin}, userRow.ConditionNotSuperAdmin()}); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return []entity.User{}, nil
+		}
+		log.Printf("failed to get admin users %v", err)
+		return []entity.User{}, errors.WithStack(err)
+	}
+
+	log.Printf("successfully get admin users")
+	return userRows.ToEntity(), nil
+}
+
 func (r *UsersRepository) GetByEmail(ctx context.Context, email string) (entity.User, bool, error) {
 	userRow := pgEntity.NewUserRow().FromEntity(entity.User{Email: email})
 
@@ -65,7 +83,7 @@ func (r *UsersRepository) UpdateUser(ctx context.Context, user entity.User) erro
 func (r *UsersRepository) DeleteUser(ctx context.Context, uid uuid.UUID) error {
 	userRow := pgEntity.NewUserRow().FromEntity(entity.User{Uid: uid})
 
-	if err := r.Delete(ctx, userRow, userRow.ConditionUserUidEqual()); err != nil {
+	if err := r.Delete(ctx, userRow, squirrel.And{userRow.ConditionUserUidEqual(), userRow.ConditionNotSuperAdmin()}); err != nil {
 		log.Printf("failed to delete user with uid %s. error: %v", uid, err)
 		return errors.WithStack(err)
 	}

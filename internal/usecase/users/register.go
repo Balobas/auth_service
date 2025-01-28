@@ -47,12 +47,14 @@ func (uc *UseCaseUsers) Register(ctx context.Context, user entity.User, password
 			return errors.WithStack(err)
 		}
 
-		if err := uc.ucVerification.CreateVerification(ctx, user.Uid, user.Email); err != nil {
-			return errors.WithStack(err)
-		}
+		if user.Role != entity.UserRoleAdmin {
+			if err := uc.ucVerification.CreateVerification(ctx, user.Uid, user.Email); err != nil {
+				return errors.WithStack(err)
+			}
 
-		if err := uc.ucOutboxMessages.CreateUserRegisteredMessage(ctx, user); err != nil {
-			return errors.WithStack(err)
+			if err := uc.ucOutboxMessages.CreateUserRegisteredMessage(ctx, user); err != nil {
+				return errors.WithStack(err)
+			}
 		}
 
 		return nil

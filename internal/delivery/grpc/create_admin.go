@@ -15,8 +15,15 @@ func (s *AuthServerGrpc) CreateAdmin(ctx context.Context, req *auth_v1.AdminCrea
 
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
-		log.Printf("failed to get token\n")
-		return nil, errors.New("failed to get token")
+		log.Printf("failed to get token context\n")
+		return nil, errors.New("failed to get token context")
+	}
+
+	var token string
+
+	accessJwtSlice := md.Get("accessJwt")
+	if len(accessJwtSlice) != 0 {
+		token = accessJwtSlice[0]
 	}
 
 	uid, err := s.ucUsers.CreateAdmin(
@@ -24,7 +31,7 @@ func (s *AuthServerGrpc) CreateAdmin(ctx context.Context, req *auth_v1.AdminCrea
 			Email: req.GetEmail(),
 		},
 		req.GetPassword(),
-		md.Get("accessJwt")[0],
+		token,
 	)
 	if err != nil {
 		log.Printf("failed to create admin user\n")

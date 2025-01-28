@@ -1,6 +1,8 @@
 package pgEntity
 
 import (
+	"os"
+
 	sq "github.com/Masterminds/squirrel"
 	"github.com/balobas/auth_service/internal/entity"
 	"github.com/jackc/pgtype"
@@ -31,6 +33,27 @@ type UserRow struct {
 
 func NewUserRow() *UserRow {
 	return &UserRow{}
+}
+
+type UserRows struct {
+	users []*UserRow
+}
+
+func NewUserRows() *UserRows {
+	return &UserRows{}
+}
+
+func (s *UserRows) ScanAll(rows pgx.Rows) error {
+	for rows.Next() {
+		newRow := &UserRow{}
+
+		if err := newRow.Scan(rows); err != nil {
+			return err
+		}
+		s.users = append(s.users, newRow)
+	}
+
+	return nil
 }
 
 func (ur *UserRow) Table() string {
@@ -138,8 +161,28 @@ func (ur *UserRow) ConditionUserUidEqual() sq.Eq {
 	}
 }
 
+func (ur *UserRow) ConditionNotSuperAdmin() sq.NotEq {
+	return sq.NotEq{
+		"email": os.Getenv("SUPER_ADMIN_EMAIL"),
+	}
+}
+
 func (ur *UserRow) ConditionEmailEqual() sq.Eq {
 	return sq.Eq{
 		"email": ur.Email,
 	}
+}
+
+func (s *UserRows) ToEntity() []entity.User {
+	if len(s.users) == 0 {
+		return nil
+	}
+
+	res := make([]entity.User, len(s.users))
+
+	for i := 0; i < len(s.users); i++ {
+		res[i] = s.users[i].ToEntity()
+	}
+
+	return res
 }
