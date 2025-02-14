@@ -25,6 +25,7 @@ const (
 	Auth_GetUser_FullMethodName     = "/auth.Auth/GetUser"
 	Auth_DeleteUser_FullMethodName  = "/auth.Auth/DeleteUser"
 	Auth_CreateAdmin_FullMethodName = "/auth.Auth/CreateAdmin"
+	Auth_GetAdmins_FullMethodName   = "/auth.Auth/GetAdmins"
 	Auth_Login_FullMethodName       = "/auth.Auth/Login"
 	Auth_Logout_FullMethodName      = "/auth.Auth/Logout"
 	Auth_Refresh_FullMethodName     = "/auth.Auth/Refresh"
@@ -110,8 +111,9 @@ func (c *authClient) CreateAdmin(ctx context.Context, in *AdminCreateRequest, op
 }
 
 func (c *authClient) GetAdmins(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*AdminsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(AdminsResponse)
-	err := c.cc.Invoke(ctx, "/auth.Auth/GetAdmins", in, out, opts...)
+	err := c.cc.Invoke(ctx, Auth_GetAdmins_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -361,7 +363,7 @@ func _Auth_GetAdmins_Handler(srv interface{}, ctx context.Context, dec func(inte
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/auth.Auth/GetAdmins",
+		FullMethod: Auth_GetAdmins_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(AuthServer).GetAdmins(ctx, req.(*emptypb.Empty))
