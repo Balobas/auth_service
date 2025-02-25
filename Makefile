@@ -79,10 +79,10 @@ build:
 	make generate
 	go mod tidy
 	go mod vendor
-	docker-compose up -d
+	docker compose up -d
 
 restart-migrations:
-	docker-compose restart migrator
+	docker compose restart migrator
 
 run:
 	nodemon --watch './internal/**/*.go' --signal SIGTERM --exec 'go' run ./cmd/main.go
