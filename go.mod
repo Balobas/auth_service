@@ -16,7 +16,7 @@ require (
 	github.com/satori/go.uuid v1.2.0
 	golang.org/x/crypto v0.31.0
 	google.golang.org/grpc v1.65.0
-	google.golang.org/protobuf v1.36.0
+	google.golang.org/protobuf v1.36.5
 )
 
 require (

@@ -70,7 +70,7 @@ push-and-run-pg:
 	ssh root@45.94.123.176 "cd postgres;docker-compose up -d;exit"
 
 down:
-	docker-compose down
+	docker compose down
 	docker image rm auth_service-migrator
 	docker volume rm auth_service_postgres_volume
 
@@ -80,10 +80,10 @@ build:
 	make generate
 	go mod tidy
 	go mod vendor
-	docker-compose up -d
+	docker compose up -d
 
 restart-migrations:
-	docker-compose restart migrator
+	docker compose restart migrator
 
 run:
 	nodemon --watch './internal/**/*.go' --signal SIGTERM --exec 'go' run ./cmd/main.go
