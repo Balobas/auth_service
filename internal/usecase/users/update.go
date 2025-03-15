@@ -10,11 +10,19 @@ import (
 )
 
 func (uc *UseCaseUsers) UpdateUser(ctx context.Context, user entity.User, password string) error {
-	if len(user.Email) != 0 {
+	oldUser, isFound, err := uc.usersRepo.GetUserByUid(ctx, user.Uid)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	if !isFound {
+		return errors.New("user not found")
+	}
+
+	if len(user.Email) != 0 && oldUser.Email != user.Email {
 		if err := validations.ValidateEmail(user.Email); err != nil {
 			return errors.WithStack(err)
 		}
-		
+
 		if _, isFound, err := uc.usersRepo.GetByEmail(ctx, user.Email); err == nil {
 			if isFound {
 				return errors.New("user with email already exists")
@@ -22,15 +30,6 @@ func (uc *UseCaseUsers) UpdateUser(ctx context.Context, user entity.User, passwo
 		} else {
 			return errors.WithStack(err)
 		}
-	}
-
-	oldUser, isFound, err := uc.usersRepo.GetUserByUid(ctx, user.Uid)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-
-	if !isFound {
-		return errors.New("user not found")
 	}
 
 	needUpdateEmail := len(user.Email) != 0 && oldUser.Email != user.Email
