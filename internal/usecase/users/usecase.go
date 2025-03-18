@@ -3,7 +3,7 @@ package useCaseUsers
 import "github.com/balobas/auth_service/internal/manager/transaction"
 
 type UseCaseUsers struct {
-	cfg Config
+	cfg       Config
 	usersRepo UsersRepository
 	permsRepo PermissionsRepository
 
@@ -25,6 +25,7 @@ func New(
 	ucOutboxMessages UcOutboxMessages,
 ) *UseCaseUsers {
 	return &UseCaseUsers{
+		cfg:              cfg,
 		usersRepo:        usersRepo,
 		permsRepo:        permsRepo,
 		ucVerification:   ucVerification,

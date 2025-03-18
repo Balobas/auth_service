@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"fmt"
 	"log"
 
 	"github.com/balobas/auth_service/internal/client"
@@ -95,6 +96,7 @@ func (sp *serviceProvider) GrpcConfig() *config.ConfigGRPC {
 func (sp *serviceProvider) ServiceConfig() *config.ServiceConfig {
 	if sp.serviceConfig == nil {
 		sp.serviceConfig = config.NewServiceConfig()
+		fmt.Println(sp.serviceConfig)
 	}
 	return sp.serviceConfig
 }
