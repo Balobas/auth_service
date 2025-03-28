@@ -1,6 +1,8 @@
 module github.com/balobas/auth_service
 
-go 1.21.4
+go 1.22
+
+toolchain go1.23.7
 
 require (
 	github.com/Masterminds/squirrel v1.5.4
@@ -16,7 +18,7 @@ require (
 	github.com/satori/go.uuid v1.2.0
 	golang.org/x/crypto v0.31.0
 	google.golang.org/grpc v1.65.0
-	google.golang.org/protobuf v1.36.5
+	google.golang.org/protobuf v1.36.6
 )
 
 require (
