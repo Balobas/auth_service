@@ -12,7 +12,7 @@ import (
 type Config interface {
 	NatsUrl() string
 	NatsClientName() string
-	UsersStreamName() string
+	ServiceName() string
 }
 
 // на данный момент не используется

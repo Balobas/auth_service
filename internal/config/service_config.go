@@ -42,6 +42,10 @@ type serviceConfigModel struct {
 	MqPublishMsgsBatchSize int64    `setting_name:"mq_publish_messages_batch_size" default:"10"`
 }
 
+func (c *ServiceConfig) ServiceName() string {
+	return c.configEnv.ServiceName
+}
+
 func (c *ServiceConfig) MinPasswordLen() int {
 	c.model.mu.RLock()
 	defer c.model.mu.RUnlock()
