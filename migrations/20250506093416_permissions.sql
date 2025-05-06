@@ -13,6 +13,10 @@ insert into permissions (key, description) values
 ('not_verified', 'Пользователь не верифицирован. Минимальные возможные права'),
 ('base', 'Стандартные права пользователя');
 
+create table deleting_permissions (
+    key varchar(100) primary key
+);
+
 -- +goose StatementEnd
 
 
@@ -20,6 +24,7 @@ insert into permissions (key, description) values
 -- +goose Down
 -- +goose StatementBegin
 
+drop table deleting_permissions;
 drop table permissions;
 create type user_permission as enum ('base', 'not_verified');
 alter table user_permissions alter column permissions type user_permission[] using permissions::text::user_permission[];
