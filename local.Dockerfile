@@ -11,4 +11,6 @@ WORKDIR /root/
 COPY --from=builder /github.com/balobasta/auth_service/src/bin/auth_service .
 COPY --from=builder /github.com/balobasta/auth_service/src/local.env .
 
+EXPOSE 50051
+
 ENTRYPOINT ["./auth_service", "-config-path=local.env"]
