@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"fmt"
 	"log"
 
 	"github.com/balobas/auth_service/internal/client"
@@ -95,6 +96,7 @@ func (sp *serviceProvider) GrpcConfig() *config.ConfigGRPC {
 func (sp *serviceProvider) ServiceConfig() *config.ServiceConfig {
 	if sp.serviceConfig == nil {
 		sp.serviceConfig = config.NewServiceConfig()
+		fmt.Println(sp.serviceConfig)
 	}
 	return sp.serviceConfig
 }
@@ -126,7 +128,7 @@ func (sp *serviceProvider) MqClient(ctx context.Context) client.MqClient {
 	if sp.mqClient == nil {
 		cfg := sp.ServiceConfig()
 		if cfg.EnableMqMessages() {
-			client, err := natsClient.New(sp.ServiceConfig())
+			client, err := natsClient.NewJs(ctx, sp.ServiceConfig())
 			if err != nil {
 				log.Printf("failed to create nats client: %v", err)
 				panic("failed to create nats client")
@@ -237,6 +239,7 @@ func (sp *serviceProvider) initConfig(ctx context.Context) {
 func (sp *serviceProvider) UseCaseUsers(ctx context.Context) *useCaseUsers.UseCaseUsers {
 	if sp.useCaseUsers == nil {
 		sp.useCaseUsers = useCaseUsers.New(
+			sp.ServiceConfig(),
 			sp.UsersRepository(ctx),
 			sp.PermissionsRepository(ctx),
 			sp.UseCaseVerification(ctx),

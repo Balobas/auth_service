@@ -12,13 +12,15 @@ import (
 type Config interface {
 	NatsUrl() string
 	NatsClientName() string
+	ServiceName() string
 }
 
-type NatsClient struct {
+// на данный момент не используется
+type NatsClientPubSub struct {
 	conn *nats.Conn
 }
 
-func New(cfg Config) (client.MqClient, error) {
+func NewPubSub(cfg Config) (client.MqClient, error) {
 	conn, err := nats.Connect(
 		cfg.NatsUrl(), nats.Name(cfg.NatsClientName()),
 		nats.ReconnectHandler(func(c *nats.Conn) {
@@ -43,15 +45,17 @@ func New(cfg Config) (client.MqClient, error) {
 		return nil, err
 	}
 
-	return &NatsClient{conn: conn}, nil
+	return &NatsClientPubSub{conn: conn}, nil
 }
 
-func (nc *NatsClient) Publish(subj string, data []byte) error {
+func (nc *NatsClientPubSub) Publish(ctx context.Context, subj string, data []byte) error {
 	return nc.conn.Publish(subj, data)
 }
 
-func (nc *NatsClient) Subscribe(ctx context.Context, handlers map[string]client.MqMsgHandler) error {
-	for subject, handler := range handlers {
+func (nc *NatsClientPubSub) Subscribe(ctx context.Context, handlers map[string]map[string]client.MqMsgHandler) error {
+
+	h := handlers[client.PubsubKey]
+	for subject, handler := range h {
 
 		_, err := nc.conn.Subscribe(subject, convertToNatsMsgHandler(ctx, handler))
 		if err != nil {
@@ -63,7 +67,7 @@ func (nc *NatsClient) Subscribe(ctx context.Context, handlers map[string]client.
 	return nil
 }
 
-func (nc *NatsClient) Close(ctx context.Context) error {
+func (nc *NatsClientPubSub) Close(ctx context.Context) error {
 	nc.conn.Close()
 	return nil
 }

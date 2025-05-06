@@ -6,6 +6,8 @@ import (
 )
 
 type configEnv struct {
+	ServiceName string
+
 	SenderEmail    string
 	SenderPassword string
 	HostSMTP       string
@@ -15,11 +17,13 @@ type configEnv struct {
 	NatsUrl          string
 	NatsClientName   string
 
+	UsersStreamName              string
 	UserRegisteredMessageSubject string
 	UserDeletedMessageSubject    string
 }
 
 func ParseEnv(cfg *configEnv) {
+	cfg.ServiceName = os.Getenv("SERVICE_NAME")
 	cfg.SenderEmail = os.Getenv("SENDER_EMAIL")
 	cfg.SenderPassword = os.Getenv("SENDER_PASSWORD")
 	cfg.HostSMTP = os.Getenv("HOST_SMTP")
@@ -30,4 +34,5 @@ func ParseEnv(cfg *configEnv) {
 	cfg.NatsClientName = os.Getenv("NATS_CLIENT_NAME")
 	cfg.UserRegisteredMessageSubject = os.Getenv("USER_REGISTERED_MESSAGE_SUBJECT")
 	cfg.UserDeletedMessageSubject = os.Getenv("USER_DELETED_MESSAGE_SUBJECT")
+	cfg.UsersStreamName = os.Getenv("USERS_STREAM_NAME")
 }

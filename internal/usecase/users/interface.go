@@ -7,6 +7,10 @@ import (
 	uuid "github.com/satori/go.uuid"
 )
 
+type Config interface {
+	MinPasswordLen() int
+}
+
 type UsersRepository interface {
 	CreateUser(ctx context.Context, user entity.User) error
 	GetUserByUid(ctx context.Context, uid uuid.UUID) (entity.User, bool, error)

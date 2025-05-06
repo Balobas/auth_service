@@ -19,11 +19,6 @@ func (uc *UseCaseAuth) Login(ctx context.Context, params entity.LoginParams) (st
 		return emptyTokensWithError(errors.WithStack(err))
 	}
 
-	if len(params.Password) < uc.cfg.MinPasswordLen() {
-		log.Printf("password shoud have >= %d symbols", uc.cfg.MinPasswordLen())
-		return emptyTokensWithError(errors.Errorf("password shoud have >= %d symbols", uc.cfg.MinPasswordLen()))
-	}
-
 	user, isFound, err := uc.ucUsers.GetUserByEmail(ctx, params.Email)
 	if err != nil {
 		log.Printf("failed to get user by email")

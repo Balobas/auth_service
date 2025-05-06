@@ -56,6 +56,7 @@ var (
 		"/auth.Auth/Register":    {},
 		"/auth.Auth/Refresh":     {},
 		"/auth.Auth/CreateAdmin": {},
+		"/auth.Auth/HealthCheck": {},
 	}
 )
 

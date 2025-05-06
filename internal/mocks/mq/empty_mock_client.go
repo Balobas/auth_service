@@ -13,11 +13,11 @@ func NewEmptyMqClientMock() client.MqClient {
 	return &EmptyMqClientMock{}
 }
 
-func (m *EmptyMqClientMock) Publish(subj string, data []byte) error {
+func (m *EmptyMqClientMock) Publish(ctx context.Context, subj string, data []byte) error {
 	return nil
 }
 
-func (m *EmptyMqClientMock) Subscribe(ctx context.Context, handlers map[string]client.MqMsgHandler) error {
+func (m *EmptyMqClientMock) Subscribe(ctx context.Context, handlers map[string]map[string]client.MqMsgHandler) error {
 	return nil
 }
 
