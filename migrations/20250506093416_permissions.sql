@@ -1,0 +1,27 @@
+-- +goose Up
+-- +goose StatementBegin
+
+alter table user_permissions alter column permissions type varchar(100)[] using permissions::text::varchar(100)[];
+drop type user_permission;
+
+create table permissions (
+    key varchar(100) PRIMARY KEY,
+    description varchar(200)
+);
+
+insert into permissions (key, description) values 
+('not_verified', 'Пользователь не верифицирован. Минимальные возможные права'),
+('base', 'Стандартные права пользователя');
+
+-- +goose StatementEnd
+
+
+
+-- +goose Down
+-- +goose StatementBegin
+
+drop table permissions;
+create type user_permission as enum ('base', 'not_verified');
+alter table user_permissions alter column permissions type user_permission[] using permissions::text::user_permission[];
+
+-- +goose StatementEnd
