@@ -43,6 +43,7 @@ func (uc *UseCaseUsers) UpdateUser(ctx context.Context, user entity.User, passwo
 	if err := tx.Execute(ctx, func(ctx context.Context) error {
 		if needUpdateEmail {
 			oldUser.Email = user.Email
+			// TODO: подумать над перезаписью пермишенов, так как у юзера слетают все пермишены что были
 			oldUser.Permissions = []entity.UserPermission{entity.UserPermissionNotVerified}
 			oldUser.UpdatedAt = time.Now()
 
