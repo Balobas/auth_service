@@ -10,15 +10,25 @@ import (
 )
 
 func (r *PermissionsRepository) RemovePermissionFromUsers(ctx context.Context, key string, limitUsers int64) ([]uuid.UUID, error) {
+	if len(key) == 0 {
+		log.Printf("repositoryPermissions.RemovePermissionFromUsers: empty permission")
+		return nil, errors.New("empty permission")
+	}
 
 	stmt := `update user_permissions set permissions = array_remove(permissions, $1) 
-		where user_uid in (select user_uid from user_permissions where $2=any(permissions) limit $3)
-		returning user_uid`
+		where user_uid in (select user_uid from user_permissions where $2=any(permissions)`
 
-	args := make([]interface{}, 3)
+	if limitUsers != 0 {
+		stmt += "limit $3"
+	}
+	stmt += ") returning user_uid"
+
+	args := make([]interface{}, 2, 3)
 	args[0] = key
 	args[1] = key
-	args[2] = limitUsers
+	if limitUsers != 0 {
+		args = append(args, limitUsers)
+	}
 
 	rows, err := r.DB().Query(ctx, stmt, args...)
 	if err != nil {

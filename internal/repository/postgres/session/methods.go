@@ -2,11 +2,14 @@ package sessionRepository
 
 import (
 	"context"
+	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/balobas/auth_service/internal/entity"
 	pgEntity "github.com/balobas/auth_service/internal/repository/postgres/pg_entity"
+	"github.com/jackc/pgtype"
 	"github.com/jackc/pgx/v4"
 	"github.com/pkg/errors"
 	uuid "github.com/satori/go.uuid"
@@ -90,5 +93,39 @@ func (r *SessionRepository) DeleteSessionByUserUid(ctx context.Context, userUid 
 	}
 
 	log.Printf("successfuly delete session by user uid")
+	return nil
+}
+
+func (r *SessionRepository) DeleteSessionsByUsersUids(ctx context.Context, usersUids []uuid.UUID) error {
+	if len(usersUids) == 0 {
+		log.Printf("sessionsRepository.DeleteSessionsByUsersUids: empty usersUids")
+		return errors.New("empty users uids")
+	}
+	sessionRow := pgEntity.NewSessionRow()
+	args := make([]interface{}, len(usersUids))
+
+	stmt := strings.Builder{}
+	stmt.WriteString(fmt.Sprintf("delete from %s where user_uid in ($1", sessionRow.Table()))
+
+	args[0] = pgtype.UUID{
+		Bytes:  usersUids[0],
+		Status: pgtype.Present,
+	}
+
+	for i := 1; i < len(usersUids); i++ {
+		stmt.WriteString(fmt.Sprintf(",$%d", i+1))
+		args[i] = pgtype.UUID{
+			Bytes:  usersUids[i],
+			Status: pgtype.Present,
+		}
+	}
+
+	stmt.WriteByte(')')
+
+	_, err := r.DB().Exec(ctx, stmt.String(), args...)
+	if err != nil {
+		log.Printf("sessionsRepository.DeleteSessionsByUsersUids: empty usersUids")
+		return nil
+	}
 	return nil
 }
