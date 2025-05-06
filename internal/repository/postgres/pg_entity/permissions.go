@@ -3,85 +3,79 @@ package pgEntity
 import (
 	sq "github.com/Masterminds/squirrel"
 	"github.com/balobas/auth_service/internal/entity"
-	"github.com/jackc/pgtype"
 	"github.com/jackc/pgx/v4"
-	"github.com/lib/pq"
-	uuid "github.com/satori/go.uuid"
 )
 
-const userPermissionsTableName = "user_permissions"
+const permissionsTableName = "permissions"
 
-type UserPermissionsRow struct {
-	UserUid     pgtype.UUID
-	Permissions []string
+type PermissionRow struct {
+	Key         string
+	Description string
 }
 
-var userPermissionsTableColumns = []string{
-	"user_uid",
-	"permissions",
+var permissionsTableColumns = []string{
+	"key",
+	"description",
 }
 
-func NewUserPermissionsRow() *UserPermissionsRow {
-	return &UserPermissionsRow{}
+func NewPermissionRow() *PermissionRow {
+	return &PermissionRow{}
 }
 
-func (p *UserPermissionsRow) FromEntity(user entity.User) *UserPermissionsRow {
-	p.UserUid = pgtype.UUID{
-		Bytes:  user.Uid,
-		Status: pgtype.Present,
-	}
+func (p *PermissionRow) New() *PermissionRow {
+	return &PermissionRow{}
+}
 
-	p.Permissions = make([]string, len(user.Permissions))
-	for i := 0; i < len(user.Permissions); i++ {
-		p.Permissions[i] = string(user.Permissions[i])
-	}
-
+func (p *PermissionRow) FromEntity(perm entity.Permission) *PermissionRow {
+	p.Key = perm.Key
+	p.Description = perm.Description
 	return p
 }
 
-func (p *UserPermissionsRow) ToEntity(user *entity.User) {
-	if uuid.Equal(user.Uid, uuid.UUID{}) {
-		user.Uid = p.UserUid.Bytes
-	}
-	user.Permissions = make([]entity.UserPermission, len(p.Permissions))
-	for i := 0; i < len(p.Permissions); i++ {
-		user.Permissions[i] = entity.UserPermission(p.Permissions[i])
+func (p *PermissionRow) ToEntity() entity.Permission {
+	return entity.Permission{
+		Key:         p.Key,
+		Description: p.Description,
 	}
 }
 
-func (p *UserPermissionsRow) IdColumnName() string {
-	return "user_uid"
+func (p *PermissionRow) IdColumnName() string {
+	return "key"
 }
 
-func (p *UserPermissionsRow) Values() []interface{} {
+func (p *PermissionRow) Values() []interface{} {
 	return []interface{}{
-		p.UserUid,
-		pq.Array(p.Permissions),
+		p.Key,
+		p.Description,
 	}
 }
 
-func (p *UserPermissionsRow) Columns() []string {
-	return userPermissionsTableColumns
+func (p *PermissionRow) Columns() []string {
+	return permissionsTableColumns
 }
 
-func (p *UserPermissionsRow) Table() string {
-	return userPermissionsTableName
+func (p *PermissionRow) Table() string {
+	return permissionsTableName
 }
 
-func (p *UserPermissionsRow) Scan(row pgx.Row) error {
-	return row.Scan(&p.UserUid, pq.Array(&p.Permissions))
+func (p *PermissionRow) Scan(row pgx.Row) error {
+	return row.Scan(&p.Key, &p.Description)
 }
 
-func (p *UserPermissionsRow) ColumnsForUpdate() []string {
-	return []string{"permissions"}
+func (p *PermissionRow) ColumnsForUpdate() []string {
+	return []string{"description"}
 }
 
-func (p *UserPermissionsRow) ValuesForUpdate() []interface{} {
-	return []interface{}{pq.Array(p.Permissions)}
+func (p *PermissionRow) ValuesForUpdate() []interface{} {
+	return []interface{}{p.Description}
 }
 
-func (p *UserPermissionsRow) ConditionUidEqual() sq.Eq {
+func (p *PermissionRow) ConditionUidEqual() sq.Eq {
 	return sq.Eq{
-		"user_uid": p.UserUid,
+		"key": p.Key,
 	}
+}
+
+func NewPermissionsRows() *Rows[*PermissionRow, entity.Permission] {
+	return &Rows[*PermissionRow, entity.Permission]{}
 }
