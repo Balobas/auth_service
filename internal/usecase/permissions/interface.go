@@ -16,6 +16,8 @@ type PermissionsRepository interface {
 	RemovePermissionFromUsers(ctx context.Context, key string, limitUsers int64) ([]uuid.UUID, error)
 
 	AddPermissionToDeletingList(ctx context.Context, key string) error
+	RemovePermissionFromDeletingList(ctx context.Context, key string) error
+	GetRandomPermissionFromDeletingList(ctx context.Context) (perm string, isListEmpty bool, err error)
 
 	GetUserPermissions(ctx context.Context, userUid uuid.UUID) ([]entity.UserPermission, error)
 	UpdateUserPermissions(ctx context.Context, userUid uuid.UUID, perms []entity.UserPermission) error
