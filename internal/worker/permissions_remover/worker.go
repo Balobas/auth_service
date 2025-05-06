@@ -23,7 +23,7 @@ func New(
 
 func (w *Worker) Run(ctx context.Context) {
 	log.Printf("start permissions remover worker\n")
-	timer := time.NewTimer(w.config.RemoveInterval())
+	timer := time.NewTimer(w.config.RemovePermissionsInterval())
 	defer timer.Stop() // потестить
 
 	for {
@@ -40,7 +40,7 @@ func (w *Worker) Run(ctx context.Context) {
 			}
 
 			w.removePermissionFromUsers(ctx, w.config.UsersLimitOnRemovePermission())
-			timer.Reset(w.config.RemoveInterval())
+			timer.Reset(w.config.RemovePermissionsInterval())
 		}
 	}
 }

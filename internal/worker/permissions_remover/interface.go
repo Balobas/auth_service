@@ -7,7 +7,7 @@ import (
 
 type Config interface {
 	UsersLimitOnRemovePermission() int64
-	RemoveInterval() time.Duration
+	RemovePermissionsInterval() time.Duration
 }
 
 type UcPermissions interface {

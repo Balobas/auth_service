@@ -40,6 +40,9 @@ type serviceConfigModel struct {
 
 	MqPublishMsgsInterval  Duration `setting_name:"mq_publish_messages_interval" default:"\"1m\""`
 	MqPublishMsgsBatchSize int64    `setting_name:"mq_publish_messages_batch_size" default:"10"`
+
+	UsersLimitOnRemovePermission int64    `setting_name:"users_limit_on_remove_permission" default:"50"`
+	RemovePermissionsInterval    Duration `setting_name:"remove_permissions_interval" default:"\"40s\""`
 }
 
 func (c *ServiceConfig) ServiceName() string {
@@ -144,6 +147,18 @@ func (c *ServiceConfig) MqPublishMessagesBatchSize() int64 {
 	c.model.mu.RLock()
 	defer c.model.mu.RUnlock()
 	return c.model.MqPublishMsgsBatchSize
+}
+
+func (c *ServiceConfig) UsersLimitOnRemovePermission() int64 {
+	c.model.mu.RLock()
+	defer c.model.mu.RUnlock()
+	return c.model.UsersLimitOnRemovePermission
+}
+
+func (c *ServiceConfig) RemovePermissionsInterval() time.Duration {
+	c.model.mu.RLock()
+	defer c.model.mu.RUnlock()
+	return c.model.RemovePermissionsInterval.Duration
 }
 
 func (c *ServiceConfig) LoadFromMap(config map[string]json.RawMessage) error {
