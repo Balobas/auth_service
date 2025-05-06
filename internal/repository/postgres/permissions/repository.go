@@ -1,4 +1,4 @@
-package permissions
+package repositoryPermissions
 
 import (
 	"github.com/balobas/auth_service/internal/client"
