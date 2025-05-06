@@ -36,6 +36,13 @@ func (w *Worker) Run(ctx context.Context) {
 			log.Printf("stop publisher worker. ctx done %v\n", ctx.Err())
 			return
 		case <-timer.C:
+			select {
+			case <-ctx.Done():
+				timer.Stop()
+				log.Printf("stop publisher worker. ctx done %v\n", ctx.Err())
+				return
+			default:
+			}
 
 			msgs, err := w.outboxRepository.GetReadyMessagesForPublish(ctx, msgsBatchSize)
 			if err != nil {

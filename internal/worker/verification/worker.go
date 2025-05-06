@@ -39,6 +39,13 @@ func (w *Worker) Run(ctx context.Context) {
 			log.Printf("stop verification worker. ctx done %v\n", ctx.Err())
 			return
 		case <-timer.C:
+			select {
+			case <-ctx.Done():
+				timer.Stop()
+				log.Printf("stop verification worker. ctx done %v\n", ctx.Err())
+				return
+			default:
+			}
 
 			verifications, err := w.verificationRepo.GetVerificationsInStatus(
 				ctx, entity.VerificationStatusCreated, w.cfg.VerificationWorkerBatchSize(),
