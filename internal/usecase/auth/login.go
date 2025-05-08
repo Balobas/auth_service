@@ -41,22 +41,24 @@ func (uc *UseCaseAuth) Login(ctx context.Context, params entity.LoginParams) (st
 		return emptyTokensWithError(errors.New("wrong password"))
 	}
 
-	_, isFound, err = uc.sessionsRepo.GetSessionByUserUid(ctx, user.Uid)
-	if err != nil {
-		log.Printf("failed to get session %v", err)
-		return emptyTokensWithError(errors.WithStack(err))
-	}
-
+	// _, isFound, err = uc.sessionsRepo.GetSessionByUserUid(ctx, user.Uid)
+	// if err != nil {
+	// 	log.Printf("failed to get session %v", err)
+	// 	return emptyTokensWithError(errors.WithStack(err))
+	// }
 	// TODO: Return when many sessions are ready
 	// if isFound {
 	// 	log.Printf("user already authorized")
 	// 	return emptyTokensWithError(errors.New("user already authorized"))
 	// }
 
+	loginTime := time.Now()
+
 	session := entity.Session{
-		Uid:       uuid.NewV4(),
-		UserUid:   user.Uid,
-		CreatedAt: time.Now(),
+		Uid:            uuid.NewV4(),
+		UserUid:        user.Uid,
+		CreatedAt:      loginTime,
+		TokensIssuedAt: loginTime.Unix(),
 	}
 
 	tokenInfo := entity.TokenInfo{
@@ -65,6 +67,7 @@ func (uc *UseCaseAuth) Login(ctx context.Context, params entity.LoginParams) (st
 		Permissions: user.PermissionsStrings(),
 		Role:        string(user.Role),
 		SessionUid:  session.Uid,
+		IssuedAt:    loginTime.Unix(),
 	}
 
 	access, err := uc.jwtManager.NewToken(tokenInfo, uc.cfg.AccessJwtTTL())

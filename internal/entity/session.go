@@ -7,8 +7,9 @@ import (
 )
 
 type Session struct {
-	Uid       uuid.UUID
-	UserUid   uuid.UUID
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	Uid            uuid.UUID
+	UserUid        uuid.UUID
+	TokensIssuedAt int64
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
 }

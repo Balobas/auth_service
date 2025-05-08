@@ -21,6 +21,7 @@ type UsersRepository interface {
 }
 
 type PermissionsRepository interface {
+	GetUserPermissions(ctx context.Context, userUid uuid.UUID) ([]entity.UserPermission, error)
 	CreateUserPermissions(ctx context.Context, userUid uuid.UUID, perms []entity.UserPermission) error
 	UpdateUserPermissions(ctx context.Context, userUid uuid.UUID, perms []entity.UserPermission) error
 }

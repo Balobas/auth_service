@@ -32,6 +32,7 @@ const (
 	tokenFieldRole        = "role"
 	tokenFieldSessionUid  = "session_uid"
 	tokenFieldExpiredAt   = "expired_at"
+	tokenFieldIssuedAt    = "issued_at"
 )
 
 const permissionsSeparator = ","
@@ -46,6 +47,7 @@ func (p *JwtManager) NewToken(info entity.TokenInfo, ttl time.Duration) (string,
 	claims[tokenFieldRole] = info.Role
 	claims[tokenFieldSessionUid] = info.SessionUid.String()
 	claims[tokenFieldExpiredAt] = time.Now().Add(ttl).Unix()
+	claims[tokenFieldIssuedAt] = info.IssuedAt
 
 	pk, err := p.keysProvider.GetPrivateKey()
 	if err != nil {
@@ -139,6 +141,13 @@ func (p *JwtManager) ParseToken(tokenStr string) (entity.TokenInfo, error) {
 	}
 
 	tokenInfo.ExpiredAt = int64(expiredAt)
+
+	issuedAt, ok := claims[tokenFieldIssuedAt].(float64)
+	if !ok {
+		return entity.TokenInfo{}, errors.New("empty issued_at in token")
+	}
+
+	tokenInfo.IssuedAt = int64(issuedAt)
 
 	return tokenInfo, nil
 }

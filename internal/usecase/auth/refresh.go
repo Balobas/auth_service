@@ -10,11 +10,8 @@ import (
 )
 
 func (uc *UseCaseAuth) Refresh(ctx context.Context, token string) (string, string, error) {
-	tokenInfo, err := uc.VerifyAuth(ctx, token)
-	switch {
-	case err == nil:
-	case errors.Is(err, ErrRoleNotMatch) || errors.Is(err, ErrPermissionsNotMatch):
-	default:
+	tokenInfo, err := uc.verifyRefreshToken(ctx, token)
+	if err != nil {
 		return emptyTokensWithError(errors.WithStack(err))
 	}
 
@@ -30,12 +27,15 @@ func (uc *UseCaseAuth) Refresh(ctx context.Context, token string) (string, strin
 	}
 	user.Permissions = perms
 
+	refreshTime := time.Now()
+
 	newTokenInfo := entity.TokenInfo{
 		UserUid:     user.Uid,
 		Email:       user.Email,
 		Permissions: user.PermissionsStrings(),
 		Role:        string(user.Role),
 		SessionUid:  tokenInfo.SessionUid,
+		IssuedAt:    refreshTime.Unix(),
 	}
 
 	access, err := uc.jwtManager.NewToken(newTokenInfo, uc.cfg.AccessJwtTTL())
@@ -47,7 +47,11 @@ func (uc *UseCaseAuth) Refresh(ctx context.Context, token string) (string, strin
 		return emptyTokensWithError(errors.Wrapf(err, "failed to build jwt"))
 	}
 
-	if err := uc.sessionsRepo.UpdateSession(ctx, tokenInfo.SessionUid, time.Now()); err != nil {
+	if err := uc.sessionsRepo.UpdateSession(ctx, entity.Session{
+		Uid:            tokenInfo.SessionUid,
+		TokensIssuedAt: refreshTime.Unix(),
+		UpdatedAt:      time.Now(),
+	}); err != nil {
 		return emptyTokensWithError(errors.WithStack(err))
 	}
 

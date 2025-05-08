@@ -30,11 +30,14 @@ func (uc *UseCaseAuth) UpdateUserCreds(ctx context.Context, user entity.User, pa
 		}
 		user.Permissions = perms
 
+		now := time.Now()
+
 		session := entity.Session{
-			Uid:       uuid.NewV4(),
-			UserUid:   user.Uid,
-			CreatedAt: time.Now(),
-			UpdatedAt: time.Now(),
+			Uid:            uuid.NewV4(),
+			UserUid:        user.Uid,
+			TokensIssuedAt: now.Unix(),
+			CreatedAt:      now,
+			UpdatedAt:      now,
 		}
 
 		tokenInfo := entity.TokenInfo{
@@ -43,6 +46,7 @@ func (uc *UseCaseAuth) UpdateUserCreds(ctx context.Context, user entity.User, pa
 			Permissions: user.PermissionsStrings(),
 			Role:        string(user.Role),
 			SessionUid:  session.Uid,
+			IssuedAt:    now.Unix(),
 		}
 
 		if err := uc.sessionsRepo.DeleteSessionByUserUid(ctx, user.Uid); err != nil {

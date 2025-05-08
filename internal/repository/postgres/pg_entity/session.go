@@ -12,15 +12,17 @@ const sessionTableName = "sessions"
 var sessionTableColumns = []string{
 	"uid",
 	"user_uid",
+	"tokens_issued_at",
 	"created_at",
 	"updated_at",
 }
 
 type SessionRow struct {
-	Uid       pgtype.UUID
-	UserUid   pgtype.UUID
-	CreatedAt pgtype.Timestamp
-	UpdatedAt pgtype.Timestamp
+	Uid            pgtype.UUID
+	UserUid        pgtype.UUID
+	CreatedAt      pgtype.Timestamp
+	TokensIssuedAt int64
+	UpdatedAt      pgtype.Timestamp
 }
 
 func NewSessionRow() *SessionRow {
@@ -36,7 +38,8 @@ func (s *SessionRow) FromEntity(session entity.Session) *SessionRow {
 		Bytes:  session.UserUid,
 		Status: pgtype.Present,
 	}
-	if session.CreatedAt.Unix() == 0 {
+
+	if session.CreatedAt.Unix() == 0 || session.CreatedAt.IsZero() {
 		s.CreatedAt = pgtype.Timestamp{
 			Status: pgtype.Null,
 		}
@@ -46,7 +49,7 @@ func (s *SessionRow) FromEntity(session entity.Session) *SessionRow {
 			Status: pgtype.Present,
 		}
 	}
-	if session.UpdatedAt.Unix() == 0 {
+	if session.UpdatedAt.Unix() == 0 || session.CreatedAt.IsZero() {
 		s.UpdatedAt = pgtype.Timestamp{
 			Status: pgtype.Null,
 		}
@@ -56,15 +59,17 @@ func (s *SessionRow) FromEntity(session entity.Session) *SessionRow {
 			Status: pgtype.Present,
 		}
 	}
+	s.TokensIssuedAt = session.TokensIssuedAt
 	return s
 }
 
 func (s *SessionRow) ToEntity() entity.Session {
 	return entity.Session{
-		Uid:       s.Uid.Bytes,
-		UserUid:   s.UserUid.Bytes,
-		CreatedAt: s.CreatedAt.Time,
-		UpdatedAt: s.UpdatedAt.Time,
+		Uid:            s.Uid.Bytes,
+		UserUid:        s.UserUid.Bytes,
+		TokensIssuedAt: s.TokensIssuedAt,
+		CreatedAt:      s.CreatedAt.Time,
+		UpdatedAt:      s.UpdatedAt.Time,
 	}
 }
 
@@ -76,6 +81,7 @@ func (s *SessionRow) Values() []interface{} {
 	return []interface{}{
 		s.Uid,
 		s.UserUid,
+		s.TokensIssuedAt,
 		s.CreatedAt,
 		s.UpdatedAt,
 	}
@@ -93,18 +99,21 @@ func (s *SessionRow) Scan(row pgx.Row) error {
 	return row.Scan(
 		&s.Uid,
 		&s.UserUid,
+		&s.TokensIssuedAt,
 		&s.CreatedAt,
 		&s.UpdatedAt,
 	)
 }
 func (s *SessionRow) ColumnsForUpdate() []string {
 	return []string{
+		"tokens_issued_at",
 		"updated_at",
 	}
 }
 
 func (s *SessionRow) ValuesForUpdate() []interface{} {
 	return []interface{}{
+		s.TokensIssuedAt,
 		s.UpdatedAt,
 	}
 }

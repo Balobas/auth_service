@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"strings"
-	"time"
 
 	"github.com/balobas/auth_service/internal/entity"
 	pgEntity "github.com/balobas/auth_service/internal/repository/postgres/pg_entity"
@@ -60,12 +59,12 @@ func (r *SessionRepository) GetSessionByUserUid(ctx context.Context, userUid uui
 	return sessionRow.ToEntity(), true, nil
 }
 
-func (r *SessionRepository) UpdateSession(ctx context.Context, sessionUid uuid.UUID, updatedAt time.Time) error {
-	sessionRow := pgEntity.NewSessionRow().FromEntity(entity.Session{Uid: sessionUid, UpdatedAt: updatedAt})
+func (r *SessionRepository) UpdateSession(ctx context.Context, session entity.Session) error {
+	sessionRow := pgEntity.NewSessionRow().FromEntity(session)
 
 	if err := r.Update(ctx, sessionRow, sessionRow.ConditionUidEqual()); err != nil {
 		log.Printf("failed to update session")
-		return errors.Wrapf(err, "failed to update session with uid %s", sessionUid)
+		return errors.Wrapf(err, "failed to update session with uid %s", session.Uid)
 	}
 
 	log.Printf("successfuly update session")

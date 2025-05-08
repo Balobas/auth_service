@@ -9,4 +9,5 @@ type TokenInfo struct {
 	Role        string
 	SessionUid  uuid.UUID
 	ExpiredAt   int64
+	IssuedAt    int64
 }

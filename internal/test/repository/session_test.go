@@ -81,7 +81,10 @@ func TestSessionRepo(t *testing.T) {
 	log.Printf("successfully get session by user uid")
 
 	updTime := time.Now()
-	if err := sRepo.UpdateSession(ctx, session.Uid, updTime); err != nil {
+	if err := sRepo.UpdateSession(ctx, entity.Session{
+		Uid:       ses.Uid,
+		UpdatedAt: updTime,
+	}); err != nil {
 		t.Fatalf("failed to update session: %v", err)
 	}
 	log.Printf("successfully update session")

@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/balobas/auth_service/internal/entity"
-	"github.com/balobas/auth_service/internal/repository/postgres/permissions"
+	repositoryPermissions "github.com/balobas/auth_service/internal/repository/postgres/permissions"
 	repositoryUsers "github.com/balobas/auth_service/internal/repository/postgres/users"
 	"github.com/jackc/pgx/v4"
 	uuid "github.com/satori/go.uuid"
@@ -19,7 +19,7 @@ func TestPermissionsRepo(t *testing.T) {
 
 	c := NewPgClient(t, ctx)
 
-	permsRepo := permissions.New(c)
+	permsRepo := repositoryPermissions.New(c)
 
 	// юзера не существует
 	userUid := uuid.NewV4()

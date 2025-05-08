@@ -32,7 +32,7 @@ type SessionsRepository interface {
 	CreateSession(ctx context.Context, session entity.Session) error
 	GetSessionByUid(ctx context.Context, uid uuid.UUID) (entity.Session, bool, error)
 	GetSessionByUserUid(ctx context.Context, userUid uuid.UUID) (entity.Session, bool, error)
-	UpdateSession(ctx context.Context, sessionUid uuid.UUID, updatedAt time.Time) error
+	UpdateSession(ctx context.Context, session entity.Session) error
 	DeleteSessionByUid(ctx context.Context, uid uuid.UUID) error
 	DeleteSessionByUserUid(ctx context.Context, userUid uuid.UUID) error
 }
