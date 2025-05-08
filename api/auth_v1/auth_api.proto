@@ -23,6 +23,14 @@ service Auth {
     rpc Verify(VerifyRequest) returns (google.protobuf.Empty);
     rpc VerifyEmail(VerifyEmailRequest) returns (google.protobuf.Empty);
 
+    rpc AddPermissionToUser(UserPermissionParams) returns (google.protobuf.Empty);
+    rpc RemovePermissionFromUser(UserPermissionParams) returns (google.protobuf.Empty);
+
+    rpc CreatePermission(Permission) returns (google.protobuf.Empty);
+    rpc UpdatePermission(Permission) returns (google.protobuf.Empty);
+    rpc DeletePermission(Permission) returns (google.protobuf.Empty);
+    rpc GetPermissions(GetPermissionsParams) returns (Permissions);
+
     rpc HealthCheck(google.protobuf.Empty) returns (HealthCheckResponse);
 }
 
@@ -101,6 +109,24 @@ message RefreshRequest {
 
 message VerifyRequest {
     string jwt = 1;
+}
+
+message UserPermissionParams {
+    string user_uid = 1;
+    string permission = 2;
+}
+
+message Permission {
+    string key = 1;
+    string description = 2;
+}
+
+message GetPermissionsParams {
+    string permission_pattern = 1;
+}
+
+message Permissions {
+    repeated Permission permissions = 1;
 }
 
 message HealthCheckResponse {
