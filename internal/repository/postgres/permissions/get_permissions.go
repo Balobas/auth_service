@@ -12,14 +12,15 @@ import (
 )
 
 func (r *PermissionsRepository) GetPermissions(ctx context.Context, keyPattern string) ([]entity.Permission, error) {
+	log.Printf("repositoryPermissions.GetPermissions: key pattern %s", keyPattern)
 
 	row := pgEntity.NewPermissionRow()
 	rows := pgEntity.NewPermissionsRows()
 
 	var cond squirrel.Sqlizer
 	if len(keyPattern) != 0 {
-		cond = squirrel.Eq{
-			"lower(key)": strings.ToLower(keyPattern),
+		cond = squirrel.Like{
+			"lower(key)": "%" + strings.ToLower(keyPattern) + "%",
 		}
 	}
 
