@@ -52,6 +52,7 @@ func (a *App) Run(ctx context.Context) error {
 	a.runGrpcServer(ctx, done)
 	a.runVerificationWorker(ctx)
 	a.runMqPublisherWorker(ctx)
+	a.runPermissionsRemoverWorker(ctx)
 
 	select {
 	case <-ctx.Done():
@@ -149,4 +150,8 @@ func (a *App) runMqPublisherWorker(ctx context.Context) {
 	}
 
 	go a.serviceProvider.WorkerMqPublisher(ctx).Run(ctx)
+}
+
+func (a *App) runPermissionsRemoverWorker(ctx context.Context) {
+	go a.serviceProvider.WorkerPermissionsRemover(ctx).Run(ctx)
 }

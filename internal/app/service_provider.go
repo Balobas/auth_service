@@ -29,8 +29,10 @@ import (
 	useCaseConfig "github.com/balobas/auth_service/internal/usecase/config"
 	useCaseCredentials "github.com/balobas/auth_service/internal/usecase/credentials"
 	useCaseOutboxMessages "github.com/balobas/auth_service/internal/usecase/outbox_messages"
+	useCasePermissions "github.com/balobas/auth_service/internal/usecase/permissions"
 	useCaseUsers "github.com/balobas/auth_service/internal/usecase/users"
 	useCaseVerification "github.com/balobas/auth_service/internal/usecase/verification"
+	workerPermissionsRemover "github.com/balobas/auth_service/internal/worker/permissions_remover"
 	workerPublisher "github.com/balobas/auth_service/internal/worker/publisher"
 	workerVerification "github.com/balobas/auth_service/internal/worker/verification"
 )
@@ -61,10 +63,12 @@ type serviceProvider struct {
 	useCaseCredentials    *useCaseCredentials.UseCaseCredentials
 	useCaseVerification   *useCaseVerification.UseCaseVerification
 	useCaseAuth           *useCaseAuth.UseCaseAuth
+	useCasePermissions    *useCasePermissions.UseCasePermissions
 	useCaseOutboxMessages *useCaseOutboxMessages.UseCaseOutboxMessages
 
-	workerVerification *workerVerification.Worker
-	workerMqPublisher  *workerPublisher.Worker
+	workerVerification       *workerVerification.Worker
+	workerMqPublisher        *workerPublisher.Worker
+	workerPermissionsRemover *workerPermissionsRemover.Worker
 
 	authServerGrpc *deliveryGrpc.AuthServerGrpc
 }
@@ -289,6 +293,17 @@ func (sp *serviceProvider) UseCaseAuth(ctx context.Context) *useCaseAuth.UseCase
 	return sp.useCaseAuth
 }
 
+func (sp *serviceProvider) UseCasePermissions(ctx context.Context) *useCasePermissions.UseCasePermissions {
+	if sp.useCasePermissions == nil {
+		sp.useCasePermissions = useCasePermissions.New(
+			sp.PermissionsRepository(ctx),
+			sp.UsersRepository(ctx),
+			sp.TxManager(ctx),
+		)
+	}
+	return sp.useCasePermissions
+}
+
 func (sp *serviceProvider) UseCaseOutboxMessages(ctx context.Context) *useCaseOutboxMessages.UseCaseOutboxMessages {
 	if sp.useCaseOutboxMessages == nil {
 		sp.useCaseOutboxMessages = useCaseOutboxMessages.New(
@@ -321,6 +336,16 @@ func (sp *serviceProvider) WorkerMqPublisher(ctx context.Context) *workerPublish
 	return sp.workerMqPublisher
 }
 
+func (sp *serviceProvider) WorkerPermissionsRemover(ctx context.Context) *workerPermissionsRemover.Worker {
+	if sp.workerPermissionsRemover == nil {
+		sp.workerPermissionsRemover = workerPermissionsRemover.New(
+			sp.ServiceConfig(),
+			sp.UseCasePermissions(ctx),
+		)
+	}
+	return sp.workerPermissionsRemover
+}
+
 func (sp *serviceProvider) AuthServerGrpc(ctx context.Context) *deliveryGrpc.AuthServerGrpc {
 	if sp.authServerGrpc == nil {
 		sp.initConfig(ctx)
@@ -329,6 +354,7 @@ func (sp *serviceProvider) AuthServerGrpc(ctx context.Context) *deliveryGrpc.Aut
 			sp.ServiceConfig(),
 			sp.UseCaseUsers(ctx),
 			sp.UseCaseAuth(ctx),
+			sp.UseCasePermissions(ctx),
 			sp.UseCaseVerification(ctx),
 		)
 	}
