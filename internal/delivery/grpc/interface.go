@@ -28,3 +28,12 @@ type UcAuth interface {
 type UcVerification interface {
 	Verify(ctx context.Context, token string) error
 }
+
+type UcPermissions interface {
+	CreatePermission(ctx context.Context, perm entity.Permission) error
+	DeletePermission(ctx context.Context, key string) error
+	GetPermissions(ctx context.Context, keyPattern string) ([]entity.Permission, error)
+	UpdatePermission(ctx context.Context, perm entity.Permission) error
+	AddPermissionToUser(ctx context.Context, userUid uuid.UUID, permKey string) error
+	RemoveUserPermission(ctx context.Context, userUid uuid.UUID, permKey string) error
+}
