@@ -16,9 +16,26 @@ func (uc *UseCasePermissions) UpdatePermission(ctx context.Context, perm entity.
 		return errors.New("empty permission key")
 	}
 
-	if err := uc.permsRepository.UpdatePermission(ctx, perm); err != nil {
-		log.Printf("usecasePermissions.UpdatePermission: failed to update permission %s: %v", perm.Key, err)
+	if err := uc.txManager.NewPgTransaction().Execute(ctx, func(ctx context.Context) error {
+		_, isFound, err := uc.permsRepository.GetPermission(ctx, perm.Key)
+		if err != nil {
+			log.Printf("usecasePermissions.UpdatePermission: failed to get permission %s: %v", perm.Key, err)
+			return err
+		}
+		if !isFound {
+			log.Printf("usecasePermissions.UpdatePermission: permission %s not found", perm.Key)
+			return errors.New("permission not found")
+		}
+
+		if err := uc.permsRepository.UpdatePermission(ctx, perm); err != nil {
+			log.Printf("usecasePermissions.UpdatePermission: failed to update permission %s: %v", perm.Key, err)
+			return err
+		}
+
+		return nil
+	}); err != nil {
 		return errors.WithStack(err)
 	}
+
 	return nil
 }

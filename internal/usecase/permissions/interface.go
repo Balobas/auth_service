@@ -26,7 +26,3 @@ type PermissionsRepository interface {
 type UsersRepository interface {
 	GetUserByUid(ctx context.Context, uid uuid.UUID) (entity.User, bool, error)
 }
-
-type SessionsRepository interface {
-	DeleteSessionsByUsersUids(ctx context.Context, usersUids []uuid.UUID) error
-}
