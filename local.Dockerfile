@@ -1,4 +1,4 @@
-FROM golang:1.21.4-alpine AS builder
+FROM golang:1.23.0-alpine AS builder
 
 COPY . /github.com/balobasta/auth_service/src/
 WORKDIR /github.com/balobasta/auth_service/src/

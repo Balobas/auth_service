@@ -1,6 +1,6 @@
 module github.com/balobas/auth_service
 
-go 1.22
+go 1.23
 
 toolchain go1.23.7
 
