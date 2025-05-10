@@ -13,9 +13,9 @@ import (
 
 func (s *AuthServerGrpc) GetUser(ctx context.Context, req *auth_v1.GetUserRequest) (*auth_v1.GetUserResponse, error) {
 	log.Printf("auth.GetUser\n")
-	uid, email := req.GetUid(), req.GetEmail()
+	uid, email := uuid.FromStringOrNil(req.GetUid()), req.GetEmail()
 
-	if len(uid) == 0 && len(email) == 0 {
+	if uuid.Equal(uid, uuid.UUID{}) && len(email) == 0 {
 		log.Printf("auth.GetUser empty request\n")
 		return nil, errors.New("empty request")
 	}
@@ -25,17 +25,10 @@ func (s *AuthServerGrpc) GetUser(ctx context.Context, req *auth_v1.GetUserReques
 		err     error
 		isFound bool
 	)
-	if len(uid) == 0 {
+	if uuid.Equal(uid, uuid.UUID{}) {
 		user, isFound, err = s.ucUsers.GetUserByEmail(ctx, email)
 	} else {
-
-		UID, uidErr := uuid.FromString(uid)
-		if uidErr != nil {
-			log.Printf("auth.GetUser invalid uid %v\n", uidErr)
-			return nil, uidErr
-		}
-
-		user, isFound, err = s.ucUsers.GetUserByUid(ctx, UID)
+		user, isFound, err = s.ucUsers.GetUserByUid(ctx, uid)
 	}
 
 	if err != nil {

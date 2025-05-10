@@ -2,10 +2,10 @@ package deliveryGrpc
 
 import (
 	"context"
-	"errors"
 	"log"
 
 	"github.com/balobas/auth_service/internal/entity"
+	"github.com/pkg/errors"
 	uuid "github.com/satori/go.uuid"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
@@ -30,13 +30,13 @@ func (s *AuthServerGrpc) UnaryAuthInterceptor() grpc.UnaryServerInterceptor {
 
 		accessJwt := accessJwtMd[0]
 		if len(accessJwt) == 0 {
-			return nil, errors.New("invalid access jwt")
+			return nil, errors.New("empty token")
 		}
 
 		tokenInfo, err := s.ucAuth.VerifyAuth(ctx, accessJwt)
 		if err != nil {
 			log.Printf("failed to verify token: %v", err)
-			return nil, err
+			return nil, errors.Wrap(err, "invalid token")
 		}
 
 		log.Printf("user %s successfully verified", tokenInfo.UserUid)

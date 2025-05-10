@@ -16,7 +16,7 @@ func (uc *UseCaseAuth) VerifyAuth(ctx context.Context, token string) (entity.Tok
 
 	tokenInfo, err := uc.jwtManager.ParseToken(token)
 	if err != nil {
-		log.Printf("auth.VerifyAuth: failed to parse token\n")
+		log.Printf("auth.VerifyAuth: failed to parse token: %v\n", err)
 		return entity.TokenInfo{}, errors.WithStack(err)
 	}
 
@@ -68,6 +68,8 @@ func (uc *UseCaseAuth) VerifyAuth(ctx context.Context, token string) (entity.Tok
 		log.Printf("auth.VerifyAuth: invalid permissions in user %s token", tokenInfo.UserUid)
 		return tokenInfo, ErrPermissionsNotMatch
 	}
+	log.Printf("token perms: %v", tokenInfo.Permissions)
+	log.Printf("user permissions: %v", user.Permissions)
 
 	permsMap := make(map[entity.UserPermission]struct{}, len(tokenInfo.Permissions))
 	for _, perm := range tokenInfo.Permissions {
