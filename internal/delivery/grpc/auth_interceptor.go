@@ -5,10 +5,11 @@ import (
 	"log"
 
 	"github.com/balobas/auth_service/internal/entity"
-	"github.com/pkg/errors"
 	uuid "github.com/satori/go.uuid"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
 )
 
 func (s *AuthServerGrpc) UnaryAuthInterceptor() grpc.UnaryServerInterceptor {
@@ -21,22 +22,24 @@ func (s *AuthServerGrpc) UnaryAuthInterceptor() grpc.UnaryServerInterceptor {
 		md, ok := metadata.FromIncomingContext(ctx)
 		if !ok {
 			log.Printf("empty metadata")
-			return nil, errors.New("token not provided")
+			return nil, status.Error(codes.Unauthenticated, AuthErrMsgTokenNotProvided)
 		}
 		accessJwtMd := md.Get("accessJwt")
 		if len(accessJwtMd) == 0 {
-			return nil, errors.New("empty token")
+			log.Printf("empty accessJwt in metadata")
+			return nil, status.Error(codes.Unauthenticated, AuthErrMsgTokenNotProvided)
 		}
 
 		accessJwt := accessJwtMd[0]
 		if len(accessJwt) == 0 {
-			return nil, errors.New("empty token")
+			log.Printf("empty accessJwt[0] in metadata")
+			return nil, status.Error(codes.Unauthenticated, AuthErrMsgTokenNotProvided)
 		}
 
 		tokenInfo, err := s.ucAuth.VerifyAuth(ctx, accessJwt)
 		if err != nil {
 			log.Printf("failed to verify token: %v", err)
-			return nil, errors.Wrap(err, "invalid token")
+			return nil, status.Error(codes.Unauthenticated, err.Error())
 		}
 
 		log.Printf("user %s successfully verified", tokenInfo.UserUid)
@@ -84,3 +87,9 @@ type UserInfo struct {
 	UserUid uuid.UUID
 	Role    entity.UserRole
 }
+
+const (
+	AuthErrMsgTokenNotProvided = "token not provided"
+	AuthErrMsgInvalidToken     = "invalid token"
+	AuthErrMsgTokenExpired     = "token expired"
+)
