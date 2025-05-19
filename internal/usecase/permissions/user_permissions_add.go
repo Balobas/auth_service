@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/balobas/auth_service/internal/entity"
+	serviceErrors "github.com/balobas/auth_service/pkg/service_errors"
 	"github.com/pkg/errors"
 	uuid "github.com/satori/go.uuid"
 )
@@ -14,11 +15,11 @@ func (uc *UseCasePermissions) AddPermissionToUser(ctx context.Context, userUid u
 
 	if uuid.Equal(userUid, uuid.UUID{}) {
 		log.Printf("usecasePermissions.AddPermissionToUser: empty user uid")
-		return errors.New("empty user uid")
+		return errors.Wrap(serviceErrors.ErrBadRequest, "empty user uid")
 	}
 	if len(permKey) == 0 {
 		log.Printf("usecasePermissions.AddPermissionToUser: empty permission")
-		return errors.New("empty permission")
+		return errors.Wrap(serviceErrors.ErrBadRequest, "empty permission")
 	}
 
 	err := uc.txManager.NewPgTransaction().Execute(ctx, func(ctx context.Context) error {
@@ -30,7 +31,7 @@ func (uc *UseCasePermissions) AddPermissionToUser(ctx context.Context, userUid u
 		}
 		if !isFound {
 			log.Printf("usecasePermissions.AddPermissionToUser: user %s not found", userUid)
-			return errors.New("user not found")
+			return errors.Wrap(serviceErrors.ErrNotFound, "user")
 		}
 
 		_, isFound, err = uc.permsRepository.GetPermission(ctx, permKey)
@@ -40,7 +41,7 @@ func (uc *UseCasePermissions) AddPermissionToUser(ctx context.Context, userUid u
 		}
 		if !isFound {
 			log.Printf("usecasePermissions.AddPermissionToUser: permission %s not found", permKey)
-			return errors.New("permission not found")
+			return errors.Wrap(serviceErrors.ErrNotFound, "permission")
 		}
 
 		perms, err := uc.permsRepository.GetUserPermissions(ctx, userUid)
@@ -56,7 +57,7 @@ func (uc *UseCasePermissions) AddPermissionToUser(ctx context.Context, userUid u
 
 		if _, ok := permsMap[entity.UserPermission(permKey)]; ok {
 			log.Printf("usecasePermissions.AddPermissionToUser: user %s already have permission %s", userUid, permKey)
-			return errors.Errorf("user already have permission %s", permKey)
+			return errors.Wrapf(serviceErrors.ErrIdempotentOperation, "user already have permission %s", permKey)
 		}
 
 		perms = append(perms, entity.UserPermission(permKey))

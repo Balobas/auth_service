@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/balobas/auth_service/internal/entity"
+	serviceErrors "github.com/balobas/auth_service/pkg/service_errors"
 	"github.com/pkg/errors"
 	uuid "github.com/satori/go.uuid"
 )
@@ -14,11 +15,11 @@ func (uc *UseCasePermissions) RemoveUserPermission(ctx context.Context, userUid 
 
 	if uuid.Equal(userUid, uuid.UUID{}) {
 		log.Printf("usecasePermissions.RemoveUserPermission: empty user uid")
-		return errors.New("empty user uid")
+		return errors.Wrap(serviceErrors.ErrBadRequest, "empty user uid")
 	}
 	if len(permKey) == 0 {
 		log.Printf("usecasePermissions.RemoveUserPermission: empty permission")
-		return errors.New("empty permission")
+		return errors.Wrap(serviceErrors.ErrBadRequest, "empty permission")
 	}
 
 	err := uc.txManager.NewPgTransaction().Execute(ctx, func(ctx context.Context) error {
@@ -29,7 +30,7 @@ func (uc *UseCasePermissions) RemoveUserPermission(ctx context.Context, userUid 
 		}
 		if !isFound {
 			log.Printf("usecasePermissions.RemoveUserPermission: user %s not found", userUid)
-			return errors.New("user not found")
+			return errors.Wrap(serviceErrors.ErrNotFound, "user")
 		}
 
 		perms, err := uc.permsRepository.GetUserPermissions(ctx, userUid)
@@ -51,7 +52,7 @@ func (uc *UseCasePermissions) RemoveUserPermission(ctx context.Context, userUid 
 
 		if !userHasRemovingPerm {
 			log.Printf("usecasePermissions.RemoveUserPermission: user %s hasnt permission %s", userUid, permKey)
-			return errors.Errorf("user hasnt permission %s", permKey)
+			return errors.Wrapf(serviceErrors.ErrIdempotentOperation, "user already hasnt permission %s", permKey)
 		}
 
 		perms[removingIdx] = perms[len(perms)-1]

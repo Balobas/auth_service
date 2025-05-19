@@ -10,19 +10,22 @@ import (
 )
 
 func (uc *UseCaseUsers) DeleteUser(ctx context.Context, userUid uuid.UUID) error {
+	log.Printf("usecaseAuth.DeleteUser: user %s", userUid)
+
 	// все связное должно каскадом удалиться
 
 	if err := uc.txManager.NewPgTransaction().Execute(ctx, func(ctx context.Context) error {
 		if err := uc.usersRepo.DeleteUser(ctx, userUid); err != nil {
-			return errors.WithStack(err)
+			log.Printf("usecaseAuth.DeleteUser: failed to delete user %s: %v", userUid, err)
+			return err
 		}
 
 		if err := uc.ucOutboxMessages.CreateUserDeletedMessage(ctx, entity.User{Uid: userUid}); err != nil {
-			return errors.WithStack(err)
+			log.Printf("usecaseAuth.DeleteUser: failed to create user %s deleted message: %v", userUid, err)
+			return err
 		}
 		return nil
 	}); err != nil {
-		log.Printf("failed to delete user %s: %v", userUid, err)
 		return errors.WithStack(err)
 	}
 

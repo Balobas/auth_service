@@ -10,20 +10,22 @@ import (
 )
 
 func (uc *UseCaseAuth) Refresh(ctx context.Context, token string) (string, string, error) {
+	log.Printf("usecaseAuth.Refresh: ")
 	tokenInfo, err := uc.verifyRefreshToken(ctx, token)
 	if err != nil {
+		log.Printf("usecaseAuth.Refresh: failed to validate token: %v", err)
 		return emptyTokensWithError(errors.WithStack(err))
 	}
 
-	user, _, err := uc.ucUsers.GetUserByEmail(ctx, tokenInfo.Email)
+	user, err := uc.ucUsers.GetUserByEmail(ctx, tokenInfo.Email)
 	if err != nil {
-		log.Printf("failed to get user")
+		log.Printf("usecaseAuth.Refresh: failed to get user by email %s: %v", tokenInfo.Email, err)
 		return emptyTokensWithError(errors.WithStack(err))
 	}
 	perms, err := uc.permsRepo.GetUserPermissions(ctx, user.Uid)
 	if err != nil {
-		log.Printf("failed to get permissions")
-		return emptyTokensWithError(err)
+		log.Printf("usecaseAuth.Refresh: failed to get user %s permissions: %v", user.Uid, err)
+		return emptyTokensWithError(errors.WithStack(err))
 	}
 	user.Permissions = perms
 
@@ -40,10 +42,12 @@ func (uc *UseCaseAuth) Refresh(ctx context.Context, token string) (string, strin
 
 	access, err := uc.jwtManager.NewToken(newTokenInfo, uc.cfg.AccessJwtTTL())
 	if err != nil {
+		log.Printf("usecaseAuth.Refresh: failed to build jwt token for user %s: %v", user.Uid, err)
 		return emptyTokensWithError(errors.Wrapf(err, "failed to build jwt"))
 	}
 	refresh, err := uc.jwtManager.NewToken(newTokenInfo, uc.cfg.RefreshJwtTTL())
 	if err != nil {
+		log.Printf("usecaseAuth.Refresh: failed to build jwt token for user %s: %v", user.Uid, err)
 		return emptyTokensWithError(errors.Wrapf(err, "failed to build jwt"))
 	}
 
@@ -52,6 +56,7 @@ func (uc *UseCaseAuth) Refresh(ctx context.Context, token string) (string, strin
 		TokensIssuedAt: refreshTime.Unix(),
 		UpdatedAt:      time.Now(),
 	}); err != nil {
+		log.Printf("usecaseAuth.Refresh: failed to update session for user %s: %v", user.Uid, err)
 		return emptyTokensWithError(errors.WithStack(err))
 	}
 

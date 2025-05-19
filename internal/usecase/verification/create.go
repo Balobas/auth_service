@@ -8,11 +8,23 @@ import (
 	"time"
 
 	"github.com/balobas/auth_service/internal/entity"
+	serviceErrors "github.com/balobas/auth_service/pkg/service_errors"
 	"github.com/pkg/errors"
 	uuid "github.com/satori/go.uuid"
 )
 
 func (uc *UseCaseVerification) CreateVerification(ctx context.Context, userUid uuid.UUID, email string) error {
+	log.Printf("usecaseVerification.CreateVerification: user %s email %s", userUid, email)
+
+	if uuid.Equal(userUid, uuid.UUID{}) {
+		log.Printf("usecaseVerification.CreateVerification: empty user uid")
+		return errors.Wrap(serviceErrors.ErrBadRequest, "empty user uid")
+	}
+	if len(email) == 0 {
+		log.Printf("usecaseVerification.CreateVerification: empty user email")
+		return errors.Wrap(serviceErrors.ErrBadRequest, "empty user email")
+	}
+
 	verification := entity.Verification{
 		UserUid:   userUid,
 		Token:     randomToken(uc.cfg.VerificationTokenLen()),
@@ -24,22 +36,25 @@ func (uc *UseCaseVerification) CreateVerification(ctx context.Context, userUid u
 
 	tx := uc.txManager.NewPgTransaction()
 	if err := tx.Execute(ctx, func(ctx context.Context) error {
-		
+
 		oldVerification, isFound, err := uc.verificationRepository.GetUserVerification(ctx, userUid)
 		if err != nil {
+			log.Printf("usecaseVerification.CreateVerification: failed to get user %s old verification: %v", userUid, err)
 			return err
 		}
 		if oldVerification.Email == email {
-			log.Printf("verification for user with email %s already exists", email)
-			return nil
+			log.Printf("usecaseVerification.CreateVerification: verification for user with email %s already exists", email)
+			return errors.Wrap(serviceErrors.ErrAlreadyExists, "verification for user email already exists")
 		}
 
 		if isFound {
 			if err := uc.verificationRepository.DeleteVerification(ctx, userUid); err != nil {
+				log.Printf("usecaseVerification.CreateVerification: failed to delete old verification for user %s: %v", userUid, err)
 				return err
 			}
 		}
 		if err := uc.verificationRepository.CreateVerification(ctx, verification); err != nil {
+			log.Printf("usecaseVerification.CreateVerification: failed to create verification for user %s: %v", userUid, err)
 			return err
 		}
 		return nil

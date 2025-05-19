@@ -5,13 +5,19 @@ import (
 	"log"
 
 	"github.com/balobas/auth_service/internal/entity"
+	serviceErrors "github.com/balobas/auth_service/pkg/service_errors"
 	"github.com/balobas/auth_service/pkg/validations"
 	"github.com/pkg/errors"
 	uuid "github.com/satori/go.uuid"
 )
 
-func (uc *UseCaseUsers) GetUserByUid(ctx context.Context, uid uuid.UUID) (entity.User, bool, error) {
+func (uc *UseCaseUsers) GetUserByUid(ctx context.Context, uid uuid.UUID) (entity.User, error) {
 	log.Printf("usecaseUsers.GetUserByUid: uid %s", uid)
+
+	if uuid.Equal(uid, uuid.UUID{}) {
+		log.Printf("usecaseUsers.GetUserByUid: empty user uid")
+		return entity.User{}, errors.Wrap(serviceErrors.ErrBadRequest, "empty user uid")
+	}
 
 	var (
 		user    entity.User
@@ -39,17 +45,20 @@ func (uc *UseCaseUsers) GetUserByUid(ctx context.Context, uid uuid.UUID) (entity
 		user.Permissions = perms
 		return nil
 	}); err != nil {
-		return entity.User{}, false, errors.WithStack(err)
+		return entity.User{}, errors.WithStack(err)
+	}
+	if !isFound {
+		return entity.User{}, errors.Wrap(serviceErrors.ErrNotFound, "user")
 	}
 
-	return user, isFound, nil
+	return user, nil
 }
 
-func (uc *UseCaseUsers) GetUserByEmail(ctx context.Context, email string) (entity.User, bool, error) {
+func (uc *UseCaseUsers) GetUserByEmail(ctx context.Context, email string) (entity.User, error) {
 	log.Printf("usecaseUsers.GetUserByEmail: email %s", email)
-	
+
 	if err := validations.ValidateEmail(email); err != nil {
-		return entity.User{}, false, errors.WithStack(err)
+		return entity.User{}, errors.Wrap(serviceErrors.ErrBadRequest, err.Error())
 	}
 
 	var (
@@ -78,8 +87,11 @@ func (uc *UseCaseUsers) GetUserByEmail(ctx context.Context, email string) (entit
 		user.Permissions = perms
 		return nil
 	}); err != nil {
-		return entity.User{}, false, errors.WithStack(err)
+		return entity.User{}, errors.WithStack(err)
+	}
+	if !isFound {
+		return entity.User{}, errors.Wrap(serviceErrors.ErrNotFound, "user")
 	}
 
-	return user, isFound, nil
+	return user, nil
 }

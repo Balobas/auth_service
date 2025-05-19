@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/balobas/auth_service/internal/entity"
+	serviceErrors "github.com/balobas/auth_service/pkg/service_errors"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/pkg/errors"
 	uuid "github.com/satori/go.uuid"
@@ -62,7 +63,7 @@ func (p *JwtManager) NewToken(info entity.TokenInfo, ttl time.Duration) (string,
 	return signedToken, nil
 }
 
-func (p *JwtManager) ParseToken(tokenStr string) (entity.TokenInfo, error) {
+func (p *JwtManager) ParseToken(tokenStr string) (t entity.TokenInfo, err error) {
 	tk, err := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
 
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -70,17 +71,21 @@ func (p *JwtManager) ParseToken(tokenStr string) (entity.TokenInfo, error) {
 		}
 
 		pk, err := p.keysProvider.GetPrivateKey()
-
 		if err != nil {
 			return nil, errors.WithStack(err)
 		}
 
 		return pk, nil
 	})
-
 	if err != nil {
 		return entity.TokenInfo{}, errors.Wrap(err, "cant parse jwt token")
 	}
+
+	defer func() {
+		if err != nil {
+			err = errors.Wrap(serviceErrors.ErrInvalidToken, err.Error())
+		}
+	}()
 
 	if !tk.Valid {
 		return entity.TokenInfo{}, errors.New("token is invalid")
@@ -95,7 +100,7 @@ func (p *JwtManager) ParseToken(tokenStr string) (entity.TokenInfo, error) {
 
 	userUid, ok := claims[tokenFieldUserUid]
 	if !ok {
-		return entity.TokenInfo{}, errors.New("empty uid in token")
+		return entity.TokenInfo{}, errors.New("empty user uid in token")
 	}
 
 	tokenInfo.UserUid = uuid.FromStringOrNil(userUid.(string))

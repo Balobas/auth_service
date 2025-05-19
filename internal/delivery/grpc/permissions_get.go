@@ -6,6 +6,7 @@ import (
 
 	"github.com/balobas/auth_service/internal/entity"
 	"github.com/balobas/auth_service/pkg/auth_v1"
+	serviceErrors "github.com/balobas/auth_service/pkg/service_errors"
 	"github.com/pkg/errors"
 )
 
@@ -16,17 +17,13 @@ func (s *AuthServerGrpc) GetPermissions(ctx context.Context, req *auth_v1.GetPer
 
 	if userInfo.Role != entity.UserRoleAdmin {
 		log.Printf("authServerGrpc.GetPermissions: user %s is not admin. permission denied", userInfo.UserUid)
-		return nil, errors.New("permission denied")
+		return nil, errors.Wrap(serviceErrors.ErrNotAllowedByPermissions, "caller user is not admin")
 	}
 
 	perms, err := s.ucPermissions.GetPermissions(ctx, req.GetPermissionPattern())
 	if err != nil {
 		log.Printf("authServerGrpc.GetPermissions: failed to get permissions: %v", err)
 		return nil, errors.WithStack(err)
-	}
-
-	if len(perms) == 0 {
-		return &auth_v1.Permissions{Permissions: []*auth_v1.Permission{}}, nil
 	}
 
 	res := make([]*auth_v1.Permission, len(perms))

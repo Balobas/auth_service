@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/balobas/auth_service/internal/entity"
+	serviceErrors "github.com/balobas/auth_service/pkg/service_errors"
 	"github.com/pkg/errors"
 )
 
@@ -13,7 +14,7 @@ func (uc *UseCasePermissions) UpdatePermission(ctx context.Context, perm entity.
 
 	if len(perm.Key) == 0 {
 		log.Printf("usecasePermissions.UpdatePermission: empty permission key")
-		return errors.New("empty permission key")
+		return errors.Wrap(serviceErrors.ErrBadRequest, "empty permission key")
 	}
 
 	if err := uc.txManager.NewPgTransaction().Execute(ctx, func(ctx context.Context) error {
@@ -24,7 +25,7 @@ func (uc *UseCasePermissions) UpdatePermission(ctx context.Context, perm entity.
 		}
 		if !isFound {
 			log.Printf("usecasePermissions.UpdatePermission: permission %s not found", perm.Key)
-			return errors.New("permission not found")
+			return errors.Wrap(serviceErrors.ErrNotFound, "permission")
 		}
 
 		if err := uc.permsRepository.UpdatePermission(ctx, perm); err != nil {

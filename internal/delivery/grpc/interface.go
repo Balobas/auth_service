@@ -12,8 +12,8 @@ type UcUsers interface {
 	CreateAdmin(ctx context.Context, user entity.User, password string, token string) (uuid.UUID, error)
 	GetAdmins(ctx context.Context, token string) ([]entity.User, error)
 	UpdateUser(ctx context.Context, user entity.User, password string) error
-	GetUserByUid(ctx context.Context, uid uuid.UUID) (entity.User, bool, error)
-	GetUserByEmail(ctx context.Context, email string) (entity.User, bool, error)
+	GetUserByUid(ctx context.Context, uid uuid.UUID) (entity.User, error)
+	GetUserByEmail(ctx context.Context, email string) (entity.User, error)
 	DeleteUser(ctx context.Context, userUid uuid.UUID) error
 }
 

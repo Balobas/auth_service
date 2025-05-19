@@ -2,33 +2,21 @@ package deliveryGrpc
 
 import (
 	"context"
-	"errors"
 	"log"
 
 	"github.com/balobas/auth_service/pkg/auth_v1"
-	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 func (s *AuthServerGrpc) GetAdmins(ctx context.Context, _ *emptypb.Empty) (*auth_v1.AdminsResponse, error) {
-	log.Printf("auth.GetAdmins\n")
+	log.Printf("authServerGrpc.GetAdmins")
 
-	md, ok := metadata.FromIncomingContext(ctx)
-	if !ok {
-		log.Printf("failed to get token context\n")
-		return nil, errors.New("failed to get token context")
-	}
+	userInfo := userInfoFromContext(ctx)
 
-	accessJwtSlice := md.Get("accessJwt")
-	if len(accessJwtSlice) == 0 {
-		log.Printf("failed to get token \n")
-		return nil, errors.New("failed to get token")
-	}
-
-	users, err := s.ucUsers.GetAdmins(ctx, accessJwtSlice[0])
+	users, err := s.ucUsers.GetAdmins(ctx, userInfo.Token)
 	if err != nil {
-		log.Printf("failed to get admin users\n")
+		log.Printf("authServerGrpc.GetAdmins: failed to get admin users")
 		return nil, err
 	}
 

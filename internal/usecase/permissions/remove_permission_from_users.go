@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 
+	serviceErrors "github.com/balobas/auth_service/pkg/service_errors"
 	"github.com/pkg/errors"
 )
 
@@ -12,7 +13,7 @@ func (uc *UseCasePermissions) RemovePermissionFromUsers(ctx context.Context, per
 
 	if len(permKey) == 0 {
 		log.Printf("usecasePermissions.RemovePermissionFromUsers: empty permission")
-		return false, errors.New("empty permission")
+		return false, errors.Wrap(serviceErrors.ErrBadRequest, "empty permission")
 	}
 
 	affectedUsers, err := uc.permsRepository.RemovePermissionFromUsers(ctx, permKey, limitUsers)

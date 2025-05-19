@@ -2,21 +2,22 @@ package deliveryGrpc
 
 import (
 	"context"
-	"errors"
 	"log"
 
 	"github.com/balobas/auth_service/internal/entity"
 	"github.com/balobas/auth_service/pkg/auth_v1"
+	serviceErrors "github.com/balobas/auth_service/pkg/service_errors"
+	"github.com/pkg/errors"
 	"google.golang.org/grpc/metadata"
 )
 
 func (s *AuthServerGrpc) CreateAdmin(ctx context.Context, req *auth_v1.AdminCreateRequest) (*auth_v1.AdminCreateResponse, error) {
-	log.Printf("auth.CreateAdmin\n")
+	log.Printf("authServerGrpc.CreateAdmin")
 
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
-		log.Printf("failed to get token context\n")
-		return nil, errors.New("failed to get token context")
+		log.Printf("authServerGrpc.CreateAdmin: failed to get token context\n")
+		return nil, errors.Wrap(serviceErrors.ErrBadRequest, "failed to get token from context")
 	}
 
 	var token string
@@ -34,7 +35,7 @@ func (s *AuthServerGrpc) CreateAdmin(ctx context.Context, req *auth_v1.AdminCrea
 		token,
 	)
 	if err != nil {
-		log.Printf("failed to create admin user\n")
+		log.Printf("authServerGrpc.CreateAdmin: failed to create admin user: %v", err)
 		return nil, err
 	}
 

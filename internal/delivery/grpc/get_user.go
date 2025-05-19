@@ -2,43 +2,38 @@ package deliveryGrpc
 
 import (
 	"context"
-	"errors"
 	"log"
 
 	"github.com/balobas/auth_service/internal/entity"
 	"github.com/balobas/auth_service/pkg/auth_v1"
+	serviceErrors "github.com/balobas/auth_service/pkg/service_errors"
+	"github.com/pkg/errors"
 	uuid "github.com/satori/go.uuid"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 func (s *AuthServerGrpc) GetUser(ctx context.Context, req *auth_v1.GetUserRequest) (*auth_v1.GetUserResponse, error) {
-	log.Printf("auth.GetUser\n")
+	log.Printf("authServerGrpc.GetUser\n")
 	uid, email := uuid.FromStringOrNil(req.GetUid()), req.GetEmail()
 
 	if uuid.Equal(uid, uuid.UUID{}) && len(email) == 0 {
-		log.Printf("auth.GetUser empty request\n")
-		return nil, errors.New("empty request")
+		log.Printf("authServerGrpc.GetUser empty request")
+		return nil, errors.Wrap(serviceErrors.ErrBadRequest, "empty request")
 	}
 
 	var (
-		user    entity.User
-		err     error
-		isFound bool
+		user entity.User
+		err  error
 	)
 	if uuid.Equal(uid, uuid.UUID{}) {
-		user, isFound, err = s.ucUsers.GetUserByEmail(ctx, email)
+		user, err = s.ucUsers.GetUserByEmail(ctx, email)
 	} else {
-		user, isFound, err = s.ucUsers.GetUserByUid(ctx, uid)
+		user, err = s.ucUsers.GetUserByUid(ctx, uid)
 	}
 
 	if err != nil {
-		log.Printf("auth.GetUser error %v\n", err)
-		return nil, err
-	}
-
-	if !isFound {
-		log.Printf("auth.GetUser not found user\n")
-		return nil, errors.New("user not found")
+		log.Printf("authServerGrpc.GetUser error %v\n", err)
+		return nil, errors.WithStack(err)
 	}
 
 	return &auth_v1.GetUserResponse{

@@ -45,7 +45,7 @@ func (s *AuthServerGrpc) UnaryAuthInterceptor() grpc.UnaryServerInterceptor {
 		log.Printf("user %s successfully verified", tokenInfo.UserUid)
 
 		return handler(
-			contextWithUserInfo(ctx, tokenInfo),
+			contextWithUserInfo(ctx, tokenInfo, accessJwt),
 			req,
 		)
 	}
@@ -65,12 +65,13 @@ var (
 
 type userCtxKey struct{}
 
-func contextWithUserInfo(ctx context.Context, tokenInfo entity.TokenInfo) context.Context {
+func contextWithUserInfo(ctx context.Context, tokenInfo entity.TokenInfo, tokenStr string) context.Context {
 	return context.WithValue(
 		ctx, userCtxKey{},
 		UserInfo{
 			UserUid: tokenInfo.UserUid,
 			Role:    entity.UserRole(tokenInfo.Role),
+			Token:   tokenStr,
 		},
 	)
 }
@@ -86,6 +87,7 @@ func userInfoFromContext(ctx context.Context) UserInfo {
 type UserInfo struct {
 	UserUid uuid.UUID
 	Role    entity.UserRole
+	Token   string
 }
 
 const (

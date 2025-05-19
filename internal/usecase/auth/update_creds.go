@@ -6,12 +6,22 @@ import (
 	"time"
 
 	"github.com/balobas/auth_service/internal/entity"
+	serviceErrors "github.com/balobas/auth_service/pkg/service_errors"
 	"github.com/pkg/errors"
 	uuid "github.com/satori/go.uuid"
 )
 
 func (uc *UseCaseAuth) UpdateUserCreds(ctx context.Context, user entity.User, password string) (string, string, error) {
-	log.Printf("auth.UpdateUserCreds")
+	log.Printf("usecaseAuth.UpdateUserCreds: user %s", user.Uid)
+
+	if uuid.Equal(user.Uid, uuid.UUID{}) {
+		log.Printf("usecaseAuth.UpdateUserCreds: empty user uid")
+		return emptyTokensWithError(errors.Wrap(serviceErrors.ErrBadRequest, "empty user uid"))
+	}
+	if len(user.Email) == 0 && len(password) == 0 {
+		log.Printf("usecaseAuth.UpdateUserCreds: empty user %s email and password", user.Uid)
+		return emptyTokensWithError(errors.Wrap(serviceErrors.ErrBadRequest, "empty user email and password"))
+	}
 
 	var access, refresh string
 
@@ -19,13 +29,13 @@ func (uc *UseCaseAuth) UpdateUserCreds(ctx context.Context, user entity.User, pa
 	if err := tx.Execute(ctx, func(ctx context.Context) error {
 
 		if err := uc.ucUsers.UpdateUser(ctx, user, password); err != nil {
-			log.Printf("failed to update user: %v", errors.WithStack(err))
+			log.Printf("usecaseAuth.UpdateUserCreds: failed to update user %s: %v", user.Uid, err)
 			return err
 		}
 
 		perms, err := uc.permsRepo.GetUserPermissions(ctx, user.Uid)
 		if err != nil {
-			log.Printf("failed to get permissions: %v", err)
+			log.Printf("usecaseAuth.UpdateUserCreds: failed to get user %s permissions: %v", user.Uid, err)
 			return err
 		}
 		user.Permissions = perms
@@ -50,29 +60,28 @@ func (uc *UseCaseAuth) UpdateUserCreds(ctx context.Context, user entity.User, pa
 		}
 
 		if err := uc.sessionsRepo.DeleteSessionByUserUid(ctx, user.Uid); err != nil {
-			log.Printf("failed to delete old session: %v", err)
+			log.Printf("usecaseAuth.UpdateUserCreds: failed to delete old session for user %s: %v", user.Uid, err)
 			return err
 		}
 
 		if err := uc.sessionsRepo.CreateSession(ctx, session); err != nil {
-			log.Printf("failed to create new session: %v", err)
+			log.Printf("usecaseAuth.UpdateUserCreds: failed to create new session for user %s: %v", user.Uid, err)
 			return err
 		}
 
 		access, err = uc.jwtManager.NewToken(tokenInfo, uc.cfg.AccessJwtTTL())
 		if err != nil {
-			log.Printf("failed to build jwt")
+			log.Printf("usecaseAuth.UpdateUserCreds: failed to build jwt for user %s: %v", user.Uid, err)
 			return errors.Wrapf(err, "failed to build jwt")
 		}
 		refresh, err = uc.jwtManager.NewToken(tokenInfo, uc.cfg.RefreshJwtTTL())
 		if err != nil {
-			log.Printf("failed to build jwt")
+			log.Printf("usecaseAuth.UpdateUserCreds: failed to build jwt for user %s: %v", user.Uid, err)
 			return errors.Wrapf(err, "failed to build jwt")
 		}
 
 		return nil
 	}); err != nil {
-		log.Printf("failed to update user creds")
 		return emptyTokensWithError(errors.WithStack(err))
 	}
 

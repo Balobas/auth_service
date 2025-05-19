@@ -8,9 +8,10 @@ import (
 )
 
 func (s *AuthServerGrpc) Refresh(ctx context.Context, req *auth_v1.RefreshRequest) (*auth_v1.JwtResponse, error) {
-	log.Printf("authService.Refresh")
+	log.Printf("authServerGrpc.Refresh")
 	accessJwt, refreshJwt, err := s.ucAuth.Refresh(ctx, req.GetRefreshJwt())
 	if err != nil {
+		log.Printf("authServerGrpc.Refresh: failed: %v", err)
 		return nil, err
 	}
 

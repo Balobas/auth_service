@@ -91,12 +91,17 @@ func (a *App) initServiceProvider(ctx context.Context) error {
 }
 
 func (a *App) initGrpcServer(ctx context.Context) error {
+	authGrpcServer := a.serviceProvider.AuthServerGrpc(ctx)
+
 	a.grpcServer = grpc.NewServer(
 		grpc.Creds(insecure.NewCredentials()),
-		grpc.UnaryInterceptor(a.serviceProvider.AuthServerGrpc(ctx).UnaryAuthInterceptor()),
+		grpc.ChainUnaryInterceptor(
+			authGrpcServer.UnaryAuthInterceptor(),
+			authGrpcServer.UnaryErrorsPostInterceptor(),
+		),
 	)
 	reflection.Register(a.grpcServer)
-	auth_v1.RegisterAuthServer(a.grpcServer, a.serviceProvider.AuthServerGrpc(ctx))
+	auth_v1.RegisterAuthServer(a.grpcServer, authGrpcServer)
 
 	return nil
 }

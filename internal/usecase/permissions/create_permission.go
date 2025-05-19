@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/balobas/auth_service/internal/entity"
+	serviceErrors "github.com/balobas/auth_service/pkg/service_errors"
 	"github.com/pkg/errors"
 )
 
@@ -13,7 +14,7 @@ func (uc *UseCasePermissions) CreatePermission(ctx context.Context, perm entity.
 
 	if len(perm.Key) == 0 {
 		log.Printf("usecasePermissions.CreatePermission: empty permission key")
-		return errors.New("empty permission key")
+		return errors.Wrap(serviceErrors.ErrBadRequest, "empty permission key")
 	}
 
 	if err := uc.permsRepository.CreatePermission(ctx, perm); err != nil {

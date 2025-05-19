@@ -9,7 +9,7 @@ import (
 )
 
 func (s *AuthServerGrpc) Register(ctx context.Context, req *auth_v1.RegisterRequest) (*auth_v1.RegisterResponse, error) {
-	log.Printf("auth.Register\n")
+	log.Printf("authServerGrpc.Register: email %s", req.GetEmail())
 
 	uid, err := s.ucUsers.Register(
 		ctx, entity.User{
@@ -19,7 +19,7 @@ func (s *AuthServerGrpc) Register(ctx context.Context, req *auth_v1.RegisterRequ
 		req.GetPassword(),
 	)
 	if err != nil {
-		log.Printf("failed to register user\n")
+		log.Printf("authServerGrpc.Register: failed to register user with email %s: %v", req.GetEmail(), err)
 		return nil, err
 	}
 
