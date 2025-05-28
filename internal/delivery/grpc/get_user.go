@@ -37,11 +37,10 @@ func (s *AuthServerGrpc) GetUser(ctx context.Context, req *auth_v1.GetUserReques
 	}
 
 	return &auth_v1.GetUserResponse{
-		Uid:         user.Uid.String(),
-		Email:       user.Email,
-		Role:        auth_v1.Role(auth_v1.Role_value[string(user.Role)]),
-		Permissions: user.PermissionsStrings(),
-		CreatedAt:   timestamppb.New(user.CreatedAt),
-		UpdatedAt:   timestamppb.New(user.UpdatedAt),
+		Uid:       user.Uid.String(),
+		Email:     user.Email,
+		Roles:     user.Roles,
+		CreatedAt: timestamppb.New(user.CreatedAt),
+		UpdatedAt: timestamppb.New(user.UpdatedAt),
 	}, nil
 }

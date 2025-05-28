@@ -6,7 +6,7 @@ type UseCaseAuth struct {
 	cfg Config
 
 	sessionsRepo SessionsRepository
-	permsRepo    PermissionsRepository
+	accessRepo   AccessRepository
 
 	ucUsers       UcUsers
 	ucCredentials UcCredentials
@@ -18,7 +18,7 @@ type UseCaseAuth struct {
 func New(
 	cfg Config,
 	sessionsRepo SessionsRepository,
-	permsRepo PermissionsRepository,
+	accessRepo AccessRepository,
 	ucUsers UcUsers,
 	ucCreds UcCredentials,
 	jwtManager JwtManager,
@@ -27,7 +27,7 @@ func New(
 	return &UseCaseAuth{
 		cfg:           cfg,
 		sessionsRepo:  sessionsRepo,
-		permsRepo:     permsRepo,
+		accessRepo:    accessRepo,
 		ucUsers:       ucUsers,
 		ucCredentials: ucCreds,
 		jwtManager:    jwtManager,

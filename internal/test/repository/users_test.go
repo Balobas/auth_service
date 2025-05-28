@@ -18,12 +18,11 @@ func TestUsersRepo(t *testing.T) {
 	usersRepo := repositoryUsers.New(c)
 
 	user := entity.User{
-		Uid:         uuid.NewV4(),
-		Email:       "test@m.ru",
-		Role:        "user",
-		Permissions: []entity.UserPermission{},
-		CreatedAt:   time.Now(),
-		UpdatedAt:   time.Now(),
+		Uid:       uuid.NewV4(),
+		Email:     "test@m.ru",
+		Roles:     []string{"user"},
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
 	}
 
 	if err := usersRepo.CreateUser(ctx, user); err != nil {
@@ -38,7 +37,7 @@ func TestUsersRepo(t *testing.T) {
 		t.Fatal("user not found by uid")
 	}
 
-	if getUsr.Email != user.Email || getUsr.Role != user.Role || !getUsr.CreatedAt.Equal(user.CreatedAt) || !getUsr.UpdatedAt.Equal(user.UpdatedAt) {
+	if getUsr.Email != user.Email || !getUsr.CreatedAt.Equal(user.CreatedAt) || !getUsr.UpdatedAt.Equal(user.UpdatedAt) {
 		t.Fatalf("getUsr by uid not match user: %v \n %v", user, getUsr)
 	}
 
@@ -50,7 +49,7 @@ func TestUsersRepo(t *testing.T) {
 		t.Fatal("user not found by email")
 	}
 
-	if !uuid.Equal(getUsr.Uid, user.Uid) || getUsr.Role != user.Role || !getUsr.CreatedAt.Equal(user.CreatedAt) || !getUsr.UpdatedAt.Equal(user.UpdatedAt) {
+	if !uuid.Equal(getUsr.Uid, user.Uid) || !getUsr.CreatedAt.Equal(user.CreatedAt) || !getUsr.UpdatedAt.Equal(user.UpdatedAt) {
 		t.Fatalf("getUsr by email not match user: %v \n %v", user, getUsr)
 	}
 
@@ -69,7 +68,7 @@ func TestUsersRepo(t *testing.T) {
 		t.Fatal("user not found by uid")
 	}
 
-	if getUsr.Email != user.Email || getUsr.Role != user.Role || !getUsr.CreatedAt.Equal(user.CreatedAt) || !getUsr.UpdatedAt.Equal(user.UpdatedAt) {
+	if getUsr.Email != user.Email || !getUsr.CreatedAt.Equal(user.CreatedAt) || !getUsr.UpdatedAt.Equal(user.UpdatedAt) {
 		t.Fatalf("getUsr by uid not match updated user: %v \n %v", user, getUsr)
 	}
 

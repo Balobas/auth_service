@@ -20,10 +20,10 @@ type UsersRepository interface {
 	DeleteUser(ctx context.Context, uid uuid.UUID) error
 }
 
-type PermissionsRepository interface {
-	GetUserPermissions(ctx context.Context, userUid uuid.UUID) ([]entity.UserPermission, error)
-	CreateUserPermissions(ctx context.Context, userUid uuid.UUID, perms []entity.UserPermission) error
-	UpdateUserPermissions(ctx context.Context, userUid uuid.UUID, perms []entity.UserPermission) error
+type AccessRepository interface {
+	AddRoleToUser(ctx context.Context, userUid uuid.UUID, role string) error
+	DeleteRoleFromUser(ctx context.Context, userUid uuid.UUID, role string) error
+	GetUserRoles(ctx context.Context, userUid uuid.UUID) ([]entity.Role, error)
 }
 
 type UcVerification interface {

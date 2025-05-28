@@ -11,8 +11,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-//TODO: переосмыслить, мб запихнуть все в одну транзакцию
-
 func (uc *UseCaseUsers) UpdateUser(ctx context.Context, user entity.User, password string) error {
 	log.Printf("usecaseUsers.UpdateUser: user uid %s", user.Uid)
 
@@ -51,17 +49,11 @@ func (uc *UseCaseUsers) UpdateUser(ctx context.Context, user entity.User, passwo
 	if err := tx.Execute(ctx, func(ctx context.Context) error {
 		if needUpdateEmail {
 			oldUser.Email = user.Email
-			// TODO: подумать над перезаписью пермишенов, так как у юзера слетают все пермишены что были
-			oldUser.Permissions = []entity.UserPermission{entity.UserPermissionNotVerified}
+			oldUser.IsVerified = false
 			oldUser.UpdatedAt = time.Now()
 
 			if err := uc.usersRepo.UpdateUser(ctx, oldUser); err != nil {
 				log.Printf("usecaseUsers.UpdateUser: failed to update user %s: %v", user.Uid, err)
-				return err
-			}
-
-			if err := uc.permsRepo.UpdateUserPermissions(ctx, oldUser.Uid, oldUser.Permissions); err != nil {
-				log.Printf("usecaseUsers.UpdateUser: failed to update user %s permissions: %v", user.Uid, err)
 				return err
 			}
 

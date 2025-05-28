@@ -25,30 +25,30 @@ func (uc *UseCaseUsers) Register(ctx context.Context, user entity.User, password
 		return uuid.UUID{}, errors.Wrapf(serviceErrors.ErrBadRequest, "password shoud have >= %d symbols", uc.cfg.MinPasswordLen())
 	}
 
-	_, isFound, err := uc.usersRepo.GetByEmail(ctx, user.Email)
-	if err != nil {
-		log.Printf("usecaseUsers.Register: failed to get user by email %s: %v", user.Email, err)
-		return uuid.UUID{}, errors.WithStack(err)
-	}
-	if isFound {
-		log.Printf("usecaseUsers.Register: user with email %s already exist", user.Email)
-		return uuid.UUID{}, errors.Wrap(serviceErrors.ErrAlreadyExists, "user with email is already exists")
-	}
-
 	user.Uid = uuid.NewV4()
-	user.Permissions = []entity.UserPermission{entity.UserPermissionNotVerified}
+	user.IsVerified = false
 	user.CreatedAt = time.Now()
 
 	tx := uc.txManager.NewPgTransaction()
 	if err := tx.Execute(ctx, func(ctx context.Context) error {
+
+		_, isFound, err := uc.usersRepo.GetByEmail(ctx, user.Email)
+		if err != nil {
+			log.Printf("usecaseUsers.Register: failed to get user by email %s: %v", user.Email, err)
+			return err
+		}
+		if isFound {
+			log.Printf("usecaseUsers.Register: user with email %s already exist", user.Email)
+			return errors.Wrap(serviceErrors.ErrAlreadyExists, "user with email already exists")
+		}
 
 		if err := uc.usersRepo.CreateUser(ctx, user); err != nil {
 			log.Printf("usecaseUsers.Register: failed to create user (email %s): %v", user.Email, err)
 			return err
 		}
 
-		if err := uc.permsRepo.CreateUserPermissions(ctx, user.Uid, user.Permissions); err != nil {
-			log.Printf("usecaseUsers.Register: failed to create user (email %s) permissions: %v", user.Email, err)
+		if err := uc.accessRepo.AddRoleToUser(ctx, user.Uid, entity.UserRoleUser); err != nil {
+			log.Printf("usecaseUsers.Register: failed to add role user to user (email %s): %v", user.Email, err)
 			return err
 		}
 
@@ -57,16 +57,14 @@ func (uc *UseCaseUsers) Register(ctx context.Context, user entity.User, password
 			return err
 		}
 
-		if user.Role != entity.UserRoleAdmin {
-			if err := uc.ucVerification.CreateVerification(ctx, user.Uid, user.Email); err != nil {
-				log.Printf("usecaseUsers.Register: failed to create verification for user (email %s): %v", user.Email, err)
-				return err
-			}
+		if err := uc.ucVerification.CreateVerification(ctx, user.Uid, user.Email); err != nil {
+			log.Printf("usecaseUsers.Register: failed to create verification for user (email %s): %v", user.Email, err)
+			return err
+		}
 
-			if err := uc.ucOutboxMessages.CreateUserRegisteredMessage(ctx, user); err != nil {
-				log.Printf("usecaseUsers.Register: failed to create user registered message (email %s): %v", user.Email, err)
-				return err
-			}
+		if err := uc.ucOutboxMessages.CreateUserRegisteredMessage(ctx, user); err != nil {
+			log.Printf("usecaseUsers.Register: failed to create user registered message (email %s): %v", user.Email, err)
+			return err
 		}
 
 		return nil

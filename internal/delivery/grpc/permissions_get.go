@@ -15,12 +15,12 @@ func (s *AuthServerGrpc) GetPermissions(ctx context.Context, req *auth_v1.GetPer
 
 	userInfo := userInfoFromContext(ctx)
 
-	if userInfo.Role != entity.UserRoleAdmin {
+	if !entity.HasRole(userInfo.Roles, entity.UserRoleAdmin) {
 		log.Printf("authServerGrpc.GetPermissions: user %s is not admin. permission denied", userInfo.UserUid)
 		return nil, errors.Wrap(serviceErrors.ErrNotAllowedByPermissions, "caller user is not admin")
 	}
 
-	perms, err := s.ucPermissions.GetPermissions(ctx, req.GetPermissionPattern())
+	perms, err := s.ucAccess.GetPermissions(ctx, req.GetPermissionPattern())
 	if err != nil {
 		log.Printf("authServerGrpc.GetPermissions: failed to get permissions: %v", err)
 		return nil, errors.WithStack(err)

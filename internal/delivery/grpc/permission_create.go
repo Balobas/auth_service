@@ -16,12 +16,12 @@ func (s *AuthServerGrpc) CreatePermission(ctx context.Context, req *auth_v1.Perm
 
 	userInfo := userInfoFromContext(ctx)
 
-	if userInfo.Role != entity.UserRoleAdmin {
+	if !entity.HasRole(userInfo.Roles, entity.UserRoleAdmin) {
 		log.Printf("authServerGrpc.CreatePermission: user %s is not admin. permission denied", userInfo.UserUid)
 		return nil, errors.Wrap(serviceErrors.ErrNotAllowedByPermissions, "caller user is not admin")
 	}
 
-	if err := s.ucPermissions.CreatePermission(ctx, entity.Permission{
+	if err := s.ucAccess.CreatePermission(ctx, entity.Permission{
 		Key:         req.GetKey(),
 		Description: req.GetDescription(),
 	}); err != nil {

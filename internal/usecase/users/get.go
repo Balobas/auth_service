@@ -32,23 +32,20 @@ func (uc *UseCaseUsers) GetUserByUid(ctx context.Context, uid uuid.UUID) (entity
 		}
 		if !isFound {
 			log.Printf("usecaseUsers.GetUserByUid: user %s not found", uid)
-			return nil
+			return errors.Wrap(serviceErrors.ErrNotFound, "user")
 		}
-		isFound = true
 
-		perms, err := uc.permsRepo.GetUserPermissions(ctx, uid)
+		roles, err := uc.accessRepo.GetUserRoles(ctx, uid)
 		if err != nil {
-			log.Printf("usecaseUsers.GetUserByUid: failed to get user %s permissions: %v", uid, err)
+			log.Printf("usecaseUsers.GetUserByUid: failed to get user %s roles: %v", uid, err)
 			return err
 		}
 
-		user.Permissions = perms
+		user.Roles = entity.RolesToStrings(roles)
+
 		return nil
 	}); err != nil {
 		return entity.User{}, errors.WithStack(err)
-	}
-	if !isFound {
-		return entity.User{}, errors.Wrap(serviceErrors.ErrNotFound, "user")
 	}
 
 	return user, nil
@@ -62,11 +59,11 @@ func (uc *UseCaseUsers) GetUserByEmail(ctx context.Context, email string) (entit
 	}
 
 	var (
-		user    entity.User
-		isFound bool
-		err     error
+		user entity.User
+		err  error
 	)
 	if err := uc.txManager.NewPgTransaction().Execute(ctx, func(ctx context.Context) error {
+		var isFound bool
 		user, isFound, err = uc.usersRepo.GetByEmail(ctx, email)
 		if err != nil {
 			log.Printf("usecaseUsers.GetUserByEmail: failed to get user with email %s: %v", email, err)
@@ -74,23 +71,20 @@ func (uc *UseCaseUsers) GetUserByEmail(ctx context.Context, email string) (entit
 		}
 		if !isFound {
 			log.Printf("usecaseUsers.GetUserByEmail: user with email %s not found", email)
-			return nil
+			return errors.Wrap(serviceErrors.ErrNotFound, "user")
 		}
-		isFound = true
 
-		perms, err := uc.permsRepo.GetUserPermissions(ctx, user.Uid)
+		roles, err := uc.accessRepo.GetUserRoles(ctx, user.Uid)
 		if err != nil {
-			log.Printf("usecaseUsers.GetUserByEmail: failed to get user %s permissions: %v", user.Uid, err)
+			log.Printf("usecaseUsers.GetUserByEmail: failed to get user %s roles: %v", user.Uid, err)
 			return err
 		}
 
-		user.Permissions = perms
+		user.Roles = entity.RolesToStrings(roles)
+
 		return nil
 	}); err != nil {
 		return entity.User{}, errors.WithStack(err)
-	}
-	if !isFound {
-		return entity.User{}, errors.Wrap(serviceErrors.ErrNotFound, "user")
 	}
 
 	return user, nil

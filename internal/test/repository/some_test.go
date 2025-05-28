@@ -20,7 +20,7 @@ func TestCascade(t *testing.T) {
 	user := entity.User{
 		Uid:       uuid.NewV4(),
 		Email:     "huisjkjsk@test",
-		Role:      "user",
+		Roles:     []string{"user"},
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}

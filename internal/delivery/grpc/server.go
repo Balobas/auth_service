@@ -11,7 +11,7 @@ type AuthServerGrpc struct {
 
 	ucUsers        UcUsers
 	ucAuth         UcAuth
-	ucPermissions  UcPermissions
+	ucAccess       UcAccess
 	ucVerification UcVerification
 }
 
@@ -22,14 +22,14 @@ func NewAuthServerGRPC(
 	cfg Config,
 	ucUsers UcUsers,
 	ucAuth UcAuth,
-	ucPermissins UcPermissions,
+	ucAccess UcAccess,
 	ucVerification UcVerification,
 ) *AuthServerGrpc {
 	return &AuthServerGrpc{
 		cfg:            cfg,
 		ucUsers:        ucUsers,
 		ucAuth:         ucAuth,
-		ucPermissions:  ucPermissins,
+		ucAccess:       ucAccess,
 		ucVerification: ucVerification,
 	}
 }

@@ -19,6 +19,7 @@ type VerificationRepository interface {
 	DeleteVerification(ctx context.Context, userUid uuid.UUID) error
 }
 
-type PermissionsRepository interface {
-	UpdateUserPermissions(ctx context.Context, userUid uuid.UUID, perms []entity.UserPermission) error
+type UsersRepository interface {
+	GetUserByUid(ctx context.Context, userUid uuid.UUID) (entity.User, bool, error)
+	UpdateUser(ctx context.Context, user entity.User) error
 }

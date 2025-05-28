@@ -27,7 +27,6 @@ func (s *AuthServerGrpc) UpdateUser(ctx context.Context, req *auth_v1.UpdateUser
 		entity.User{
 			Uid:   userUid,
 			Email: req.GetEmail(),
-			Role:  userInfo.Role,
 		},
 		req.GetPassword(),
 	)

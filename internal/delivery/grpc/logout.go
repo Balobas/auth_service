@@ -18,7 +18,7 @@ func (s *AuthServerGrpc) Logout(ctx context.Context, req *auth_v1.LogoutRequest)
 
 	userUid := uuid.FromStringOrNil(req.GetUid())
 
-	if userInfo.Role != entity.UserRoleAdmin && !uuid.Equal(userInfo.UserUid, userUid) {
+	if !entity.HasRole(userInfo.Roles, entity.UserRoleAdmin) && !uuid.Equal(userInfo.UserUid, userUid) {
 		log.Printf("authServerGrpc.Logout: user %s cant logout user %s", userInfo.UserUid, userUid)
 		return nil, errors.Wrap(serviceErrors.ErrNotAllowedByPermissions, "permissions denied")
 	}

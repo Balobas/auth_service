@@ -37,6 +37,7 @@ type SessionsRepository interface {
 	DeleteSessionByUserUid(ctx context.Context, userUid uuid.UUID) error
 }
 
-type PermissionsRepository interface {
-	GetUserPermissions(ctx context.Context, userUid uuid.UUID) ([]entity.UserPermission, error)
+type AccessRepository interface {
+	GetUserRoles(ctx context.Context, userUid uuid.UUID) ([]entity.Role, error)
+	IsUserHasPermissionsForResource(ctx context.Context, userUid uuid.UUID, uri string, method string) (bool, error)
 }

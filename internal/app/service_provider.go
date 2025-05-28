@@ -17,10 +17,10 @@ import (
 	mqMock "github.com/balobas/auth_service/internal/mocks/mq"
 	outboxMessagesMockRepository "github.com/balobas/auth_service/internal/mocks/repository/outbox_messages"
 	repositoryKeys "github.com/balobas/auth_service/internal/repository/keys"
+	accessRepository "github.com/balobas/auth_service/internal/repository/postgres/access"
 	repositoryConfig "github.com/balobas/auth_service/internal/repository/postgres/config"
 	repositoryCredentials "github.com/balobas/auth_service/internal/repository/postgres/credentials"
 	outboxRepository "github.com/balobas/auth_service/internal/repository/postgres/outbox"
-	repositoryPermissions "github.com/balobas/auth_service/internal/repository/postgres/permissions"
 	sessionRepository "github.com/balobas/auth_service/internal/repository/postgres/session"
 	repositoryUsers "github.com/balobas/auth_service/internal/repository/postgres/users"
 	repositoryVerification "github.com/balobas/auth_service/internal/repository/postgres/verification"
@@ -29,10 +29,9 @@ import (
 	useCaseConfig "github.com/balobas/auth_service/internal/usecase/config"
 	useCaseCredentials "github.com/balobas/auth_service/internal/usecase/credentials"
 	useCaseOutboxMessages "github.com/balobas/auth_service/internal/usecase/outbox_messages"
-	useCasePermissions "github.com/balobas/auth_service/internal/usecase/permissions"
+	useCaseAccess "github.com/balobas/auth_service/internal/usecase/access"
 	useCaseUsers "github.com/balobas/auth_service/internal/usecase/users"
 	useCaseVerification "github.com/balobas/auth_service/internal/usecase/verification"
-	workerPermissionsRemover "github.com/balobas/auth_service/internal/worker/permissions_remover"
 	workerPublisher "github.com/balobas/auth_service/internal/worker/publisher"
 	workerVerification "github.com/balobas/auth_service/internal/worker/verification"
 )
@@ -48,7 +47,7 @@ type serviceProvider struct {
 
 	keysRepository           *repositoryKeys.KeysRepository
 	usersRepository          *repositoryUsers.UsersRepository
-	permissionsRepository    *repositoryPermissions.PermissionsRepository
+	accessRepository         *accessRepository.AccessRepository
 	credentialsRepository    *repositoryCredentials.CredentialsRepository
 	sessionsRepository       *sessionRepository.SessionRepository
 	verificationRepository   *repositoryVerification.VerificationRepository
@@ -63,12 +62,11 @@ type serviceProvider struct {
 	useCaseCredentials    *useCaseCredentials.UseCaseCredentials
 	useCaseVerification   *useCaseVerification.UseCaseVerification
 	useCaseAuth           *useCaseAuth.UseCaseAuth
-	useCasePermissions    *useCasePermissions.UseCasePermissions
+	useCaseAccess         *useCaseAccess.UseCaseAccess
 	useCaseOutboxMessages *useCaseOutboxMessages.UseCaseOutboxMessages
 
 	workerVerification       *workerVerification.Worker
 	workerMqPublisher        *workerPublisher.Worker
-	workerPermissionsRemover *workerPermissionsRemover.Worker
 
 	authServerGrpc *deliveryGrpc.AuthServerGrpc
 }
@@ -163,11 +161,11 @@ func (sp *serviceProvider) UsersRepository(ctx context.Context) *repositoryUsers
 	return sp.usersRepository
 }
 
-func (sp *serviceProvider) PermissionsRepository(ctx context.Context) *repositoryPermissions.PermissionsRepository {
-	if sp.permissionsRepository == nil {
-		sp.permissionsRepository = repositoryPermissions.New(sp.PgClient(ctx))
+func (sp *serviceProvider) AccessRepository(ctx context.Context) *accessRepository.AccessRepository {
+	if sp.accessRepository == nil {
+		sp.accessRepository = accessRepository.New(sp.PgClient(ctx))
 	}
-	return sp.permissionsRepository
+	return sp.accessRepository
 }
 
 func (sp *serviceProvider) CredentialsRepository(ctx context.Context) *repositoryCredentials.CredentialsRepository {
@@ -245,7 +243,7 @@ func (sp *serviceProvider) UseCaseUsers(ctx context.Context) *useCaseUsers.UseCa
 		sp.useCaseUsers = useCaseUsers.New(
 			sp.ServiceConfig(),
 			sp.UsersRepository(ctx),
-			sp.PermissionsRepository(ctx),
+			sp.AccessRepository(ctx),
 			sp.UseCaseVerification(ctx),
 			sp.TxManager(ctx),
 			sp.UseCaseCredentials(ctx),
@@ -271,7 +269,7 @@ func (sp *serviceProvider) UseCaseVerification(ctx context.Context) *useCaseVeri
 		sp.useCaseVerification = useCaseVerification.New(
 			sp.ServiceConfig(),
 			sp.VerificationRepository(ctx),
-			sp.PermissionsRepository(ctx),
+			sp.UsersRepository(ctx),
 			sp.TxManager(ctx),
 		)
 	}
@@ -283,7 +281,7 @@ func (sp *serviceProvider) UseCaseAuth(ctx context.Context) *useCaseAuth.UseCase
 		sp.useCaseAuth = useCaseAuth.New(
 			sp.ServiceConfig(),
 			sp.SessionsRepository(ctx),
-			sp.PermissionsRepository(ctx),
+			sp.AccessRepository(ctx),
 			sp.UseCaseUsers(ctx),
 			sp.UseCaseCredentials(ctx),
 			sp.JwtManager(ctx),
@@ -293,15 +291,15 @@ func (sp *serviceProvider) UseCaseAuth(ctx context.Context) *useCaseAuth.UseCase
 	return sp.useCaseAuth
 }
 
-func (sp *serviceProvider) UseCasePermissions(ctx context.Context) *useCasePermissions.UseCasePermissions {
-	if sp.useCasePermissions == nil {
-		sp.useCasePermissions = useCasePermissions.New(
-			sp.PermissionsRepository(ctx),
+func (sp *serviceProvider) UseCaseAccess(ctx context.Context) *useCaseAccess.UseCaseAccess {
+	if sp.useCaseAccess == nil {
+		sp.useCaseAccess = useCaseAccess.New(
+			sp.AccessRepository(ctx),
 			sp.UsersRepository(ctx),
 			sp.TxManager(ctx),
 		)
 	}
-	return sp.useCasePermissions
+	return sp.useCaseAccess
 }
 
 func (sp *serviceProvider) UseCaseOutboxMessages(ctx context.Context) *useCaseOutboxMessages.UseCaseOutboxMessages {
@@ -336,16 +334,6 @@ func (sp *serviceProvider) WorkerMqPublisher(ctx context.Context) *workerPublish
 	return sp.workerMqPublisher
 }
 
-func (sp *serviceProvider) WorkerPermissionsRemover(ctx context.Context) *workerPermissionsRemover.Worker {
-	if sp.workerPermissionsRemover == nil {
-		sp.workerPermissionsRemover = workerPermissionsRemover.New(
-			sp.ServiceConfig(),
-			sp.UseCasePermissions(ctx),
-		)
-	}
-	return sp.workerPermissionsRemover
-}
-
 func (sp *serviceProvider) AuthServerGrpc(ctx context.Context) *deliveryGrpc.AuthServerGrpc {
 	if sp.authServerGrpc == nil {
 		sp.initConfig(ctx)
@@ -354,7 +342,7 @@ func (sp *serviceProvider) AuthServerGrpc(ctx context.Context) *deliveryGrpc.Aut
 			sp.ServiceConfig(),
 			sp.UseCaseUsers(ctx),
 			sp.UseCaseAuth(ctx),
-			sp.UseCasePermissions(ctx),
+			sp.UseCaseAccess(ctx),
 			sp.UseCaseVerification(ctx),
 		)
 	}

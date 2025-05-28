@@ -27,16 +27,15 @@ func New(keysProvider KeysProvider) *JwtManager {
 }
 
 const (
-	tokenFieldUserUid     = "user_uid"
-	tokenFieldEmail       = "email"
-	tokenFieldPermissions = "permissions"
-	tokenFieldRole        = "role"
-	tokenFieldSessionUid  = "session_uid"
-	tokenFieldExpiredAt   = "expired_at"
-	tokenFieldIssuedAt    = "issued_at"
+	tokenFieldUserUid    = "user_uid"
+	tokenFieldEmail      = "email"
+	tokenFieldRoles      = "roles"
+	tokenFieldSessionUid = "session_uid"
+	tokenFieldExpiredAt  = "expired_at"
+	tokenFieldIssuedAt   = "issued_at"
 )
 
-const permissionsSeparator = ","
+const rolesSeparator = ","
 
 func (p *JwtManager) NewToken(info entity.TokenInfo, ttl time.Duration) (string, error) {
 	token := jwt.New(jwt.SigningMethodHS256)
@@ -44,8 +43,7 @@ func (p *JwtManager) NewToken(info entity.TokenInfo, ttl time.Duration) (string,
 
 	claims[tokenFieldUserUid] = info.UserUid.String()
 	claims[tokenFieldEmail] = info.Email
-	claims[tokenFieldPermissions] = strings.Join(info.Permissions, permissionsSeparator)
-	claims[tokenFieldRole] = info.Role
+	claims[tokenFieldRoles] = strings.Join(info.Roles, rolesSeparator)
 	claims[tokenFieldSessionUid] = info.SessionUid.String()
 	claims[tokenFieldExpiredAt] = time.Now().Add(ttl).Unix()
 	claims[tokenFieldIssuedAt] = info.IssuedAt
@@ -103,7 +101,10 @@ func (p *JwtManager) ParseToken(tokenStr string) (t entity.TokenInfo, err error)
 		return entity.TokenInfo{}, errors.New("empty user uid in token")
 	}
 
-	tokenInfo.UserUid = uuid.FromStringOrNil(userUid.(string))
+	tokenInfo.UserUid, err = uuid.FromString(userUid.(string))
+	if err != nil {
+		return entity.TokenInfo{}, errors.New("invalid user uid in token")
+	}
 
 	userEmail, ok := claims[tokenFieldEmail]
 	if !ok {
@@ -114,23 +115,17 @@ func (p *JwtManager) ParseToken(tokenStr string) (t entity.TokenInfo, err error)
 		return entity.TokenInfo{}, errors.New("invalid token user email")
 	}
 
-	perms, ok := claims[tokenFieldPermissions]
+	roles, ok := claims[tokenFieldRoles]
 	if !ok {
-		return entity.TokenInfo{}, errors.New("empty permissions in token")
+		return entity.TokenInfo{}, errors.New("empty roles in token")
 	}
-	permsStr, ok := perms.(string)
-	if !ok {
-		return entity.TokenInfo{}, errors.New("invalid permissions")
-	}
-	tokenInfo.Permissions = strings.Split(permsStr, permissionsSeparator)
 
-	role, ok := claims[tokenFieldRole]
+	rolesStr, ok := roles.(string)
 	if !ok {
-		return entity.TokenInfo{}, errors.New("invalid role")
+		return entity.TokenInfo{}, errors.New("invalid roles")
 	}
-	tokenInfo.Role, ok = role.(string)
-	if !ok {
-		return entity.TokenInfo{}, errors.New("invalid role")
+	if len(rolesStr) != 0 {
+		tokenInfo.Roles = strings.Split(rolesStr, rolesSeparator)
 	}
 
 	sessionUid, ok := claims[tokenFieldSessionUid]

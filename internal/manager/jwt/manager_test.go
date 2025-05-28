@@ -14,12 +14,11 @@ func TestManager(t *testing.T) {
 	manager := New(kp)
 
 	tokenInfo := entity.TokenInfo{
-		UserUid: uuid.FromStringOrNil("c61f4445-02d5-4afd-8ad5-49b26a3834c1"),
-		Email: "hui",
-		Permissions: []string{"admin"},
-		Role: "admin",
+		UserUid:    uuid.FromStringOrNil("c61f4445-02d5-4afd-8ad5-49b26a3834c1"),
+		Email:      "hui",
+		Roles:      []string{"admin"},
 		SessionUid: uuid.FromStringOrNil("c61f4445-02d5-4afd-8ad5-49b26a3834c1"),
-		ExpiredAt: time.Now().Add(100*time.Hour).Unix(),
+		ExpiredAt:  time.Now().Add(100 * time.Hour).Unix(),
 	}
 
 	token, err := manager.NewToken(tokenInfo, 100*time.Hour)

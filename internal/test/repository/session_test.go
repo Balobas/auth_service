@@ -39,7 +39,7 @@ func TestSessionRepo(t *testing.T) {
 	err := usersRepo.CreateUser(ctx, entity.User{
 		Uid:       userUid,
 		Email:     fmt.Sprintf("%s@%s", randStr(), randStr()),
-		Role:      "user",
+		Roles:     []string{"user"},
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	})

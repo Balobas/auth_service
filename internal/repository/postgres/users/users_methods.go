@@ -2,7 +2,9 @@ package repositoryUsers
 
 import (
 	"context"
+	"fmt"
 	"log"
+	"strings"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/balobas/auth_service/internal/entity"
@@ -41,12 +43,19 @@ func (r *UsersRepository) GetAdminUsers(ctx context.Context) ([]entity.User, err
 	userRow := pgEntity.NewUserRow().FromEntity(entity.User{})
 	userRows := pgEntity.NewUserRows()
 
-	if err := r.GetSome(ctx, userRow, userRows,
-		squirrel.And{squirrel.Eq{"role": entity.UserRoleAdmin}, userRow.ConditionNotSuperAdmin()}); err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return []entity.User{}, nil
-		}
+	stmt := fmt.Sprintf(
+		`select %s from users inner join user_roles on users.uid = user_roles.user_uid 
+		where user_roles.role = $1`, strings.Join(userRow.Columns(), ", "))
+
+	rows, err := r.DB().Query(ctx, stmt, entity.UserRoleAdmin)
+	if err != nil {
 		log.Printf("failed to get admin users %v", err)
+		return []entity.User{}, errors.WithStack(err)
+	}
+	defer rows.Close()
+
+	if err := userRows.ScanAll(rows); err != nil {
+		log.Printf("failed to scan admin users %v", err)
 		return []entity.User{}, errors.WithStack(err)
 	}
 

@@ -28,17 +28,21 @@ func (uc *UseCaseAuth) UpdateUserCreds(ctx context.Context, user entity.User, pa
 	tx := uc.txManager.NewPgTransaction()
 	if err := tx.Execute(ctx, func(ctx context.Context) error {
 
+		// TODO: возвращать юзера, иначе может быть пустой емэйл в токене
 		if err := uc.ucUsers.UpdateUser(ctx, user, password); err != nil {
 			log.Printf("usecaseAuth.UpdateUserCreds: failed to update user %s: %v", user.Uid, err)
 			return err
 		}
 
-		perms, err := uc.permsRepo.GetUserPermissions(ctx, user.Uid)
+		roles, err := uc.accessRepo.GetUserRoles(ctx, user.Uid)
 		if err != nil {
-			log.Printf("usecaseAuth.UpdateUserCreds: failed to get user %s permissions: %v", user.Uid, err)
+			log.Printf("usecaseAuth.UpdateUserCreds: failed to get user %s roles: %v", user.Uid, err)
 			return err
 		}
-		user.Permissions = perms
+
+		rolesStrs := entity.RolesToStrings(roles)
+
+		user.Roles = rolesStrs
 
 		now := time.Now()
 
@@ -51,12 +55,11 @@ func (uc *UseCaseAuth) UpdateUserCreds(ctx context.Context, user entity.User, pa
 		}
 
 		tokenInfo := entity.TokenInfo{
-			UserUid:     user.Uid,
-			Email:       user.Email,
-			Permissions: user.PermissionsStrings(),
-			Role:        string(user.Role),
-			SessionUid:  session.Uid,
-			IssuedAt:    now.Unix(),
+			UserUid:    user.Uid,
+			Email:      user.Email,
+			Roles:      rolesStrs,
+			SessionUid: session.Uid,
+			IssuedAt:   now.Unix(),
 		}
 
 		if err := uc.sessionsRepo.DeleteSessionByUserUid(ctx, user.Uid); err != nil {

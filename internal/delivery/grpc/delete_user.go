@@ -18,7 +18,7 @@ func (s *AuthServerGrpc) DeleteUser(ctx context.Context, req *auth_v1.DeleteUser
 
 	userUid := uuid.FromStringOrNil(req.GetUid())
 
-	if userInfo.Role != entity.UserRoleAdmin && !uuid.Equal(userUid, userInfo.UserUid) {
+	if !entity.HasRole(userInfo.Roles, entity.UserRoleAdmin) && !uuid.Equal(userUid, userInfo.UserUid) {
 		log.Printf("authServerGrpc.DeleteUser: user %s hasnt permissions to delete user %s", userInfo.UserUid, userUid)
 		return nil, errors.Wrap(serviceErrors.ErrNotAllowedByPermissions, "permissions denied")
 	}

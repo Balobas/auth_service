@@ -6,20 +6,20 @@ type UseCaseVerification struct {
 	cfg Config
 
 	verificationRepository VerificationRepository
-	permissionsRepository  PermissionsRepository
+	usersRepository        UsersRepository
 	txManager              *transaction.Manager
 }
 
 func New(
 	cfg Config,
 	verificationRepo VerificationRepository,
-	permissionsRepo PermissionsRepository,
+	usersRepo UsersRepository,
 	txManager *transaction.Manager,
 ) *UseCaseVerification {
 	return &UseCaseVerification{
 		cfg:                    cfg,
 		verificationRepository: verificationRepo,
-		permissionsRepository:  permissionsRepo,
+		usersRepository:        usersRepo,
 		txManager:              txManager,
 	}
 }

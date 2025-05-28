@@ -32,6 +32,11 @@ func (uc *UseCaseAuth) VerifyAuth(ctx context.Context, token string) (entity.Tok
 
 	user, err := uc.ucUsers.GetUserByEmail(ctx, tokenInfo.Email)
 	if err != nil {
+		if errors.Is(err, serviceErrors.ErrNotFound) {
+			log.Printf("usecaseAuth.VerifyAuth: user with email %s not found", tokenInfo.Email)
+			return entity.TokenInfo{}, errors.Wrap(serviceErrors.ErrInvalidToken, "user not found")
+		}
+
 		log.Printf("usecaseAuth.VerifyAuth: failed to get user %s: %v\n", tokenInfo.UserUid, err)
 		return entity.TokenInfo{}, errors.WithStack(err)
 	}
@@ -41,12 +46,12 @@ func (uc *UseCaseAuth) VerifyAuth(ctx context.Context, token string) (entity.Tok
 		return entity.TokenInfo{}, errors.Wrap(serviceErrors.ErrInvalidToken, "user in token is not user in request")
 	}
 
-	perms, err := uc.permsRepo.GetUserPermissions(ctx, user.Uid)
+	roles, err := uc.accessRepo.GetUserRoles(ctx, user.Uid)
 	if err != nil {
-		log.Printf("usecaseAuth.VerifyAuth: failed to get user %s permissions: %v", tokenInfo.UserUid, err)
-		return entity.TokenInfo{}, errors.Wrap(err, "failed to get user permissions")
+		log.Printf("usecaseAuth.VerifyAuth: failed to get user %s roles: %v", user.Uid, err)
+		return entity.TokenInfo{}, errors.WithStack(err)
 	}
-	user.Permissions = perms
+	user.Roles = entity.RolesToStrings(roles)
 
 	session, isFound, err := uc.sessionsRepo.GetSessionByUid(ctx, tokenInfo.SessionUid)
 	if err != nil {
@@ -63,26 +68,21 @@ func (uc *UseCaseAuth) VerifyAuth(ctx context.Context, token string) (entity.Tok
 		return entity.TokenInfo{}, errors.Wrap(serviceErrors.ErrInvalidToken, "you should use last issued token")
 	}
 
-	if len(tokenInfo.Permissions) != len(user.Permissions) {
-		log.Printf("usecaseAuth.VerifyAuth: invalid permissions in user %s token", tokenInfo.UserUid)
-		return tokenInfo, errors.Wrap(serviceErrors.ErrInvalidToken, "invalid permissions in token")
+	if len(tokenInfo.Roles) != len(user.Roles) {
+		log.Printf("usecaseAuth.VerifyAuth: invalid roles in user %s token: len mismatch", tokenInfo.UserUid)
+		return tokenInfo, errors.Wrap(serviceErrors.ErrInvalidToken, "invalid roles in token")
 	}
 
-	permsMap := make(map[entity.UserPermission]struct{}, len(tokenInfo.Permissions))
-	for _, perm := range tokenInfo.Permissions {
-		permsMap[entity.UserPermission(perm)] = struct{}{}
+	rolesMap := make(map[string]struct{}, len(tokenInfo.Roles))
+	for _, role := range tokenInfo.Roles {
+		rolesMap[role] = struct{}{}
 	}
 
-	for _, perm := range user.Permissions {
-		if _, ok := permsMap[perm]; !ok {
-			log.Printf("usecaseAuth.VerifyAuth: invalid permissions in user %s token", tokenInfo.UserUid)
-			return tokenInfo, errors.Wrap(serviceErrors.ErrInvalidToken, "invalid permissions in token")
+	for _, role := range user.Roles {
+		if _, ok := rolesMap[role]; !ok {
+			log.Printf("usecaseAuth.VerifyAuth: invalid roles in user %s token: role %s doesnt exists in user", tokenInfo.UserUid, role)
+			return tokenInfo, errors.Wrap(serviceErrors.ErrInvalidToken, "invalid roles in token")
 		}
-	}
-
-	if tokenInfo.Role != string(user.Role) {
-		log.Printf("usecaseAuth.VerifyAuth: role from token is invalid: token role '%s' user role: '%s' user uid '%s'", tokenInfo.Role, user.Role, user.Uid)
-		return tokenInfo, errors.Wrap(serviceErrors.ErrInvalidToken, "invalid user role in token")
 	}
 
 	return tokenInfo, nil

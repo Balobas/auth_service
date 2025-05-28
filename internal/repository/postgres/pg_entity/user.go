@@ -17,18 +17,18 @@ var (
 	usersTableColumns = []string{
 		"uid",
 		"email",
-		"role",
+		"is_verified",
 		"created_at",
 		"updated_at",
 	}
 )
 
 type UserRow struct {
-	Uid       pgtype.UUID
-	Email     string
-	Role      string
-	CreatedAt pgtype.Timestamp
-	UpdatedAt pgtype.Timestamp
+	Uid        pgtype.UUID
+	Email      string
+	IsVerified bool
+	CreatedAt  pgtype.Timestamp
+	UpdatedAt  pgtype.Timestamp
 }
 
 func NewUserRow() *UserRow {
@@ -66,7 +66,8 @@ func (ur *UserRow) FromEntity(user entity.User) *UserRow {
 		Status: pgtype.Present,
 	}
 	ur.Email = user.Email
-	ur.Role = string(user.Role)
+
+	ur.IsVerified = user.IsVerified
 
 	if user.CreatedAt.Unix() == 0 {
 		ur.CreatedAt = pgtype.Timestamp{
@@ -95,11 +96,11 @@ func (ur *UserRow) FromEntity(user entity.User) *UserRow {
 
 func (ur *UserRow) ToEntity() entity.User {
 	return entity.User{
-		Uid:       ur.Uid.Bytes,
-		Email:     ur.Email,
-		Role:      entity.UserRole(ur.Role),
-		CreatedAt: ur.CreatedAt.Time,
-		UpdatedAt: ur.UpdatedAt.Time,
+		Uid:        ur.Uid.Bytes,
+		Email:      ur.Email,
+		IsVerified: ur.IsVerified,
+		CreatedAt:  ur.CreatedAt.Time,
+		UpdatedAt:  ur.UpdatedAt.Time,
 	}
 }
 
@@ -111,7 +112,7 @@ func (ur *UserRow) Values() []interface{} {
 	return []interface{}{
 		ur.Uid,
 		ur.Email,
-		ur.Role,
+		ur.IsVerified,
 		ur.CreatedAt,
 		ur.UpdatedAt,
 	}
@@ -125,7 +126,7 @@ func (ur *UserRow) Scan(row pgx.Row) error {
 	return row.Scan(
 		&ur.Uid,
 		&ur.Email,
-		&ur.Role,
+		&ur.IsVerified,
 		&ur.CreatedAt,
 		&ur.UpdatedAt,
 	)
@@ -135,7 +136,7 @@ func (ur *UserRow) ValuesForScan() []interface{} {
 	return []interface{}{
 		&ur.Uid,
 		&ur.Email,
-		&ur.Role,
+		&ur.IsVerified,
 		&ur.CreatedAt,
 		&ur.UpdatedAt,
 	}

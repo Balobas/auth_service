@@ -22,22 +22,24 @@ func (uc *UseCaseAuth) Refresh(ctx context.Context, token string) (string, strin
 		log.Printf("usecaseAuth.Refresh: failed to get user by email %s: %v", tokenInfo.Email, err)
 		return emptyTokensWithError(errors.WithStack(err))
 	}
-	perms, err := uc.permsRepo.GetUserPermissions(ctx, user.Uid)
+	roles, err := uc.accessRepo.GetUserRoles(ctx, user.Uid)
 	if err != nil {
-		log.Printf("usecaseAuth.Refresh: failed to get user %s permissions: %v", user.Uid, err)
+		log.Printf("usecaseAuth.Refresh: failed to get user %s roles: %v", user.Uid, err)
 		return emptyTokensWithError(errors.WithStack(err))
 	}
-	user.Permissions = perms
+
+	rolesStrs := entity.RolesToStrings(roles)
+
+	user.Roles = rolesStrs
 
 	refreshTime := time.Now()
 
 	newTokenInfo := entity.TokenInfo{
-		UserUid:     user.Uid,
-		Email:       user.Email,
-		Permissions: user.PermissionsStrings(),
-		Role:        string(user.Role),
-		SessionUid:  tokenInfo.SessionUid,
-		IssuedAt:    refreshTime.Unix(),
+		UserUid:    user.Uid,
+		Email:      user.Email,
+		Roles:      rolesStrs,
+		SessionUid: tokenInfo.SessionUid,
+		IssuedAt:   refreshTime.Unix(),
 	}
 
 	access, err := uc.jwtManager.NewToken(newTokenInfo, uc.cfg.AccessJwtTTL())

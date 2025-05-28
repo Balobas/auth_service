@@ -53,13 +53,14 @@ func (s *AuthServerGrpc) UnaryAuthInterceptor() grpc.UnaryServerInterceptor {
 
 var (
 	withoutAuth = map[string]struct{}{
-		"/auth.Auth/VerifyEmail": {},
-		"/auth.Auth/Verify":      {},
-		"/auth.Auth/Login":       {},
-		"/auth.Auth/Register":    {},
-		"/auth.Auth/Refresh":     {},
-		"/auth.Auth/CreateAdmin": {},
-		"/auth.Auth/HealthCheck": {},
+		"/auth.Auth/VerifyEmail":  {},
+		"/auth.Auth/Verify":       {},
+		"/auth.Auth/VerifyAccess": {},
+		"/auth.Auth/Login":        {},
+		"/auth.Auth/Register":     {},
+		"/auth.Auth/Refresh":      {},
+		"/auth.Auth/CreateAdmin":  {},
+		"/auth.Auth/HealthCheck":  {},
 	}
 )
 
@@ -70,7 +71,7 @@ func contextWithUserInfo(ctx context.Context, tokenInfo entity.TokenInfo, tokenS
 		ctx, userCtxKey{},
 		UserInfo{
 			UserUid: tokenInfo.UserUid,
-			Role:    entity.UserRole(tokenInfo.Role),
+			Roles:   tokenInfo.Roles,
 			Token:   tokenStr,
 		},
 	)
@@ -86,7 +87,7 @@ func userInfoFromContext(ctx context.Context) UserInfo {
 
 type UserInfo struct {
 	UserUid uuid.UUID
-	Role    entity.UserRole
+	Roles   []string
 	Token   string
 }
 

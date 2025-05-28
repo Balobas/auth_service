@@ -47,7 +47,7 @@ func TestVerificationRepo(t *testing.T) {
 	err := usersRepo.CreateUser(ctx, entity.User{
 		Uid:       userUid,
 		Email:     ver.Email,
-		Role:      "user",
+		Roles:     []string{"user"},
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	})

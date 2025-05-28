@@ -16,12 +16,12 @@ func (s *AuthServerGrpc) UpdatePermission(ctx context.Context, req *auth_v1.Perm
 
 	userInfo := userInfoFromContext(ctx)
 
-	if userInfo.Role != entity.UserRoleAdmin {
+	if !entity.HasRole(userInfo.Roles, entity.UserRoleAdmin) {
 		log.Printf("authServerGrpc.UpdatePermission: user %s is not admin. permission denied", userInfo.UserUid)
 		return nil, errors.Wrap(serviceErrors.ErrNotAllowedByPermissions, "caller user is not admin")
 	}
 
-	if err := s.ucPermissions.UpdatePermission(ctx, entity.Permission{
+	if err := s.ucAccess.UpdatePermission(ctx, entity.Permission{
 		Key:         req.GetKey(),
 		Description: req.GetDescription(),
 	}); err != nil {

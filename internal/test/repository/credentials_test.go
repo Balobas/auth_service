@@ -34,7 +34,7 @@ func TestCredsRepo(t *testing.T) {
 	err := usersRepo.CreateUser(ctx, entity.User{
 		Uid:       userUid,
 		Email:     "hui@test",
-		Role:      "user",
+		Roles:     []string{"user"},
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	})

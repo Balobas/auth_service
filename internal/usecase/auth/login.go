@@ -35,12 +35,15 @@ func (uc *UseCaseAuth) Login(ctx context.Context, params entity.LoginParams) (st
 		return emptyTokensWithError(errors.WithStack(err))
 	}
 
-	permissions, err := uc.permsRepo.GetUserPermissions(ctx, user.Uid)
+	roles, err := uc.accessRepo.GetUserRoles(ctx, user.Uid)
 	if err != nil {
-		log.Printf("usecaseAuth.Login: failed to get user %s permissions: %v", user.Uid, err)
+		log.Printf("usecaseAuth.Login: failed to get user %s roles: %v", user.Uid, err)
 		return emptyTokensWithError(errors.WithStack(err))
 	}
-	user.Permissions = permissions
+
+	rolesStrs := entity.RolesToStrings(roles)
+
+	user.Roles = rolesStrs
 
 	if err := uc.ucCredentials.Validate(ctx, user.Uid, params.Password); err != nil {
 		log.Printf("usecaseAuth.Login: wrong password %v", err)
@@ -68,12 +71,11 @@ func (uc *UseCaseAuth) Login(ctx context.Context, params entity.LoginParams) (st
 	}
 
 	tokenInfo := entity.TokenInfo{
-		UserUid:     user.Uid,
-		Email:       user.Email,
-		Permissions: user.PermissionsStrings(),
-		Role:        string(user.Role),
-		SessionUid:  session.Uid,
-		IssuedAt:    loginTime.Unix(),
+		UserUid:    user.Uid,
+		Email:      user.Email,
+		Roles:      rolesStrs,
+		SessionUid: session.Uid,
+		IssuedAt:   loginTime.Unix(),
 	}
 
 	access, err := uc.jwtManager.NewToken(tokenInfo, uc.cfg.AccessJwtTTL())
