@@ -16,7 +16,7 @@ func (r *AccessRepository) IsUserHasPermissionsForResource(ctx context.Context, 
 	stmt := `with perms as (
 		select distinct on (rp.permission) rp.permission from user_roles ur inner join roles_permissions rp on ur.role = rp.role where ur.user_uid = $1
 		)
-		select true as res from resources_permissions where uri = $2 and method = $3 and permission in (select permission from perms);
+		select true as res from resources_permissions where uri = $2 and method = $3 and (permission in (select permission from perms) or permission = 'none');
 	`
 
 	args := []interface{}{
@@ -31,6 +31,7 @@ func (r *AccessRepository) IsUserHasPermissionsForResource(ctx context.Context, 
 	row := r.DB().QueryRow(ctx, stmt, args...)
 
 	var res bool
+
 	err := row.Scan(&res)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {

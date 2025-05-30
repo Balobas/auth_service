@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 
+	"github.com/balobas/auth_service/internal/entity"
 	serviceErrors "github.com/balobas/auth_service/pkg/service_errors"
 	"github.com/pkg/errors"
 )
@@ -15,6 +16,11 @@ func (uc *UseCaseAuth) VerifyAccess(ctx context.Context, uri string, method stri
 	if err != nil {
 		log.Printf("usecaseAuth.VerifyAccess: failed to verify auth: %v", err)
 		return err
+	}
+
+	if entity.HasRole(tokenInfo.Roles, entity.UserRoleAdmin) {
+		log.Printf("usecaseAuth.VerifyAccess: user is admin")
+		return nil
 	}
 
 	hasPerms, err := uc.accessRepo.IsUserHasPermissionsForResource(ctx, tokenInfo.UserUid, uri, method)

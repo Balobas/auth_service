@@ -8,14 +8,18 @@ create table roles (
 
 create table user_roles (
     user_uid uuid references users(uid) on delete cascade,
-    role varchar(50) references roles(role) on delete cascade
+    role varchar(50) references roles(role) on delete cascade,
+    primary key (user_uid, role)
 );
 
-insert into roles (role, description) values ('admin', 'god of the system');
+insert into roles (role, description) values 
+('admin', 'god of the system'),
+('user', 'default user');
 
 create table roles_permissions (
     role varchar(50) references roles(role) on delete cascade,
-    permission varchar(100) references permissions(key) on delete cascade
+    permission varchar(100) references permissions(key) on delete cascadeб
+    primary key (role, permission)
 );
 
 create table resources_permissions (
@@ -25,10 +29,13 @@ create table resources_permissions (
     primary key (uri, method)
 );
 
+insert into permissions (key, description) values ('none', 'Права не требуются. Технический пермишен');
+
 alter table users drop column role;
 drop type user_role;
 
 drop table user_permissions;
+drop table deleting_permissions;
 
 alter table users add column is_verified boolean not null default false;
 

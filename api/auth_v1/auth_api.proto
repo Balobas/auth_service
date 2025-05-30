@@ -13,7 +13,6 @@ service Auth {
     rpc UpdateUser(UpdateUserRequest) returns (JwtResponse); // required accessJwt in ctx
     rpc GetUser(GetUserRequest) returns (GetUserResponse); // required accessJwt in ctx
     rpc DeleteUser(DeleteUserRequest) returns (google.protobuf.Empty); // required accessJwt in ctx
-    rpc CreateAdmin(AdminCreateRequest) returns (AdminCreateResponse);
     rpc GetAdmins(google.protobuf.Empty) returns (AdminsResponse);
 
     rpc Login(LoginRequest) returns (JwtResponse);
