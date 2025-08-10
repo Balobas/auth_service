@@ -1,4 +1,4 @@
-package deliveryGrpc
+gpackage deliveryGrpc
 
 import (
 	"context"
@@ -17,6 +17,9 @@ func (s *AuthServerGrpc) Logout(ctx context.Context, req *auth_v1.LogoutRequest)
 	log.Printf("authServerGrpc.Logout: user uid %s, caller %s", req.GetUid(), userInfo.UserUid)
 
 	userUid := uuid.FromStringOrNil(req.GetUid())
+	if uuid.Equal(userUid, uuid.UUID{}) {
+		userUid = userInfo.UserUid
+	}
 
 	if !entity.HasRole(userInfo.Roles, entity.UserRoleAdmin) && !uuid.Equal(userInfo.UserUid, userUid) {
 		log.Printf("authServerGrpc.Logout: user %s cant logout user %s", userInfo.UserUid, userUid)
