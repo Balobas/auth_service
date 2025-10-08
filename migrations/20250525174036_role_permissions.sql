@@ -18,7 +18,7 @@ insert into roles (role, description) values
 
 create table roles_permissions (
     role varchar(50) references roles(role) on delete cascade,
-    permission varchar(100) references permissions(key) on delete cascadeб
+    permission varchar(100) references permissions(key) on delete cascade
     primary key (role, permission)
 );
 
