@@ -60,7 +60,7 @@ func (uc *UseCaseAuth) VerifyAuth(ctx context.Context, token string) (entity.Tok
 	}
 	if !isFound {
 		log.Printf("usecaseAuth.VerifyAuth: session %s not found", tokenInfo.SessionUid)
-		return entity.TokenInfo{}, errors.Wrap(serviceErrors.ErrNotFound, "session")
+		return entity.TokenInfo{}, errors.Wrap(serviceErrors.ErrInvalidToken, "session not found")
 	}
 
 	if session.TokensIssuedAt != tokenInfo.IssuedAt {
