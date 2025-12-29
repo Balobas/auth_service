@@ -6,7 +6,7 @@ import (
 
 	"github.com/balobas/auth_service/internal/entity"
 	pgEntity "github.com/balobas/auth_service/internal/repository/postgres/pg_entity"
-	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v5"
 	"github.com/pkg/errors"
 	uuid "github.com/satori/go.uuid"
 )
@@ -58,7 +58,7 @@ func (r *VerificationRepository) GetVerificationsInStatus(ctx context.Context, s
 		return nil, errors.Wrapf(err, "failed to get verifications in status %s", status)
 	}
 	log.Printf("successfully get verification in status")
-	return rows.ToEntities(), nil
+	return rows.ToEntity(), nil
 }
 
 func (r *VerificationRepository) GetVerificationByToken(ctx context.Context, token string) (entity.Verification, bool, error) {

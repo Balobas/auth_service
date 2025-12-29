@@ -7,6 +7,7 @@ import (
 	"github.com/balobas/auth_service/internal/entity"
 	serviceErrors "github.com/balobas/auth_service/pkg/service_errors"
 	"github.com/balobas/auth_service/pkg/validations"
+	common "github.com/balobas/sport_city_common"
 	"github.com/pkg/errors"
 	uuid "github.com/satori/go.uuid"
 )
@@ -24,7 +25,7 @@ func (uc *UseCaseUsers) GetUserByUid(ctx context.Context, uid uuid.UUID) (entity
 		isFound bool
 		err     error
 	)
-	if err := uc.txManager.NewPgTransaction().Execute(ctx, func(ctx context.Context) error {
+	if err := uc.dbm.ExecuteTx(uc.dbm.ReplicaCtx(ctx), common.RepeatableRead, func(ctx context.Context) error {
 		user, isFound, err = uc.usersRepo.GetUserByUid(ctx, uid)
 		if err != nil {
 			log.Printf("usecaseUsers.GetUserByUid: failed to get user %s: %v", uid, err)
@@ -62,7 +63,7 @@ func (uc *UseCaseUsers) GetUserByEmail(ctx context.Context, email string) (entit
 		user entity.User
 		err  error
 	)
-	if err := uc.txManager.NewPgTransaction().Execute(ctx, func(ctx context.Context) error {
+	if err := uc.dbm.ExecuteTx(uc.dbm.ReplicaCtx(ctx), common.RepeatableRead, func(ctx context.Context) error {
 		var isFound bool
 		user, isFound, err = uc.usersRepo.GetByEmail(ctx, email)
 		if err != nil {

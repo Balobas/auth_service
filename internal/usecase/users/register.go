@@ -8,6 +8,7 @@ import (
 	"github.com/balobas/auth_service/internal/entity"
 	serviceErrors "github.com/balobas/auth_service/pkg/service_errors"
 	"github.com/balobas/auth_service/pkg/validations"
+	common "github.com/balobas/sport_city_common"
 	"github.com/pkg/errors"
 	uuid "github.com/satori/go.uuid"
 )
@@ -29,8 +30,7 @@ func (uc *UseCaseUsers) Register(ctx context.Context, user entity.User, password
 	user.IsVerified = false
 	user.CreatedAt = time.Now()
 
-	tx := uc.txManager.NewPgTransaction()
-	if err := tx.Execute(ctx, func(ctx context.Context) error {
+	if err := uc.dbm.ExecuteTx(ctx, common.Serializable, func(ctx context.Context) error {
 
 		_, isFound, err := uc.usersRepo.GetByEmail(ctx, user.Email)
 		if err != nil {

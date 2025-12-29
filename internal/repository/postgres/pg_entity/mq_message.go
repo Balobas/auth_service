@@ -5,8 +5,9 @@ import (
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/balobas/auth_service/internal/entity"
-	"github.com/jackc/pgtype"
-	"github.com/jackc/pgx/v4"
+	basePgEntity "github.com/balobas/sport_city_common/repository/postgres/entity"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type MqMessageRow struct {
@@ -29,24 +30,21 @@ func (m *MqMessageRow) New() *MqMessageRow {
 
 func (m *MqMessageRow) FromEntity(mqMessage entity.MqMessage) *MqMessageRow {
 	m.Uid = pgtype.UUID{
-		Bytes:  mqMessage.Uid,
-		Status: pgtype.Present,
+		Bytes: mqMessage.Uid,
+		Valid: true,
 	}
 	m.SubjectName = mqMessage.SubjectName
 	m.Payload = string(mqMessage.Payload)
 	m.LastErrorMessage = mqMessage.LastErrorMessage
 
 	m.CreatedAt = pgtype.Timestamp{
-		Time:   mqMessage.CreatedAt,
-		Status: pgtype.Present,
+		Time:  mqMessage.CreatedAt,
+		Valid: true,
 	}
-	m.UpdatedAt = pgtype.Timestamp{Time: mqMessage.UpdatedAt, Status: pgtype.Present}
-	if mqMessage.UpdatedAt.Equal(time.Time{}) {
-		m.UpdatedAt.Status = pgtype.Null
-	}
-	m.SendAt = pgtype.Timestamp{Time: mqMessage.SendAt, Status: pgtype.Present}
+	m.UpdatedAt = pgtype.Timestamp{Time: mqMessage.UpdatedAt, Valid: true}
+	m.SendAt = pgtype.Timestamp{Time: mqMessage.SendAt, Valid: true}
 	if mqMessage.SendAt.Equal(time.Time{}) {
-		m.SendAt.Status = pgtype.Null
+		m.SendAt.Valid = false
 	}
 
 	return m
@@ -105,9 +103,9 @@ func (m *MqMessageRow) ConditionUidEqual() sq.Eq {
 }
 
 func (m *MqMessageRow) ConditionSendAtIsNull() sq.Eq {
-	return sq.Eq{"send_at": pgtype.Timestamp{Status: pgtype.Null}}
+	return sq.Eq{"send_at": pgtype.Timestamp{Valid: false}}
 }
 
-func NewMqMessageRows() *Rows[*MqMessageRow, entity.MqMessage] {
-	return &Rows[*MqMessageRow, entity.MqMessage]{}
+func NewMqMessageRows() *basePgEntity.Rows[*MqMessageRow, entity.MqMessage] {
+	return &basePgEntity.Rows[*MqMessageRow, entity.MqMessage]{}
 }

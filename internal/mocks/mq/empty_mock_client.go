@@ -3,13 +3,13 @@ package mqMock
 import (
 	"context"
 
-	"github.com/balobas/auth_service/internal/client"
+	mqClient "github.com/balobas/sport_city_common/clients/mq"
 )
 
 type EmptyMqClientMock struct {
 }
 
-func NewEmptyMqClientMock() client.MqClient {
+func NewEmptyMqClientMock() mqClient.MqClient {
 	return &EmptyMqClientMock{}
 }
 
@@ -17,7 +17,11 @@ func (m *EmptyMqClientMock) Publish(ctx context.Context, subj string, data []byt
 	return nil
 }
 
-func (m *EmptyMqClientMock) Subscribe(ctx context.Context, handlers map[string]map[string]client.MqMsgHandler) error {
+func (m *EmptyMqClientMock) Subscribe(ctx context.Context, handlers map[string]map[string]mqClient.MqMsgHandler) error {
+	return nil
+}
+
+func (m *EmptyMqClientMock) SubscribeV2(ctx context.Context, handlers map[string]map[string]mqClient.MqMsgHandler) error {
 	return nil
 }
 

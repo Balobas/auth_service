@@ -2,15 +2,15 @@ package useCaseOutboxMessages
 
 type UseCaseOutboxMessages struct {
 	cfg              Config
-	outboxRepository OutboxRepository
+	riverClient  RiverClient
 }
 
 func New(
 	cfg Config,
-	outboxRepository OutboxRepository,
+	riverClient RiverClient,
 ) *UseCaseOutboxMessages {
 	return &UseCaseOutboxMessages{
 		cfg:              cfg,
-		outboxRepository: outboxRepository,
+		riverClient: riverClient,
 	}
 }

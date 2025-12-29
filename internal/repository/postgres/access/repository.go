@@ -1,15 +1,15 @@
 package repositoryAccess
 
 import (
-	"github.com/balobas/auth_service/internal/client"
-	repositoryPostgres "github.com/balobas/auth_service/internal/repository/postgres"
+	DBclient "github.com/balobas/sport_city_common/clients/database"
+	repositoryPostgres "github.com/balobas/sport_city_common/repository/postgres"
 )
 
 type AccessRepository struct {
 	*repositoryPostgres.BasePgRepository
 }
 
-func New(client client.ClientDB) *AccessRepository {
+func New(client DBclient.ClientDB) *AccessRepository {
 	return &AccessRepository{
 		repositoryPostgres.New(client),
 	}

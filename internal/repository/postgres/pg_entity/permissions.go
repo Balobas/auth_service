@@ -3,7 +3,8 @@ package pgEntity
 import (
 	sq "github.com/Masterminds/squirrel"
 	"github.com/balobas/auth_service/internal/entity"
-	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v5"
+	basePgEntity "github.com/balobas/sport_city_common/repository/postgres/entity"
 )
 
 const permissionsTableName = "permissions"
@@ -76,6 +77,6 @@ func (p *PermissionRow) ConditionUidEqual() sq.Eq {
 	}
 }
 
-func NewPermissionsRows() *Rows[*PermissionRow, entity.Permission] {
-	return &Rows[*PermissionRow, entity.Permission]{}
+func NewPermissionsRows() *basePgEntity.Rows[*PermissionRow, entity.Permission] {
+	return &basePgEntity.Rows[*PermissionRow, entity.Permission]{}
 }

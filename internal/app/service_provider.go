@@ -5,35 +5,36 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/balobas/auth_service/internal/client"
-	natsClient "github.com/balobas/auth_service/internal/client/nats"
-	"github.com/balobas/auth_service/internal/client/pg"
 	"github.com/balobas/auth_service/internal/config"
 	deliveryGrpc "github.com/balobas/auth_service/internal/delivery/grpc"
 	"github.com/balobas/auth_service/internal/entity"
 	jwtManager "github.com/balobas/auth_service/internal/manager/jwt"
-	"github.com/balobas/auth_service/internal/manager/transaction"
 	emailMock "github.com/balobas/auth_service/internal/mocks/email"
 	mqMock "github.com/balobas/auth_service/internal/mocks/mq"
-	outboxMessagesMockRepository "github.com/balobas/auth_service/internal/mocks/repository/outbox_messages"
 	repositoryKeys "github.com/balobas/auth_service/internal/repository/keys"
 	accessRepository "github.com/balobas/auth_service/internal/repository/postgres/access"
 	repositoryConfig "github.com/balobas/auth_service/internal/repository/postgres/config"
 	repositoryCredentials "github.com/balobas/auth_service/internal/repository/postgres/credentials"
-	outboxRepository "github.com/balobas/auth_service/internal/repository/postgres/outbox"
 	sessionRepository "github.com/balobas/auth_service/internal/repository/postgres/session"
 	repositoryUsers "github.com/balobas/auth_service/internal/repository/postgres/users"
 	repositoryVerification "github.com/balobas/auth_service/internal/repository/postgres/verification"
 	"github.com/balobas/auth_service/internal/shutdown"
+	useCaseAccess "github.com/balobas/auth_service/internal/usecase/access"
 	useCaseAuth "github.com/balobas/auth_service/internal/usecase/auth"
 	useCaseConfig "github.com/balobas/auth_service/internal/usecase/config"
 	useCaseCredentials "github.com/balobas/auth_service/internal/usecase/credentials"
 	useCaseOutboxMessages "github.com/balobas/auth_service/internal/usecase/outbox_messages"
-	useCaseAccess "github.com/balobas/auth_service/internal/usecase/access"
 	useCaseUsers "github.com/balobas/auth_service/internal/usecase/users"
 	useCaseVerification "github.com/balobas/auth_service/internal/usecase/verification"
-	workerPublisher "github.com/balobas/auth_service/internal/worker/publisher"
+	riverWorkers "github.com/balobas/auth_service/internal/worker/river"
 	workerVerification "github.com/balobas/auth_service/internal/worker/verification"
+	DBclient "github.com/balobas/sport_city_common/clients/database"
+	pgRw "github.com/balobas/sport_city_common/clients/database/pg_rw"
+	clientMq "github.com/balobas/sport_city_common/clients/mq"
+	natsClient "github.com/balobas/sport_city_common/clients/mq/nats"
+	"github.com/balobas/sport_city_common/logger"
+	dbManager "github.com/balobas/sport_city_common/managers/database"
+	riverOutboxPublisher "github.com/balobas/sport_city_common/worker/river/outbox_publisher"
 )
 
 type serviceProvider struct {
@@ -41,20 +42,21 @@ type serviceProvider struct {
 	grpcConfig    *config.ConfigGRPC
 	serviceConfig *config.ServiceConfig
 
-	pgClient    client.ClientDB
+	pgClient    DBclient.ClientDB
 	emailClient EmailClient
-	mqClient    client.MqClient
+	mqClient    clientMq.MqClient
 
-	keysRepository           *repositoryKeys.KeysRepository
-	usersRepository          *repositoryUsers.UsersRepository
-	accessRepository         *accessRepository.AccessRepository
-	credentialsRepository    *repositoryCredentials.CredentialsRepository
-	sessionsRepository       *sessionRepository.SessionRepository
-	verificationRepository   *repositoryVerification.VerificationRepository
-	configRepository         *repositoryConfig.ConfigRepository
-	outboxMessagesRepository OutboxMessagesRepository
+	riverClient *riverWorkers.Client
 
-	txManager  *transaction.Manager
+	keysRepository         *repositoryKeys.KeysRepository
+	usersRepository        *repositoryUsers.UsersRepository
+	accessRepository       *accessRepository.AccessRepository
+	credentialsRepository  *repositoryCredentials.CredentialsRepository
+	sessionsRepository     *sessionRepository.SessionRepository
+	verificationRepository *repositoryVerification.VerificationRepository
+	configRepository       *repositoryConfig.ConfigRepository
+
+	dbManager  *dbManager.Manager
 	jwtManager *jwtManager.JwtManager
 
 	useCaseConfig         *useCaseConfig.UseCaseConfig
@@ -65,8 +67,8 @@ type serviceProvider struct {
 	useCaseAccess         *useCaseAccess.UseCaseAccess
 	useCaseOutboxMessages *useCaseOutboxMessages.UseCaseOutboxMessages
 
-	workerVerification       *workerVerification.Worker
-	workerMqPublisher        *workerPublisher.Worker
+	workerVerification *workerVerification.Worker
+	workerMqPublisher  *riverOutboxPublisher.Worker
 
 	authServerGrpc *deliveryGrpc.AuthServerGrpc
 }
@@ -103,9 +105,13 @@ func (sp *serviceProvider) ServiceConfig() *config.ServiceConfig {
 	return sp.serviceConfig
 }
 
-func (sp *serviceProvider) PgClient(ctx context.Context) client.ClientDB {
+func (sp *serviceProvider) PgClient(ctx context.Context) DBclient.ClientDB {
 	if sp.pgClient == nil {
-		client, err := pg.NewClient(ctx, sp.PgConfig().DSN())
+		client, err := pgRw.NewClientRW(
+			ctx,
+			sp.PgConfig().DSN(), nil,
+			sp.pgConfig.DSN(), nil,
+		)
 		if err != nil {
 			log.Printf("failed to create pgClient: %v", err)
 			panic("failed to create pgClient")
@@ -118,6 +124,21 @@ func (sp *serviceProvider) PgClient(ctx context.Context) client.ClientDB {
 	return sp.pgClient
 }
 
+func (sp *serviceProvider) RiverClient(ctx context.Context) *riverWorkers.Client {
+	if sp.riverClient == nil {
+		c, err := riverWorkers.NewClient(sp.ServiceConfig().RiverConfig(), sp.PgClient(ctx))
+		if err != nil {
+			log := logger.From(ctx)
+			log.Error().Err(err).Msg("failed to create river client")
+			panic("failed to create river client")
+		}
+		shutdown.Add(c.Stop)
+
+		sp.riverClient = c
+	}
+	return sp.riverClient
+}
+
 func (sp *serviceProvider) EmailClient(ctx context.Context) EmailClient {
 	if sp.emailClient == nil {
 		// sp.emailClient = email.NewClient(ctx, sp.ServiceConfig())
@@ -126,7 +147,7 @@ func (sp *serviceProvider) EmailClient(ctx context.Context) EmailClient {
 	return sp.emailClient
 }
 
-func (sp *serviceProvider) MqClient(ctx context.Context) client.MqClient {
+func (sp *serviceProvider) MqClient(ctx context.Context) clientMq.MqClient {
 	if sp.mqClient == nil {
 		cfg := sp.ServiceConfig()
 		if cfg.EnableMqMessages() {
@@ -196,24 +217,11 @@ func (sp *serviceProvider) ConfigRepository(ctx context.Context) *repositoryConf
 	return sp.configRepository
 }
 
-func (sp *serviceProvider) OutboxMessagesRepository(ctx context.Context) OutboxMessagesRepository {
-	if sp.outboxMessagesRepository == nil {
-		if sp.ServiceConfig().EnableMqMessages() {
-			sp.outboxMessagesRepository = outboxRepository.New(sp.PgClient(ctx))
-			return sp.outboxMessagesRepository
-		}
-
-		log.Printf("mq messages disabled. use empty mock outbox messages repository")
-		sp.outboxMessagesRepository = outboxMessagesMockRepository.New()
+func (sp *serviceProvider) DbManager(ctx context.Context) *dbManager.Manager {
+	if sp.dbManager == nil {
+		sp.dbManager = dbManager.NewDbManager(sp.PgClient(ctx))
 	}
-	return sp.outboxMessagesRepository
-}
-
-func (sp *serviceProvider) TxManager(ctx context.Context) *transaction.Manager {
-	if sp.txManager == nil {
-		sp.txManager = transaction.NewTxManager(sp.PgClient(ctx))
-	}
-	return sp.txManager
+	return sp.dbManager
 }
 
 func (sp *serviceProvider) JwtManager(ctx context.Context) *jwtManager.JwtManager {
@@ -245,7 +253,7 @@ func (sp *serviceProvider) UseCaseUsers(ctx context.Context) *useCaseUsers.UseCa
 			sp.UsersRepository(ctx),
 			sp.AccessRepository(ctx),
 			sp.UseCaseVerification(ctx),
-			sp.TxManager(ctx),
+			sp.DbManager(ctx),
 			sp.UseCaseCredentials(ctx),
 			sp.JwtManager(ctx),
 			sp.UseCaseOutboxMessages(ctx),
@@ -270,7 +278,7 @@ func (sp *serviceProvider) UseCaseVerification(ctx context.Context) *useCaseVeri
 			sp.ServiceConfig(),
 			sp.VerificationRepository(ctx),
 			sp.UsersRepository(ctx),
-			sp.TxManager(ctx),
+			sp.DbManager(ctx),
 		)
 	}
 	return sp.useCaseVerification
@@ -285,7 +293,7 @@ func (sp *serviceProvider) UseCaseAuth(ctx context.Context) *useCaseAuth.UseCase
 			sp.UseCaseUsers(ctx),
 			sp.UseCaseCredentials(ctx),
 			sp.JwtManager(ctx),
-			sp.TxManager(ctx),
+			sp.DbManager(ctx),
 		)
 	}
 	return sp.useCaseAuth
@@ -296,7 +304,7 @@ func (sp *serviceProvider) UseCaseAccess(ctx context.Context) *useCaseAccess.Use
 		sp.useCaseAccess = useCaseAccess.New(
 			sp.AccessRepository(ctx),
 			sp.UsersRepository(ctx),
-			sp.TxManager(ctx),
+			sp.DbManager(ctx),
 		)
 	}
 	return sp.useCaseAccess
@@ -306,7 +314,7 @@ func (sp *serviceProvider) UseCaseOutboxMessages(ctx context.Context) *useCaseOu
 	if sp.useCaseOutboxMessages == nil {
 		sp.useCaseOutboxMessages = useCaseOutboxMessages.New(
 			sp.ServiceConfig(),
-			sp.OutboxMessagesRepository(ctx),
+			sp.RiverClient(ctx),
 		)
 	}
 	return sp.useCaseOutboxMessages
@@ -323,13 +331,9 @@ func (sp *serviceProvider) WorkerVerification(ctx context.Context) *workerVerifi
 	return sp.workerVerification
 }
 
-func (sp *serviceProvider) WorkerMqPublisher(ctx context.Context) *workerPublisher.Worker {
+func (sp *serviceProvider) WorkerMqPublisher(ctx context.Context) *riverOutboxPublisher.Worker {
 	if sp.workerMqPublisher == nil {
-		sp.workerMqPublisher = workerPublisher.New(
-			sp.ServiceConfig(),
-			sp.OutboxMessagesRepository(ctx),
-			sp.MqClient(ctx),
-		)
+		sp.workerMqPublisher = riverOutboxPublisher.New(sp.MqClient(ctx))
 	}
 	return sp.workerMqPublisher
 }

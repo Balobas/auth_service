@@ -37,7 +37,7 @@ func (r *AccessRepository) GetRoles(ctx context.Context, rolePattern string, lim
 		args = append(args, limit)
 	}
 
-	rows, err := r.DB().Query(ctx, stmt.String(), args...)
+	rows, err := r.Query(ctx, stmt.String(), args...)
 	if err != nil {
 		log.Printf("accessRepository.GetRoles: failed to get roles  (pattern %s): %v", rolePattern, err)
 		return nil, errors.WithStack(err)

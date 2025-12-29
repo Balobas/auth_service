@@ -16,7 +16,7 @@ func (r *AccessRepository) DeleteRole(ctx context.Context, role string) error {
 
 	stmt := `DELETE FROM roles WHERE role=$1`
 
-	_, err := r.DB().Exec(ctx, stmt, role)
+	_, err := r.Exec(ctx, stmt, role)
 	if err != nil {
 		log.Printf("accessRepository.DeleteRole: failed to delete role %s: %v", role, err)
 		return errors.WithStack(err)

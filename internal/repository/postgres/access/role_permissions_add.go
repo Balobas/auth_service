@@ -34,7 +34,7 @@ func (r *AccessRepository) AddPermissionsToRole(ctx context.Context, role string
 		args = append(args, role, permissions[i])
 	}
 
-	if _, err := r.DB().Exec(ctx, stmt.String(), args...); err != nil {
+	if _, err := r.Exec(ctx, stmt.String(), args...); err != nil {
 		log.Printf("accessRepository.AddPermissionsToRole: failed :%v", err)
 		return errors.WithStack(err)
 	}

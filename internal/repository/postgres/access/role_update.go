@@ -17,7 +17,7 @@ func (r *AccessRepository) UpdateRole(ctx context.Context, role entity.Role) err
 
 	stmt := `UPDATE roles SET description=$1 WHERE role=$2`
 
-	_, err := r.DB().Exec(ctx, stmt, role.Description, role.Role)
+	_, err := r.Exec(ctx, stmt, role.Description, role.Role)
 	if err != nil {
 		log.Printf("accessRepository.UpdateRole: failed to update role %s: %v", role.Role, err)
 		return errors.WithStack(err)

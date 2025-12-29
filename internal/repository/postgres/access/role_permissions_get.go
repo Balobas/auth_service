@@ -13,7 +13,7 @@ func (r *AccessRepository) GetRolePermissions(ctx context.Context, role string) 
 
 	stmt := "SELECT permission, p.description FROM roles_permissions rp INNER JOIN permissions p on rp.permission=p.key WHERE role=$1"
 
-	rows, err := r.DB().Query(ctx, stmt, role)
+	rows, err := r.Query(ctx, stmt, role)
 	if err != nil {
 		log.Printf("accessRepository.GetRolePermissions: failed to get role %s permissions: %v", role, err)
 		return nil, errors.WithStack(err)

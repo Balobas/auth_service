@@ -3,13 +3,13 @@ package pgEntity
 import (
 	sq "github.com/Masterminds/squirrel"
 	"github.com/balobas/auth_service/internal/entity"
-	"github.com/jackc/pgtype"
-	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type UserCredentialsRow struct {
 	UserUid      pgtype.UUID
-	PasswordHash pgtype.Varchar
+	PasswordHash pgtype.Text
 }
 
 const userCredentialsTableName = "users_credentials"
@@ -27,12 +27,12 @@ func NewUserCredentialsRow() *UserCredentialsRow {
 
 func (uc *UserCredentialsRow) FromEntity(creds entity.UserCredentials) *UserCredentialsRow {
 	uc.UserUid = pgtype.UUID{
-		Bytes:  creds.UserUid,
-		Status: pgtype.Present,
+		Bytes: creds.UserUid,
+		Valid: true,
 	}
-	uc.PasswordHash = pgtype.Varchar{
+	uc.PasswordHash = pgtype.Text{
 		String: string(creds.PasswordHash),
-		Status: pgtype.Present,
+		Valid: true,
 	}
 	return uc
 }

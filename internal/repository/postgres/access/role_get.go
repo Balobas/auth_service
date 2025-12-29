@@ -5,7 +5,7 @@ import (
 	"log"
 
 	"github.com/balobas/auth_service/internal/entity"
-	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v5"
 	"github.com/pkg/errors"
 )
 
@@ -18,7 +18,7 @@ func (r *AccessRepository) GetRole(ctx context.Context, role string) (entity.Rol
 
 	stmt := "SELECT role, description FROM roles WHERE role=$1"
 
-	row := r.DB().QueryRow(ctx, stmt, role)
+	row := r.QueryRow(ctx, stmt, role)
 
 	res := entity.Role{}
 

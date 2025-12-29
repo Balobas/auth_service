@@ -8,7 +8,9 @@ import (
 
 	"github.com/balobas/auth_service/internal/config"
 	"github.com/balobas/auth_service/internal/shutdown"
+	"github.com/balobas/auth_service/migrations"
 	"github.com/balobas/auth_service/pkg/auth_v1"
+	"github.com/balobas/sport_city_common/logger"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -49,9 +51,10 @@ func (a *App) Run(ctx context.Context) error {
 		return errors.Wrap(err, "failed to init app deps")
 	}
 
+	a.migrateDb(ctx)
 	a.runGrpcServer(ctx, done)
+	a.runWorkers(ctx)
 	a.runVerificationWorker(ctx)
-	a.runMqPublisherWorker(ctx)
 
 	select {
 	case <-ctx.Done():
@@ -66,6 +69,7 @@ func (a *App) initDeps(ctx context.Context) error {
 		a.initEnv,
 		a.initServiceProvider,
 		a.initGrpcServer,
+		a.buildRiverWorkers,
 	}
 
 	for _, f := range inits {
@@ -147,11 +151,25 @@ func (a *App) runVerificationWorker(ctx context.Context) {
 	go a.serviceProvider.WorkerVerification(ctx).Run(ctx)
 }
 
-func (a *App) runMqPublisherWorker(ctx context.Context) {
-	if !a.serviceProvider.ServiceConfig().EnableMqMessages() {
-		log.Printf("mq messages disabled. dont run mqPublisherWorker")
-		return
-	}
+func (a *App) buildRiverWorkers(ctx context.Context) error {
+	sp := a.serviceProvider
+	sp.RiverClient(ctx).BuildWorkers(
+		ctx,
+		sp.WorkerMqPublisher(ctx),
+	)
+	return nil
+}
 
-	go a.serviceProvider.WorkerMqPublisher(ctx).Run(ctx)
+func (a *App) runWorkers(ctx context.Context) {
+	if err := a.serviceProvider.RiverClient(ctx).Start(ctx); err != nil {
+		log := logger.From(ctx)
+		log.Error().Msgf("failed to start river workers: %v", err)
+		panic(err)
+	}
+}
+
+func (a *App) migrateDb(ctx context.Context) {
+	if err := a.serviceProvider.PgClient(ctx).Migrate(ctx, migrations.Files); err != nil {
+		panic(errors.Wrap(err, "failed to migrate db"))
+	}
 }

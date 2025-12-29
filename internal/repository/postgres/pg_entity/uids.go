@@ -1,8 +1,9 @@
 package pgEntity
 
 import (
-	"github.com/jackc/pgtype"
-	"github.com/jackc/pgx/v4"
+	basePgEntity "github.com/balobas/sport_city_common/repository/postgres/entity"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 	uuid "github.com/satori/go.uuid"
 )
 
@@ -22,6 +23,6 @@ func (u *UidRow) Scan(row pgx.Row) error {
 	return row.Scan(&u.Uid)
 }
 
-func NewUUIDRows() *Rows[*UidRow, uuid.UUID] {
-	return &Rows[*UidRow, uuid.UUID]{}
+func NewUUIDRows() *basePgEntity.Rows[*UidRow, uuid.UUID] {
+	return &basePgEntity.Rows[*UidRow, uuid.UUID]{}
 }

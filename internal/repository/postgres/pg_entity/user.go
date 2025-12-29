@@ -5,8 +5,8 @@ import (
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/balobas/auth_service/internal/entity"
-	"github.com/jackc/pgtype"
-	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const (
@@ -62,32 +62,28 @@ func (ur *UserRow) Table() string {
 
 func (ur *UserRow) FromEntity(user entity.User) *UserRow {
 	ur.Uid = pgtype.UUID{
-		Bytes:  user.Uid,
-		Status: pgtype.Present,
+		Bytes: user.Uid,
+		Valid: true,
 	}
 	ur.Email = user.Email
 
 	ur.IsVerified = user.IsVerified
 
 	if user.CreatedAt.Unix() == 0 {
-		ur.CreatedAt = pgtype.Timestamp{
-			Status: pgtype.Null,
-		}
+		ur.CreatedAt = pgtype.Timestamp{}
 	} else {
 		ur.CreatedAt = pgtype.Timestamp{
-			Time:   user.CreatedAt.UTC(),
-			Status: pgtype.Present,
+			Time:  user.CreatedAt.UTC(),
+			Valid: true,
 		}
 	}
 
 	if user.UpdatedAt.Unix() == 0 {
-		ur.UpdatedAt = pgtype.Timestamp{
-			Status: pgtype.Null,
-		}
+		ur.UpdatedAt = pgtype.Timestamp{}
 	} else {
 		ur.UpdatedAt = pgtype.Timestamp{
-			Time:   user.UpdatedAt.UTC(),
-			Status: pgtype.Present,
+			Time:  user.UpdatedAt.UTC(),
+			Valid: true,
 		}
 	}
 

@@ -3,7 +3,7 @@ package useCaseOutboxMessages
 import (
 	"context"
 
-	"github.com/balobas/auth_service/internal/entity"
+	outboxEntity "github.com/balobas/sport_city_common/entity/outbox"
 )
 
 type Config interface {
@@ -13,6 +13,6 @@ type Config interface {
 	UsersStreamName() string
 }
 
-type OutboxRepository interface {
-	CreateMessage(ctx context.Context, message entity.MqMessage) error
+type RiverClient interface {
+	CreateTaskSendOutboxMessage(ctx context.Context, message outboxEntity.Message) error
 }

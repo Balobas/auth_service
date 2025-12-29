@@ -17,7 +17,7 @@ func (r *AccessRepository) CreateRole(ctx context.Context, role entity.Role) err
 
 	stmt := `INSERT INTO roles(role, description) VALUES ($1, $2)`
 
-	_, err := r.DB().Exec(ctx, stmt, role.Role, role.Description)
+	_, err := r.Exec(ctx, stmt, role.Role, role.Description)
 	if err != nil {
 		log.Printf("accessRepository.CreateRole: failed to create role %s: %v", role.Role, err)
 		return errors.WithStack(err)

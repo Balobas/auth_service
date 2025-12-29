@@ -31,7 +31,7 @@ func (r *AccessRepository) RemovePermissionFromUsers(ctx context.Context, key st
 		args = append(args, limitUsers)
 	}
 
-	rows, err := r.DB().Query(ctx, stmt, args...)
+	rows, err := r.Query(ctx, stmt, args...)
 	if err != nil {
 		log.Printf("accessRepository.RemovePermissionFromUsers: failed to remove permission %s from users: %v", key, err)
 		return nil, errors.WithStack(err)

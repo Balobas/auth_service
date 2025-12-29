@@ -9,7 +9,7 @@ import (
 	"github.com/Masterminds/squirrel"
 	"github.com/balobas/auth_service/internal/entity"
 	pgEntity "github.com/balobas/auth_service/internal/repository/postgres/pg_entity"
-	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v5"
 	"github.com/pkg/errors"
 	uuid "github.com/satori/go.uuid"
 )
@@ -47,7 +47,7 @@ func (r *UsersRepository) GetAdminUsers(ctx context.Context) ([]entity.User, err
 		`select %s from users inner join user_roles on users.uid = user_roles.user_uid 
 		where user_roles.role = $1`, strings.Join(userRow.Columns(), ", "))
 
-	rows, err := r.DB().Query(ctx, stmt, entity.UserRoleAdmin)
+	rows, err := r.Query(ctx, stmt, entity.UserRoleAdmin)
 	if err != nil {
 		log.Printf("failed to get admin users %v", err)
 		return []entity.User{}, errors.WithStack(err)

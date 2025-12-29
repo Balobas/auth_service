@@ -8,6 +8,7 @@ import (
 	"github.com/balobas/auth_service/internal/entity"
 	serviceErrors "github.com/balobas/auth_service/pkg/service_errors"
 	"github.com/balobas/auth_service/pkg/validations"
+	common "github.com/balobas/sport_city_common"
 	"github.com/pkg/errors"
 )
 
@@ -45,8 +46,7 @@ func (uc *UseCaseUsers) UpdateUser(ctx context.Context, user entity.User, passwo
 		return errors.Wrap(serviceErrors.ErrIdempotentOperation, "nothing to update")
 	}
 
-	tx := uc.txManager.NewPgTransaction()
-	if err := tx.Execute(ctx, func(ctx context.Context) error {
+	if err := uc.dbm.ExecuteTx(ctx, common.Serializable, func(ctx context.Context) error {
 		if needUpdateEmail {
 			oldUser.Email = user.Email
 			oldUser.IsVerified = false

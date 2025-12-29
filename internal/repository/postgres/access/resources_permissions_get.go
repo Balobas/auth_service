@@ -29,7 +29,7 @@ func (r *AccessRepository) GetResourcesPermissions(ctx context.Context, limit in
 		args = append(args, limit)
 	}
 
-	rows, err := r.DB().Query(ctx, stmt, args...)
+	rows, err := r.Query(ctx, stmt, args...)
 	if err != nil {
 		log.Printf("accessRepository.GetResourcesPermissions: failed to get: %v", err)
 		return nil, errors.WithStack(err)

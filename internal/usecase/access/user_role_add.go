@@ -5,6 +5,7 @@ import (
 	"log"
 
 	serviceErrors "github.com/balobas/auth_service/pkg/service_errors"
+	common "github.com/balobas/sport_city_common"
 	"github.com/pkg/errors"
 	uuid "github.com/satori/go.uuid"
 )
@@ -22,7 +23,7 @@ func (uc *UseCaseAccess) AddRoleToUser(ctx context.Context, userUid uuid.UUID, r
 		return errors.Wrap(serviceErrors.ErrBadRequest, "empty role")
 	}
 
-	if err := uc.txManager.NewPgTransaction().Execute(ctx, func(ctx context.Context) error {
+	if err := uc.dbm.ExecuteTx(ctx, common.Serializable, func(ctx context.Context) error {
 
 		_, isFound, err := uc.usersRepository.GetUserByUid(ctx, userUid)
 		if err != nil {

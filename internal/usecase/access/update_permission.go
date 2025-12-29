@@ -6,6 +6,7 @@ import (
 
 	"github.com/balobas/auth_service/internal/entity"
 	serviceErrors "github.com/balobas/auth_service/pkg/service_errors"
+	common "github.com/balobas/sport_city_common"
 	"github.com/pkg/errors"
 )
 
@@ -17,7 +18,7 @@ func (uc *UseCaseAccess) UpdatePermission(ctx context.Context, perm entity.Permi
 		return errors.Wrap(serviceErrors.ErrBadRequest, "empty permission key")
 	}
 
-	if err := uc.txManager.NewPgTransaction().Execute(ctx, func(ctx context.Context) error {
+	if err := uc.dbm.ExecuteTx(ctx, common.Serializable, func(ctx context.Context) error {
 		_, isFound, err := uc.accessRepository.GetPermission(ctx, perm.Key)
 		if err != nil {
 			log.Printf("usecasePermissions.UpdatePermission: failed to get permission %s: %v", perm.Key, err)

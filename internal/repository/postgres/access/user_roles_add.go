@@ -4,7 +4,7 @@ import (
 	"context"
 	"log"
 
-	"github.com/jackc/pgtype"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/pkg/errors"
 	uuid "github.com/satori/go.uuid"
 )
@@ -14,10 +14,10 @@ func (r *AccessRepository) AddRoleToUser(ctx context.Context, userUid uuid.UUID,
 
 	stmt := "INSERT INTO user_roles (user_uid, role) VALUES ($1, $2)"
 
-	_, err := r.DB().Exec(ctx, stmt, []interface{}{
+	_, err := r.Exec(ctx, stmt, []interface{}{
 		pgtype.UUID{
 			Bytes:  userUid,
-			Status: pgtype.Present,
+			Valid: true,
 		},
 		role,
 	}...)

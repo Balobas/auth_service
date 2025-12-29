@@ -1,21 +1,23 @@
 package useCaseAccess
 
-import "github.com/balobas/auth_service/internal/manager/transaction"
+import (
+	dbManager "github.com/balobas/sport_city_common/managers/database"
+)
 
 type UseCaseAccess struct {
 	accessRepository AccessRepository
 	usersRepository  UsersRepository
-	txManager        *transaction.Manager
+	dbm              *dbManager.Manager
 }
 
 func New(
 	accessRepository AccessRepository,
 	usersRepository UsersRepository,
-	txManager *transaction.Manager,
+	dbm *dbManager.Manager,
 ) *UseCaseAccess {
 	return &UseCaseAccess{
 		accessRepository: accessRepository,
 		usersRepository:  usersRepository,
-		txManager:        txManager,
+		dbm:              dbm,
 	}
 }

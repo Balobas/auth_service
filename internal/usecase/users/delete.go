@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/balobas/auth_service/internal/entity"
+	common "github.com/balobas/sport_city_common"
 	"github.com/pkg/errors"
 	uuid "github.com/satori/go.uuid"
 )
@@ -14,7 +15,7 @@ func (uc *UseCaseUsers) DeleteUser(ctx context.Context, userUid uuid.UUID) error
 
 	// все связное должно каскадом удалиться
 
-	if err := uc.txManager.NewPgTransaction().Execute(ctx, func(ctx context.Context) error {
+	if err := uc.dbm.ExecuteTx(ctx, common.Serializable, func(ctx context.Context) error {
 		if err := uc.usersRepo.DeleteUser(ctx, userUid); err != nil {
 			log.Printf("usecaseAuth.DeleteUser: failed to delete user %s: %v", userUid, err)
 			return err

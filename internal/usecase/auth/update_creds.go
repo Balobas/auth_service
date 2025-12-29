@@ -7,6 +7,7 @@ import (
 
 	"github.com/balobas/auth_service/internal/entity"
 	serviceErrors "github.com/balobas/auth_service/pkg/service_errors"
+	common "github.com/balobas/sport_city_common"
 	"github.com/pkg/errors"
 	uuid "github.com/satori/go.uuid"
 )
@@ -25,8 +26,7 @@ func (uc *UseCaseAuth) UpdateUserCreds(ctx context.Context, user entity.User, pa
 
 	var access, refresh string
 
-	tx := uc.txManager.NewPgTransaction()
-	if err := tx.Execute(ctx, func(ctx context.Context) error {
+	if err := uc.dbm.ExecuteTx(ctx, common.Serializable, func(ctx context.Context) error {
 
 		// TODO: возвращать юзера, иначе может быть пустой емэйл в токене
 		if err := uc.ucUsers.UpdateUser(ctx, user, password); err != nil {

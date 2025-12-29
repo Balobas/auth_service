@@ -36,7 +36,7 @@ func (r *AccessRepository) DeletePermissionsFromRole(ctx context.Context, role s
 	}
 	stmt.WriteByte(')')
 
-	if _, err := r.DB().Exec(ctx, stmt.String(), args...); err != nil {
+	if _, err := r.Exec(ctx, stmt.String(), args...); err != nil {
 		log.Printf("accessRepository.DeletePermissionsFromRole: failed :%v", err)
 		return errors.WithStack(err)
 	}

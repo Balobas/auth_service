@@ -4,8 +4,8 @@ import (
 	"context"
 	"log"
 
-	"github.com/jackc/pgtype"
-	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/jackc/pgx/v5"
 	"github.com/pkg/errors"
 	uuid "github.com/satori/go.uuid"
 )
@@ -22,13 +22,13 @@ func (r *AccessRepository) IsUserHasPermissionsForResource(ctx context.Context, 
 	args := []interface{}{
 		pgtype.UUID{
 			Bytes:  userUid,
-			Status: pgtype.Present,
+			Valid: true,
 		},
 		uri,
 		method,
 	}
 
-	row := r.DB().QueryRow(ctx, stmt, args...)
+	row := r.QueryRow(ctx, stmt, args...)
 
 	var res bool
 

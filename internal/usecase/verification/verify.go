@@ -5,6 +5,7 @@ import (
 	"log"
 
 	serviceErrors "github.com/balobas/auth_service/pkg/service_errors"
+	common "github.com/balobas/sport_city_common"
 	"github.com/pkg/errors"
 )
 
@@ -16,7 +17,7 @@ func (uc *UseCaseVerification) Verify(ctx context.Context, token string) error {
 		return errors.Wrap(serviceErrors.ErrBadRequest, "empty token")
 	}
 
-	if err := uc.txManager.NewPgTransaction().Execute(ctx, func(ctx context.Context) error {
+	if err := uc.dbm.ExecuteTx(ctx, common.Serializable, func(ctx context.Context) error {
 		verification, isFound, err := uc.verificationRepository.GetVerificationByToken(ctx, token)
 		if err != nil {
 			log.Printf("usecaseVerification.Verify: failed to get verification by token %s: %v", token, err)

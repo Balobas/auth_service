@@ -1,25 +1,27 @@
 package useCaseVerification
 
-import "github.com/balobas/auth_service/internal/manager/transaction"
+import (
+	dbManager "github.com/balobas/sport_city_common/managers/database"
+)
 
 type UseCaseVerification struct {
 	cfg Config
 
 	verificationRepository VerificationRepository
 	usersRepository        UsersRepository
-	txManager              *transaction.Manager
+	dbm                    *dbManager.Manager
 }
 
 func New(
 	cfg Config,
 	verificationRepo VerificationRepository,
 	usersRepo UsersRepository,
-	txManager *transaction.Manager,
+	dbm *dbManager.Manager,
 ) *UseCaseVerification {
 	return &UseCaseVerification{
 		cfg:                    cfg,
 		verificationRepository: verificationRepo,
 		usersRepository:        usersRepo,
-		txManager:              txManager,
+		dbm:                    dbm,
 	}
 }

@@ -1,15 +1,15 @@
 package sessionRepository
 
 import (
-	"github.com/balobas/auth_service/internal/client"
-	repositoryPostgres "github.com/balobas/auth_service/internal/repository/postgres"
+	DBclient "github.com/balobas/sport_city_common/clients/database"
+	repositoryPostgres "github.com/balobas/sport_city_common/repository/postgres"
 )
 
 type SessionRepository struct {
 	*repositoryPostgres.BasePgRepository
 }
 
-func New(client client.ClientDB) *SessionRepository {
+func New(client DBclient.ClientDB) *SessionRepository {
 	return &SessionRepository{
 		repositoryPostgres.New(client),
 	}

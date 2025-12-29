@@ -3,8 +3,8 @@ package pgEntity
 import (
 	sq "github.com/Masterminds/squirrel"
 	"github.com/balobas/auth_service/internal/entity"
-	"github.com/jackc/pgtype"
-	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const sessionTableName = "sessions"
@@ -31,32 +31,28 @@ func NewSessionRow() *SessionRow {
 
 func (s *SessionRow) FromEntity(session entity.Session) *SessionRow {
 	s.Uid = pgtype.UUID{
-		Bytes:  session.Uid,
-		Status: pgtype.Present,
+		Bytes: session.Uid,
+		Valid: true,
 	}
 	s.UserUid = pgtype.UUID{
-		Bytes:  session.UserUid,
-		Status: pgtype.Present,
+		Bytes: session.UserUid,
+		Valid: true,
 	}
 
 	if session.CreatedAt.Unix() == 0 || session.CreatedAt.IsZero() {
-		s.CreatedAt = pgtype.Timestamp{
-			Status: pgtype.Null,
-		}
+		s.CreatedAt = pgtype.Timestamp{}
 	} else {
 		s.CreatedAt = pgtype.Timestamp{
-			Time:   session.CreatedAt.UTC(),
-			Status: pgtype.Present,
+			Time:  session.CreatedAt.UTC(),
+			Valid: true,
 		}
 	}
 	if session.UpdatedAt.Unix() == 0 || session.CreatedAt.IsZero() {
-		s.UpdatedAt = pgtype.Timestamp{
-			Status: pgtype.Null,
-		}
+		s.UpdatedAt = pgtype.Timestamp{}
 	} else {
 		s.UpdatedAt = pgtype.Timestamp{
-			Time:   session.UpdatedAt.UTC(),
-			Status: pgtype.Present,
+			Time:  session.UpdatedAt.UTC(),
+			Valid: true,
 		}
 	}
 	s.TokensIssuedAt = session.TokensIssuedAt

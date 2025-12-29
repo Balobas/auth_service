@@ -23,7 +23,7 @@ func (r *ConfigRepository) UpdateConfig(ctx context.Context, cfg map[string]json
 
 	stmt += " ON CONFLICT DO UPDATE SET value=EXCLUDED.value"
 
-	if _, err = r.client.DB().Exec(ctx, stmt, args...); err != nil {
+	if _, err = r.client.Exec(ctx, stmt, args...); err != nil {
 		return errors.WithStack(err)
 	}
 
@@ -38,7 +38,7 @@ func (r *ConfigRepository) GetConfig(ctx context.Context) (map[string]json.RawMe
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
-	rows, err := r.client.DB().Query(ctx, stmt, args...)
+	rows, err := r.client.Query(ctx, stmt, args...)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}

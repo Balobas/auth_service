@@ -7,12 +7,14 @@ import (
 	"sync"
 	"time"
 
+	commonConfig "github.com/balobas/sport_city_common/config"
 	"github.com/pkg/errors"
 )
 
 type ServiceConfig struct {
 	model     serviceConfigModel
 	configEnv configEnv
+	riverCfg  *commonConfig.RiverConfig
 }
 
 func NewServiceConfig() *ServiceConfig {
@@ -23,6 +25,7 @@ func NewServiceConfig() *ServiceConfig {
 			mu: &sync.RWMutex{},
 		},
 		configEnv: envCfg,
+		riverCfg:  commonConfig.ParseRiverConfig(),
 	}
 }
 
@@ -159,6 +162,10 @@ func (c *ServiceConfig) RemovePermissionsInterval() time.Duration {
 	c.model.mu.RLock()
 	defer c.model.mu.RUnlock()
 	return c.model.RemovePermissionsInterval.Duration
+}
+
+func (c *ServiceConfig) RiverConfig() *commonConfig.RiverConfig {
+	return c.riverCfg
 }
 
 func (c *ServiceConfig) LoadFromMap(config map[string]json.RawMessage) error {

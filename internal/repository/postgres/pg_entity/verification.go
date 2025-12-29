@@ -3,8 +3,9 @@ package pgEntity
 import (
 	sq "github.com/Masterminds/squirrel"
 	"github.com/balobas/auth_service/internal/entity"
-	"github.com/jackc/pgtype"
-	"github.com/jackc/pgx/v4"
+	basePgEntity "github.com/balobas/sport_city_common/repository/postgres/entity"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const verificationTableName = "verification"
@@ -31,32 +32,32 @@ func NewVerificationRow() *VerificationRow {
 	return &VerificationRow{}
 }
 
+func (v *VerificationRow) New() *VerificationRow {
+	return &VerificationRow{}
+}
+
 func (v *VerificationRow) FromEntity(verification entity.Verification) *VerificationRow {
 	v.UserUid = pgtype.UUID{
-		Bytes:  verification.UserUid,
-		Status: pgtype.Present,
+		Bytes: verification.UserUid,
+		Valid: true,
 	}
 	v.Token = verification.Token
 	v.Email = verification.Email
 	v.Status = string(verification.Status)
 	if verification.CreatedAt.Unix() == 0 {
-		v.CreatedAt = pgtype.Timestamp{
-			Status: pgtype.Null,
-		}
+		v.CreatedAt = pgtype.Timestamp{}
 	} else {
 		v.CreatedAt = pgtype.Timestamp{
-			Time:   verification.CreatedAt.UTC(),
-			Status: pgtype.Present,
+			Time:  verification.CreatedAt.UTC(),
+			Valid: true,
 		}
 	}
 	if verification.UpdatedAt.Unix() == 0 {
-		v.UpdatedAt = pgtype.Timestamp{
-			Status: pgtype.Null,
-		}
+		v.UpdatedAt = pgtype.Timestamp{}
 	} else {
 		v.UpdatedAt = pgtype.Timestamp{
-			Time:   verification.UpdatedAt.UTC(),
-			Status: pgtype.Present,
+			Time:  verification.UpdatedAt.UTC(),
+			Valid: true,
 		}
 	}
 	return v
@@ -132,37 +133,6 @@ func (v *VerificationRow) ConditionTokenEqual() sq.Eq {
 	}
 }
 
-type VerificationRows struct {
-	verifications []*VerificationRow
-}
-
-func NewVerificationRows() *VerificationRows {
-	return &VerificationRows{}
-}
-
-func (s *VerificationRows) ScanAll(rows pgx.Rows) error {
-	for rows.Next() {
-		newRow := &VerificationRow{}
-
-		if err := newRow.Scan(rows); err != nil {
-			return err
-		}
-		s.verifications = append(s.verifications, newRow)
-	}
-
-	return nil
-}
-
-func (s *VerificationRows) ToEntities() []entity.Verification {
-	if len(s.verifications) == 0 {
-		return nil
-	}
-
-	res := make([]entity.Verification, len(s.verifications))
-
-	for i := 0; i < len(s.verifications); i++ {
-		res[i] = s.verifications[i].ToEntity()
-	}
-
-	return res
+func NewVerificationRows() *basePgEntity.Rows[*VerificationRow, entity.Verification] {
+	return &basePgEntity.Rows[*VerificationRow, entity.Verification]{}
 }

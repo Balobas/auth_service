@@ -5,7 +5,7 @@ import (
 	"log"
 
 	"github.com/balobas/auth_service/internal/entity"
-	"github.com/jackc/pgtype"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/pkg/errors"
 	uuid "github.com/satori/go.uuid"
 )
@@ -15,9 +15,9 @@ func (r *AccessRepository) GetUserRoles(ctx context.Context, userUid uuid.UUID) 
 
 	stmt := "SELECT ur.role, r.description from user_roles ur INNER JOIN roles r on ur.role=r.role  WHERE user_uid=$1"
 
-	rows, err := r.DB().Query(ctx, stmt, pgtype.UUID{
+	rows, err := r.Query(ctx, stmt, pgtype.UUID{
 		Bytes:  userUid,
-		Status: pgtype.Present,
+		Valid: true,
 	})
 	if err != nil {
 		log.Printf("accessRepository.GetUserRoles: failed to get user %s roles: %v", userUid, err)

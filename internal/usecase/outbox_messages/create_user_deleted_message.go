@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/balobas/auth_service/internal/entity"
+	outboxEntity "github.com/balobas/sport_city_common/entity/outbox"
 	"github.com/pkg/errors"
 	uuid "github.com/satori/go.uuid"
 )
@@ -35,14 +36,14 @@ func (uc *UseCaseOutboxMessages) CreateUserDeletedMessage(ctx context.Context, u
 		return errors.WithStack(err)
 	}
 
-	userRegisteredMessage := entity.MqMessage{
+	userRegisteredMessage := outboxEntity.Message{
 		Uid:         msgUid,
 		SubjectName: uc.cfg.UserDeletedMessageSubject(),
 		Payload:     bts,
 		CreatedAt:   time.Now().UTC(),
 	}
 
-	if err := uc.outboxRepository.CreateMessage(ctx, userRegisteredMessage); err != nil {
+	if err := uc.riverClient.CreateTaskSendOutboxMessage(ctx, userRegisteredMessage); err != nil {
 		log.Printf("failed to create user registered message in outbox repository: %v", err)
 		return errors.WithStack(err)
 	}

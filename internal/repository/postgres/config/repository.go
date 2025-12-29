@@ -1,14 +1,14 @@
 package config
 
 import (
-	"github.com/balobas/auth_service/internal/client"
+	DBclient "github.com/balobas/sport_city_common/clients/database"
 )
 
 type ConfigRepository struct {
-	client client.ClientDB
+	client DBclient.ClientDB
 }
 
-func New(client client.ClientDB) *ConfigRepository {
+func New(client DBclient.ClientDB) *ConfigRepository {
 	return &ConfigRepository{
 		client: client,
 	}

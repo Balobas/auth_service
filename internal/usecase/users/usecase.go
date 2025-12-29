@@ -1,6 +1,8 @@
 package useCaseUsers
 
-import "github.com/balobas/auth_service/internal/manager/transaction"
+import (
+	dbManager "github.com/balobas/sport_city_common/managers/database"
+)
 
 type UseCaseUsers struct {
 	cfg        Config
@@ -11,7 +13,7 @@ type UseCaseUsers struct {
 	ucCredentials    UcCredentials
 	ucOutboxMessages UcOutboxMessages
 	jwtManager       JwtManager
-	txManager        *transaction.Manager
+	dbm              *dbManager.Manager
 }
 
 func New(
@@ -19,7 +21,7 @@ func New(
 	usersRepo UsersRepository,
 	accessRepo AccessRepository,
 	ucVerification UcVerification,
-	txManager *transaction.Manager,
+	dbm *dbManager.Manager,
 	ucCreds UcCredentials,
 	jwtManager JwtManager,
 	ucOutboxMessages UcOutboxMessages,
@@ -31,7 +33,7 @@ func New(
 		ucVerification:   ucVerification,
 		ucCredentials:    ucCreds,
 		ucOutboxMessages: ucOutboxMessages,
-		txManager:        txManager,
+		dbm:              dbm,
 		jwtManager:       jwtManager,
 	}
 }

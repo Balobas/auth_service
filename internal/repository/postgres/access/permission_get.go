@@ -6,7 +6,7 @@ import (
 
 	"github.com/balobas/auth_service/internal/entity"
 	pgEntity "github.com/balobas/auth_service/internal/repository/postgres/pg_entity"
-	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v5"
 	"github.com/pkg/errors"
 )
 

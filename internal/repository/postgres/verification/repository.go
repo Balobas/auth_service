@@ -1,15 +1,15 @@
 package verification
 
 import (
-	"github.com/balobas/auth_service/internal/client"
-	repositoryPostgres "github.com/balobas/auth_service/internal/repository/postgres"
+	DBclient "github.com/balobas/sport_city_common/clients/database"
+	repositoryPostgres "github.com/balobas/sport_city_common/repository/postgres"
 )
 
 type VerificationRepository struct {
 	*repositoryPostgres.BasePgRepository
 }
 
-func New(client client.ClientDB) *VerificationRepository {
+func New(client DBclient.ClientDB) *VerificationRepository {
 	return &VerificationRepository{
 		BasePgRepository: repositoryPostgres.New(client),
 	}

@@ -9,6 +9,7 @@ import (
 
 	"github.com/balobas/auth_service/internal/entity"
 	serviceErrors "github.com/balobas/auth_service/pkg/service_errors"
+	common "github.com/balobas/sport_city_common"
 	"github.com/pkg/errors"
 	uuid "github.com/satori/go.uuid"
 )
@@ -34,8 +35,7 @@ func (uc *UseCaseVerification) CreateVerification(ctx context.Context, userUid u
 		UpdatedAt: time.Now(),
 	}
 
-	tx := uc.txManager.NewPgTransaction()
-	if err := tx.Execute(ctx, func(ctx context.Context) error {
+	if err := uc.dbm.ExecuteTx(ctx, common.Serializable, func(ctx context.Context) error {
 
 		oldVerification, isFound, err := uc.verificationRepository.GetUserVerification(ctx, userUid)
 		if err != nil {

@@ -12,7 +12,7 @@ func (r *AccessRepository) AddResourcePermission(ctx context.Context, uri string
 
 	stmt := "INSERT INTO resources_permissions (uri, method, permission) VALUES ($1, $2, $3)"
 
-	if _, err := r.DB().Exec(ctx, stmt, uri, method, permission); err != nil {
+	if _, err := r.Exec(ctx, stmt, uri, method, permission); err != nil {
 		log.Printf("accessRepository.AddResourcePermission: failed to add permission %s to resource (method %s, uri %s): %v", permission, method, uri, err)
 		return errors.WithStack(err)
 	}

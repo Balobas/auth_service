@@ -4,7 +4,7 @@ import (
 	"context"
 	"log"
 
-	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v5"
 	"github.com/pkg/errors"
 )
 
@@ -13,7 +13,7 @@ func (r *AccessRepository) GetResourcePermission(ctx context.Context, uri string
 
 	stmt := "SELECT permission FROM resources_permissions WHERE uri=$1 AND method = $2"
 
-	row := r.DB().QueryRow(ctx, stmt, uri, method)
+	row := r.QueryRow(ctx, stmt, uri, method)
 
 	var perm string
 	if err := row.Scan(&perm); err != nil {

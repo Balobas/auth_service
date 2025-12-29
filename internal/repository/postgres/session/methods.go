@@ -8,8 +8,8 @@ import (
 
 	"github.com/balobas/auth_service/internal/entity"
 	pgEntity "github.com/balobas/auth_service/internal/repository/postgres/pg_entity"
-	"github.com/jackc/pgtype"
-	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/jackc/pgx/v5"
 	"github.com/pkg/errors"
 	uuid "github.com/satori/go.uuid"
 )
@@ -108,20 +108,20 @@ func (r *SessionRepository) DeleteSessionsByUsersUids(ctx context.Context, users
 
 	args[0] = pgtype.UUID{
 		Bytes:  usersUids[0],
-		Status: pgtype.Present,
+		Valid: true,
 	}
 
 	for i := 1; i < len(usersUids); i++ {
 		stmt.WriteString(fmt.Sprintf(",$%d", i+1))
 		args[i] = pgtype.UUID{
 			Bytes:  usersUids[i],
-			Status: pgtype.Present,
+			Valid: true,
 		}
 	}
 
 	stmt.WriteByte(')')
 
-	_, err := r.DB().Exec(ctx, stmt.String(), args...)
+	_, err := r.Exec(ctx, stmt.String(), args...)
 	if err != nil {
 		log.Printf("sessionsRepository.DeleteSessionsByUsersUids: empty usersUids")
 		return nil
