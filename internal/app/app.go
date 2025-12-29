@@ -68,8 +68,6 @@ func (a *App) initDeps(ctx context.Context) error {
 	inits := []func(ctx context.Context) error{
 		a.initEnv,
 		a.initServiceProvider,
-		a.initGrpcServer,
-		a.buildRiverWorkers,
 	}
 
 	for _, f := range inits {
@@ -93,7 +91,8 @@ func (a *App) initServiceProvider(ctx context.Context) error {
 	return nil
 }
 
-func (a *App) initGrpcServer(ctx context.Context) error {
+func (a *App) runGrpcServer(ctx context.Context, done chan<- struct{}) {
+	log.Printf("grpc server is running on %v\n", a.serviceProvider.GrpcConfig())
 	authGrpcServer := a.serviceProvider.AuthServerGrpc(ctx)
 
 	a.grpcServer = grpc.NewServer(
@@ -105,12 +104,6 @@ func (a *App) initGrpcServer(ctx context.Context) error {
 	)
 	reflection.Register(a.grpcServer)
 	auth_v1.RegisterAuthServer(a.grpcServer, authGrpcServer)
-
-	return nil
-}
-
-func (a *App) runGrpcServer(ctx context.Context, done chan<- struct{}) {
-	log.Printf("grpc server is running on %v\n", a.serviceProvider.GrpcConfig())
 
 	go func() {
 		lis, err := net.Listen("tcp", a.serviceProvider.GrpcConfig().Address())
@@ -151,16 +144,13 @@ func (a *App) runVerificationWorker(ctx context.Context) {
 	go a.serviceProvider.WorkerVerification(ctx).Run(ctx)
 }
 
-func (a *App) buildRiverWorkers(ctx context.Context) error {
+func (a *App) runWorkers(ctx context.Context) {
 	sp := a.serviceProvider
 	sp.RiverClient(ctx).BuildWorkers(
 		ctx,
 		sp.WorkerMqPublisher(ctx),
 	)
-	return nil
-}
 
-func (a *App) runWorkers(ctx context.Context) {
 	if err := a.serviceProvider.RiverClient(ctx).Start(ctx); err != nil {
 		log := logger.From(ctx)
 		log.Error().Msgf("failed to start river workers: %v", err)
