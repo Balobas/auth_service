@@ -15,6 +15,7 @@ import (
 	accessRepository "github.com/balobas/auth_service/internal/repository/postgres/access"
 	repositoryConfig "github.com/balobas/auth_service/internal/repository/postgres/config"
 	repositoryCredentials "github.com/balobas/auth_service/internal/repository/postgres/credentials"
+	devicesRepository "github.com/balobas/auth_service/internal/repository/postgres/devices"
 	sessionRepository "github.com/balobas/auth_service/internal/repository/postgres/session"
 	repositoryUsers "github.com/balobas/auth_service/internal/repository/postgres/users"
 	repositoryVerification "github.com/balobas/auth_service/internal/repository/postgres/verification"
@@ -23,6 +24,7 @@ import (
 	useCaseAuth "github.com/balobas/auth_service/internal/usecase/auth"
 	useCaseConfig "github.com/balobas/auth_service/internal/usecase/config"
 	useCaseCredentials "github.com/balobas/auth_service/internal/usecase/credentials"
+	ucDevices "github.com/balobas/auth_service/internal/usecase/devices"
 	useCaseOutboxMessages "github.com/balobas/auth_service/internal/usecase/outbox_messages"
 	useCaseUsers "github.com/balobas/auth_service/internal/usecase/users"
 	useCaseVerification "github.com/balobas/auth_service/internal/usecase/verification"
@@ -55,6 +57,7 @@ type serviceProvider struct {
 	sessionsRepository     *sessionRepository.SessionRepository
 	verificationRepository *repositoryVerification.VerificationRepository
 	configRepository       *repositoryConfig.ConfigRepository
+	devicesRepository      *devicesRepository.Repository
 
 	dbManager  *dbManager.Manager
 	jwtManager *jwtManager.JwtManager
@@ -66,6 +69,7 @@ type serviceProvider struct {
 	useCaseAuth           *useCaseAuth.UseCaseAuth
 	useCaseAccess         *useCaseAccess.UseCaseAccess
 	useCaseOutboxMessages *useCaseOutboxMessages.UseCaseOutboxMessages
+	useCaseDevices        *ucDevices.UseCase
 
 	workerVerification *workerVerification.Worker
 	workerMqPublisher  *riverOutboxPublisher.Worker
@@ -217,6 +221,13 @@ func (sp *serviceProvider) ConfigRepository(ctx context.Context) *repositoryConf
 	return sp.configRepository
 }
 
+func (sp *serviceProvider) DevicesRepository(ctx context.Context) *devicesRepository.Repository {
+	if sp.devicesRepository == nil {
+		sp.devicesRepository = devicesRepository.New(sp.PgClient(ctx))
+	}
+	return sp.devicesRepository
+}
+
 func (sp *serviceProvider) DbManager(ctx context.Context) *dbManager.Manager {
 	if sp.dbManager == nil {
 		sp.dbManager = dbManager.NewDbManager(sp.PgClient(ctx))
@@ -292,6 +303,7 @@ func (sp *serviceProvider) UseCaseAuth(ctx context.Context) *useCaseAuth.UseCase
 			sp.AccessRepository(ctx),
 			sp.UseCaseUsers(ctx),
 			sp.UseCaseCredentials(ctx),
+			sp.UseCaseDevices(ctx),
 			sp.JwtManager(ctx),
 			sp.DbManager(ctx),
 		)
@@ -318,6 +330,13 @@ func (sp *serviceProvider) UseCaseOutboxMessages(ctx context.Context) *useCaseOu
 		)
 	}
 	return sp.useCaseOutboxMessages
+}
+
+func (sp *serviceProvider) UseCaseDevices(ctx context.Context) *ucDevices.UseCase {
+	if sp.useCaseDevices == nil {
+		sp.useCaseDevices = ucDevices.New(sp.DevicesRepository(ctx))
+	}
+	return sp.useCaseDevices
 }
 
 func (sp *serviceProvider) WorkerVerification(ctx context.Context) *workerVerification.Worker {
@@ -348,6 +367,7 @@ func (sp *serviceProvider) AuthServerGrpc(ctx context.Context) *deliveryGrpc.Aut
 			sp.UseCaseAuth(ctx),
 			sp.UseCaseAccess(ctx),
 			sp.UseCaseVerification(ctx),
+			sp.UseCaseDevices(ctx),
 		)
 	}
 	return sp.authServerGrpc

@@ -6,6 +6,7 @@ import (
 
 	"github.com/balobas/auth_service/internal/entity"
 	"github.com/balobas/auth_service/pkg/auth_v1"
+	uuid "github.com/satori/go.uuid"
 )
 
 func (s *AuthServerGrpc) Login(ctx context.Context, req *auth_v1.LoginRequest) (*auth_v1.JwtResponse, error) {
@@ -14,6 +15,12 @@ func (s *AuthServerGrpc) Login(ctx context.Context, req *auth_v1.LoginRequest) (
 		ctx, entity.LoginParams{
 			Email:    req.GetEmail(),
 			Password: req.GetPassword(),
+			Device: entity.UserDevice{
+				Uid:      uuid.FromStringOrNil(req.GetDevice().GetUid()),
+				Name:     req.GetDevice().GetName(),
+				Agent:    req.GetDevice().GetAgent(),
+				Language: req.GetDevice().GetLanguage(),
+			},
 		},
 	)
 	if err != nil {

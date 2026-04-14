@@ -12,6 +12,7 @@ type UseCaseAuth struct {
 
 	ucUsers       UcUsers
 	ucCredentials UcCredentials
+	ucDevices     UcDevices
 
 	jwtManager JwtManager
 	dbm        *dbManager.Manager
@@ -23,6 +24,7 @@ func New(
 	accessRepo AccessRepository,
 	ucUsers UcUsers,
 	ucCreds UcCredentials,
+	ucDevices UcDevices,
 	jwtManager JwtManager,
 	dbm *dbManager.Manager,
 ) *UseCaseAuth {
@@ -32,6 +34,7 @@ func New(
 		accessRepo:    accessRepo,
 		ucUsers:       ucUsers,
 		ucCredentials: ucCreds,
+		ucDevices:     ucDevices,
 		jwtManager:    jwtManager,
 		dbm:           dbm,
 	}

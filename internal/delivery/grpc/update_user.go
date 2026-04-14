@@ -29,6 +29,13 @@ func (s *AuthServerGrpc) UpdateUser(ctx context.Context, req *auth_v1.UpdateUser
 			Email: req.GetEmail(),
 		},
 		req.GetPassword(),
+		entity.UserDevice{
+			Uid:      uuid.FromStringOrNil(req.GetDevice().GetUid()),
+			UserUid:  userUid,
+			Name:     req.GetDevice().GetName(),
+			Agent:    req.GetDevice().GetAgent(),
+			Language: req.GetDevice().GetLanguage(),
+		},
 	)
 	if err != nil {
 		log.Printf("authServerGrpc.UpdateUser: failed to update user %s: %v", userUid, err)

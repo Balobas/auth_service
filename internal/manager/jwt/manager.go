@@ -28,6 +28,7 @@ func New(keysProvider KeysProvider) *JwtManager {
 
 const (
 	tokenFieldUserUid    = "user_uid"
+	tokenFieldDeviceUid  = "device_uid"
 	tokenFieldEmail      = "email"
 	tokenFieldRoles      = "roles"
 	tokenFieldSessionUid = "session_uid"
@@ -42,6 +43,7 @@ func (p *JwtManager) NewToken(info entity.TokenInfo, ttl time.Duration) (string,
 	claims := token.Claims.(jwt.MapClaims)
 
 	claims[tokenFieldUserUid] = info.UserUid.String()
+	claims[tokenFieldDeviceUid] = info.DeviceUid.String()
 	claims[tokenFieldEmail] = info.Email
 	claims[tokenFieldRoles] = strings.Join(info.Roles, rolesSeparator)
 	claims[tokenFieldSessionUid] = info.SessionUid.String()
@@ -104,6 +106,16 @@ func (p *JwtManager) ParseToken(tokenStr string) (t entity.TokenInfo, err error)
 	tokenInfo.UserUid, err = uuid.FromString(userUid.(string))
 	if err != nil {
 		return entity.TokenInfo{}, errors.New("invalid user uid in token")
+	}
+
+	deviceUid, ok := claims[tokenFieldDeviceUid]
+	if !ok {
+		return entity.TokenInfo{}, errors.New("empty device uid in token")
+	}
+
+	tokenInfo.DeviceUid, err = uuid.FromString(deviceUid.(string))
+	if err != nil {
+		return entity.TokenInfo{}, errors.New("invalid device uid in token")
 	}
 
 	userEmail, ok := claims[tokenFieldEmail]

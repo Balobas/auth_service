@@ -6,61 +6,72 @@ import (
 	"time"
 
 	"github.com/balobas/auth_service/internal/entity"
-	"github.com/pkg/errors"
+	common "github.com/balobas/sport_city_common"
 )
 
 func (uc *UseCaseAuth) Refresh(ctx context.Context, token string) (string, string, error) {
 	log.Printf("usecaseAuth.Refresh: ")
-	tokenInfo, err := uc.verifyRefreshToken(ctx, token)
-	if err != nil {
-		log.Printf("usecaseAuth.Refresh: failed to validate token: %v", err)
-		return emptyTokensWithError(errors.WithStack(err))
-	}
 
-	user, err := uc.ucUsers.GetUserByEmail(ctx, tokenInfo.Email)
-	if err != nil {
-		log.Printf("usecaseAuth.Refresh: failed to get user by email %s: %v", tokenInfo.Email, err)
-		return emptyTokensWithError(errors.WithStack(err))
-	}
-	roles, err := uc.accessRepo.GetUserRoles(ctx, user.Uid)
-	if err != nil {
-		log.Printf("usecaseAuth.Refresh: failed to get user %s roles: %v", user.Uid, err)
-		return emptyTokensWithError(errors.WithStack(err))
-	}
+	var access, refresh string
+	if err := uc.dbm.ExecuteTx(ctx, common.ReadCommitted, func(ctx context.Context) error {
+		tokenInfo, err := uc.verifyRefreshToken(ctx, token)
+		if err != nil {
+			return err
+		}
 
-	rolesStrs := entity.RolesToStrings(roles)
+		user, err := uc.getUserWithRolesByEmail(ctx, tokenInfo.Email)
+		if err != nil {
+			return err
+		}
 
-	user.Roles = rolesStrs
+		refreshTime := time.Now()
 
-	refreshTime := time.Now()
+		newTokenInfo := entity.TokenInfo{
+			UserUid:    user.Uid,
+			DeviceUid:  tokenInfo.DeviceUid,
+			Email:      user.Email,
+			Roles:      user.Roles,
+			SessionUid: tokenInfo.SessionUid,
+			IssuedAt:   refreshTime.Unix(),
+		}
 
-	newTokenInfo := entity.TokenInfo{
-		UserUid:    user.Uid,
-		Email:      user.Email,
-		Roles:      rolesStrs,
-		SessionUid: tokenInfo.SessionUid,
-		IssuedAt:   refreshTime.Unix(),
-	}
+		access, err = uc.jwtManager.NewToken(newTokenInfo, uc.cfg.AccessJwtTTL())
+		if err != nil {
+			return err
+		}
+		refresh, err = uc.jwtManager.NewToken(newTokenInfo, uc.cfg.RefreshJwtTTL())
+		if err != nil {
+			return err
+		}
 
-	access, err := uc.jwtManager.NewToken(newTokenInfo, uc.cfg.AccessJwtTTL())
-	if err != nil {
-		log.Printf("usecaseAuth.Refresh: failed to build jwt token for user %s: %v", user.Uid, err)
-		return emptyTokensWithError(errors.Wrapf(err, "failed to build jwt"))
-	}
-	refresh, err := uc.jwtManager.NewToken(newTokenInfo, uc.cfg.RefreshJwtTTL())
-	if err != nil {
-		log.Printf("usecaseAuth.Refresh: failed to build jwt token for user %s: %v", user.Uid, err)
-		return emptyTokensWithError(errors.Wrapf(err, "failed to build jwt"))
-	}
-
-	if err := uc.sessionsRepo.UpdateSession(ctx, entity.Session{
-		Uid:            tokenInfo.SessionUid,
-		TokensIssuedAt: refreshTime.Unix(),
-		UpdatedAt:      time.Now(),
+		if err := uc.sessionsRepo.UpdateSession(ctx, entity.Session{
+			Uid:            tokenInfo.SessionUid,
+			UserUid:        tokenInfo.UserUid,
+			DeviceUid:      tokenInfo.DeviceUid,
+			TokensIssuedAt: refreshTime.Unix(),
+			UpdatedAt:      time.Now(),
+		}); err != nil {
+			return err
+		}
+		return nil
 	}); err != nil {
-		log.Printf("usecaseAuth.Refresh: failed to update session for user %s: %v", user.Uid, err)
-		return emptyTokensWithError(errors.WithStack(err))
+		return emptyTokensWithError(err)
 	}
 
 	return access, refresh, nil
+}
+
+func (uc *UseCaseAuth) getUserWithRolesByEmail(ctx context.Context, email string) (entity.User, error) {
+	user, err := uc.ucUsers.GetUserByEmail(ctx, email)
+	if err != nil {
+		return entity.User{}, err
+	}
+	roles, err := uc.accessRepo.GetUserRoles(ctx, user.Uid)
+	if err != nil {
+		return entity.User{}, err
+	}
+
+	rolesStrs := entity.RolesToStrings(roles)
+	user.Roles = rolesStrs
+	return user, nil
 }

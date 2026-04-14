@@ -12,6 +12,7 @@ const sessionTableName = "sessions"
 var sessionTableColumns = []string{
 	"uid",
 	"user_uid",
+	"device_uid",
 	"tokens_issued_at",
 	"created_at",
 	"updated_at",
@@ -20,6 +21,7 @@ var sessionTableColumns = []string{
 type SessionRow struct {
 	Uid            pgtype.UUID
 	UserUid        pgtype.UUID
+	DeviceUid      pgtype.UUID
 	CreatedAt      pgtype.Timestamp
 	TokensIssuedAt int64
 	UpdatedAt      pgtype.Timestamp
@@ -36,6 +38,10 @@ func (s *SessionRow) FromEntity(session entity.Session) *SessionRow {
 	}
 	s.UserUid = pgtype.UUID{
 		Bytes: session.UserUid,
+		Valid: true,
+	}
+	s.DeviceUid = pgtype.UUID{
+		Bytes: session.DeviceUid,
 		Valid: true,
 	}
 
@@ -63,6 +69,7 @@ func (s *SessionRow) ToEntity() entity.Session {
 	return entity.Session{
 		Uid:            s.Uid.Bytes,
 		UserUid:        s.UserUid.Bytes,
+		DeviceUid:      s.DeviceUid.Bytes,
 		TokensIssuedAt: s.TokensIssuedAt,
 		CreatedAt:      s.CreatedAt.Time,
 		UpdatedAt:      s.UpdatedAt.Time,
@@ -77,6 +84,7 @@ func (s *SessionRow) Values() []interface{} {
 	return []interface{}{
 		s.Uid,
 		s.UserUid,
+		s.DeviceUid,
 		s.TokensIssuedAt,
 		s.CreatedAt,
 		s.UpdatedAt,
@@ -95,6 +103,7 @@ func (s *SessionRow) Scan(row pgx.Row) error {
 	return row.Scan(
 		&s.Uid,
 		&s.UserUid,
+		&s.DeviceUid,
 		&s.TokensIssuedAt,
 		&s.CreatedAt,
 		&s.UpdatedAt,
@@ -123,6 +132,13 @@ func (s *SessionRow) ConditionUidEqual() sq.Eq {
 func (s *SessionRow) ConditionUserUidEqual() sq.Eq {
 	return sq.Eq{
 		"user_uid": s.UserUid,
+	}
+}
+
+func (s *SessionRow) ConditionUserUidAndDeviceUidEqual() sq.Eq {
+	return sq.Eq{
+		"user_uid":   s.UserUid,
+		"device_uid": s.DeviceUid,
 	}
 }
 

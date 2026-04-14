@@ -18,15 +18,19 @@ type UcUsers interface {
 
 type UcAuth interface {
 	Login(ctx context.Context, params entity.LoginParams) (string, string, error)
-	Logout(ctx context.Context, userUid uuid.UUID) error
+	Logout(ctx context.Context, device entity.UserDevice) error
 	Refresh(ctx context.Context, token string) (string, string, error)
 	VerifyAuth(ctx context.Context, token string) (entity.TokenInfo, error)
 	VerifyAccess(ctx context.Context, uri string, method string, token string) error
-	UpdateUserCreds(ctx context.Context, user entity.User, password string) (string, string, error)
+	UpdateUserCreds(ctx context.Context, user entity.User, password string, device entity.UserDevice) (string, string, error)
 }
 
 type UcVerification interface {
 	Verify(ctx context.Context, token string) error
+}
+
+type UcDevices interface {
+	GetUserAuthorizedDevices(ctx context.Context, userUid uuid.UUID) ([]entity.UserAuthorizedDevice, error)
 }
 
 type UcAccess interface {

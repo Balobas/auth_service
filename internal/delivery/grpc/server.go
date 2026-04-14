@@ -13,6 +13,7 @@ type AuthServerGrpc struct {
 	ucAuth         UcAuth
 	ucAccess       UcAccess
 	ucVerification UcVerification
+	ucDevices      UcDevices
 }
 
 type Config interface {
@@ -24,6 +25,7 @@ func NewAuthServerGRPC(
 	ucAuth UcAuth,
 	ucAccess UcAccess,
 	ucVerification UcVerification,
+	ucDevices UcDevices,
 ) *AuthServerGrpc {
 	return &AuthServerGrpc{
 		cfg:            cfg,
@@ -31,5 +33,6 @@ func NewAuthServerGRPC(
 		ucAuth:         ucAuth,
 		ucAccess:       ucAccess,
 		ucVerification: ucVerification,
+		ucDevices:      ucDevices,
 	}
 }

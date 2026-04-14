@@ -4,6 +4,7 @@ import uuid "github.com/satori/go.uuid"
 
 type TokenInfo struct {
 	UserUid    uuid.UUID
+	DeviceUid  uuid.UUID
 	Email      string
 	Roles      []string
 	SessionUid uuid.UUID

@@ -23,6 +23,12 @@ type UcCredentials interface {
 	Validate(ctx context.Context, userUid uuid.UUID, password string) error
 }
 
+type UcDevices interface {
+	HandleLoginFromDevice(ctx context.Context, device entity.UserDevice, loginTime time.Time) error
+	HandleLogoutFromDevice(ctx context.Context, device entity.UserDevice, logoutTime time.Time) error
+	UnauthorizeUserDevices(ctx context.Context, userUid uuid.UUID, unauthTime time.Time) error
+}
+
 type JwtManager interface {
 	NewToken(info entity.TokenInfo, ttl time.Duration) (string, error)
 	ParseToken(tokenStr string) (entity.TokenInfo, error)
@@ -31,10 +37,10 @@ type JwtManager interface {
 type SessionsRepository interface {
 	CreateSession(ctx context.Context, session entity.Session) error
 	GetSessionByUid(ctx context.Context, uid uuid.UUID) (entity.Session, bool, error)
-	GetSessionByUserUid(ctx context.Context, userUid uuid.UUID) (entity.Session, bool, error)
+	GetSessionByUserUidAndDeviceUid(ctx context.Context, userUid uuid.UUID, deviceUid uuid.UUID) (entity.Session, bool, error)
 	UpdateSession(ctx context.Context, session entity.Session) error
-	DeleteSessionByUid(ctx context.Context, uid uuid.UUID) error
-	DeleteSessionByUserUid(ctx context.Context, userUid uuid.UUID) error
+	DeleteSessionsByUserUid(ctx context.Context, userUid uuid.UUID) error
+	DeleteSessionByUserUidAndDeviceUid(ctx context.Context, userUid uuid.UUID, deviceUid uuid.UUID) error
 }
 
 type AccessRepository interface {

@@ -56,6 +56,9 @@ func (uc *UseCaseAuth) verifyRefreshToken(ctx context.Context, token string) (en
 		log.Printf("usecaseAuth.verifyRefreshToken: token from request already invalid for session %s", tokenInfo.SessionUid)
 		return entity.TokenInfo{}, errors.Wrap(serviceErrors.ErrInvalidToken, "you should use last issued token")
 	}
+	if !uuid.Equal(session.DeviceUid, tokenInfo.DeviceUid) {
+		return entity.TokenInfo{}, errors.Wrap(serviceErrors.ErrInvalidToken, "wrong device")
+	}
 
 	return tokenInfo, nil
 }

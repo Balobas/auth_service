@@ -14,9 +14,9 @@ import (
 
 func (s *AuthServerGrpc) Logout(ctx context.Context, req *auth_v1.LogoutRequest) (*emptypb.Empty, error) {
 	userInfo := userInfoFromContext(ctx)
-	log.Printf("authServerGrpc.Logout: user uid %s, caller %s", req.GetUid(), userInfo.UserUid)
+	log.Printf("authServerGrpc.Logout: user uid %s, caller %s", req.GetDevice().GetUserUid(), userInfo.UserUid)
 
-	userUid := uuid.FromStringOrNil(req.GetUid())
+	userUid := uuid.FromStringOrNil(req.GetDevice().GetUserUid())
 	if uuid.Equal(userUid, uuid.UUID{}) {
 		userUid = userInfo.UserUid
 	}
@@ -26,7 +26,13 @@ func (s *AuthServerGrpc) Logout(ctx context.Context, req *auth_v1.LogoutRequest)
 		return nil, errors.Wrap(serviceErrors.ErrNotAllowedByPermissions, "permissions denied")
 	}
 
-	if err := s.ucAuth.Logout(ctx, userUid); err != nil {
+	if err := s.ucAuth.Logout(ctx, entity.UserDevice{
+		Uid:      uuid.FromStringOrNil(req.GetDevice().GetUid()),
+		UserUid:  userUid,
+		Name:     req.GetDevice().GetName(),
+		Agent:    req.GetDevice().GetAgent(),
+		Language: req.GetDevice().GetLanguage(),
+	}); err != nil {
 		log.Printf("authServerGrpc.Logout: failed to logout user %s: %v", userUid, err)
 		return nil, err
 	}

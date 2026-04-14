@@ -12,16 +12,17 @@ import (
 	uuid "github.com/satori/go.uuid"
 )
 
-func (uc *UseCaseAuth) UpdateUserCreds(ctx context.Context, user entity.User, password string) (string, string, error) {
+func (uc *UseCaseAuth) UpdateUserCreds(ctx context.Context, user entity.User, password string, device entity.UserDevice) (string, string, error) {
 	log.Printf("usecaseAuth.UpdateUserCreds: user %s", user.Uid)
 
 	if uuid.Equal(user.Uid, uuid.UUID{}) {
-		log.Printf("usecaseAuth.UpdateUserCreds: empty user uid")
 		return emptyTokensWithError(errors.Wrap(serviceErrors.ErrBadRequest, "empty user uid"))
 	}
 	if len(user.Email) == 0 && len(password) == 0 {
-		log.Printf("usecaseAuth.UpdateUserCreds: empty user %s email and password", user.Uid)
 		return emptyTokensWithError(errors.Wrap(serviceErrors.ErrBadRequest, "empty user email and password"))
+	}
+	if err := device.Validate(); err != nil {
+		return emptyTokensWithError(err)
 	}
 
 	var access, refresh string
@@ -30,7 +31,6 @@ func (uc *UseCaseAuth) UpdateUserCreds(ctx context.Context, user entity.User, pa
 
 		// TODO: возвращать юзера, иначе может быть пустой емэйл в токене
 		if err := uc.ucUsers.UpdateUser(ctx, user, password); err != nil {
-			log.Printf("usecaseAuth.UpdateUserCreds: failed to update user %s: %v", user.Uid, err)
 			return err
 		}
 
@@ -49,6 +49,7 @@ func (uc *UseCaseAuth) UpdateUserCreds(ctx context.Context, user entity.User, pa
 		session := entity.Session{
 			Uid:            uuid.NewV4(),
 			UserUid:        user.Uid,
+			DeviceUid:      device.Uid,
 			TokensIssuedAt: now.Unix(),
 			CreatedAt:      now,
 			UpdatedAt:      now,
@@ -56,14 +57,22 @@ func (uc *UseCaseAuth) UpdateUserCreds(ctx context.Context, user entity.User, pa
 
 		tokenInfo := entity.TokenInfo{
 			UserUid:    user.Uid,
+			DeviceUid:  device.Uid,
 			Email:      user.Email,
 			Roles:      rolesStrs,
 			SessionUid: session.Uid,
 			IssuedAt:   now.Unix(),
 		}
 
-		if err := uc.sessionsRepo.DeleteSessionByUserUid(ctx, user.Uid); err != nil {
-			log.Printf("usecaseAuth.UpdateUserCreds: failed to delete old session for user %s: %v", user.Uid, err)
+		if err := uc.ucDevices.UnauthorizeUserDevices(ctx, user.Uid, now); err != nil {
+			return err
+		}
+		if err := uc.ucDevices.HandleLoginFromDevice(ctx, device, now); err != nil {
+			return err
+		}
+
+		if err := uc.sessionsRepo.DeleteSessionsByUserUid(ctx, user.Uid); err != nil {
+			log.Printf("usecaseAuth.UpdateUserCreds: failed to delete all sessions for user %s: %v", user.Uid, err)
 			return err
 		}
 
@@ -74,12 +83,10 @@ func (uc *UseCaseAuth) UpdateUserCreds(ctx context.Context, user entity.User, pa
 
 		access, err = uc.jwtManager.NewToken(tokenInfo, uc.cfg.AccessJwtTTL())
 		if err != nil {
-			log.Printf("usecaseAuth.UpdateUserCreds: failed to build jwt for user %s: %v", user.Uid, err)
 			return errors.Wrapf(err, "failed to build jwt")
 		}
 		refresh, err = uc.jwtManager.NewToken(tokenInfo, uc.cfg.RefreshJwtTTL())
 		if err != nil {
-			log.Printf("usecaseAuth.UpdateUserCreds: failed to build jwt for user %s: %v", user.Uid, err)
 			return errors.Wrapf(err, "failed to build jwt")
 		}
 
