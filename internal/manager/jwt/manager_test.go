@@ -15,6 +15,7 @@ func TestManager(t *testing.T) {
 
 	tokenInfo := entity.TokenInfo{
 		UserUid:    uuid.FromStringOrNil("c61f4445-02d5-4afd-8ad5-49b26a3834c1"),
+		DeviceUid: uuid.FromStringOrNil("c61f4445-02d5-4afd-8ad5-49b26a3834c1"),
 		Email:      "hui",
 		Roles:      []string{"admin"},
 		SessionUid: uuid.FromStringOrNil("c61f4445-02d5-4afd-8ad5-49b26a3834c1"),

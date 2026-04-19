@@ -14,7 +14,7 @@ func (uc *UseCaseAuth) Refresh(ctx context.Context, token string) (string, strin
 
 	var access, refresh string
 	if err := uc.dbm.ExecuteTx(ctx, common.ReadCommitted, func(ctx context.Context) error {
-		tokenInfo, err := uc.verifyRefreshToken(ctx, token)
+		tokenInfo, err := uc.parseAndVerifyRefreshToken(ctx, token)
 		if err != nil {
 			return err
 		}

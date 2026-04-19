@@ -188,7 +188,7 @@ message JwtResponse {
 }
 
 message LogoutRequest {
-    Device device = 1;
+    string device_uid = 1;
 }
 
 message RefreshRequest {

@@ -25,7 +25,7 @@ type UcCredentials interface {
 
 type UcDevices interface {
 	HandleLoginFromDevice(ctx context.Context, device entity.UserDevice, loginTime time.Time) error
-	HandleLogoutFromDevice(ctx context.Context, device entity.UserDevice, logoutTime time.Time) error
+	HandleLogoutFromDevice(ctx context.Context, userUid uuid.UUID, deviceUid uuid.UUID, logoutTime time.Time) error
 	UnauthorizeUserDevices(ctx context.Context, userUid uuid.UUID, unauthTime time.Time) error
 }
 

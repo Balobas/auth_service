@@ -16,7 +16,7 @@ func (r *Repository) CreateUserAuthorizedDevice(ctx context.Context, device enti
 
 func (r *Repository) UpdateUserAuthorizedDevice(ctx context.Context, device entity.UserAuthorizedDevice) error {
 	row := pgEntity.NewDeviceRow().FromEntity(device)
-	return r.Update(ctx, row, row.ConditionUidEqual())
+	return r.Update(ctx, row, row.ConditionUserUidAndDeviceUidEqual())
 }
 
 func (r *Repository) GetUserAuthorizedDevice(ctx context.Context, userUid uuid.UUID, deviceUid uuid.UUID) (entity.UserAuthorizedDevice, bool, error) {

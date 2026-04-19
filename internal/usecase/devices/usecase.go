@@ -8,9 +8,11 @@ type UseCase struct {
 }
 
 func New(
+	dbm *dbManager.Manager,
 	devicesRepo DevicesRepository,
 ) *UseCase {
 	return &UseCase{
+		dbm:         dbm,
 		devicesRepo: devicesRepo,
 	}
 }

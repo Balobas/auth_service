@@ -10,7 +10,7 @@ import (
 )
 
 func (s *AuthServerGrpc) Login(ctx context.Context, req *auth_v1.LoginRequest) (*auth_v1.JwtResponse, error) {
-	log.Printf("authServerGrpc.Login: email %s", req.GetEmail())
+	log.Printf("authServerGrpc.Login: email %s, device uid %s", req.GetEmail(), req.GetDevice().GetUid())
 	accessjwt, refreshJwt, err := s.ucAuth.Login(
 		ctx, entity.LoginParams{
 			Email:    req.GetEmail(),

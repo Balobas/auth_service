@@ -5,7 +5,6 @@ import (
 	"log"
 
 	"github.com/balobas/auth_service/internal/entity"
-	uuid "github.com/satori/go.uuid"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
@@ -69,7 +68,7 @@ type userCtxKey struct{}
 func contextWithUserInfo(ctx context.Context, tokenInfo entity.TokenInfo, tokenStr string) context.Context {
 	return context.WithValue(
 		ctx, userCtxKey{},
-		UserInfo{
+		entity.UserInfo{
 			UserUid: tokenInfo.UserUid,
 			Roles:   tokenInfo.Roles,
 			Token:   tokenStr,
@@ -77,18 +76,12 @@ func contextWithUserInfo(ctx context.Context, tokenInfo entity.TokenInfo, tokenS
 	)
 }
 
-func userInfoFromContext(ctx context.Context) UserInfo {
-	info, ok := ctx.Value(userCtxKey{}).(UserInfo)
+func userInfoFromContext(ctx context.Context) entity.UserInfo {
+	info, ok := ctx.Value(userCtxKey{}).(entity.UserInfo)
 	if !ok {
-		return UserInfo{}
+		return entity.UserInfo{}
 	}
 	return info
-}
-
-type UserInfo struct {
-	UserUid uuid.UUID
-	Roles   []string
-	Token   string
 }
 
 const (

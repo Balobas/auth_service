@@ -18,7 +18,7 @@ import (
 Для одного юзера и девайса в один момент времени может быть только одна сессия
 */
 func (uc *UseCaseAuth) Login(ctx context.Context, params entity.LoginParams) (string, string, error) {
-	log.Printf("usecaseAuth.Login: email %s", params.Email)
+	log.Printf("usecaseAuth.Login: email %s, device %s", params.Email, params.Device.Uid)
 
 	if err := validations.ValidateEmail(params.Email); err != nil {
 		return emptyTokensWithError(err)

@@ -334,7 +334,7 @@ func (sp *serviceProvider) UseCaseOutboxMessages(ctx context.Context) *useCaseOu
 
 func (sp *serviceProvider) UseCaseDevices(ctx context.Context) *ucDevices.UseCase {
 	if sp.useCaseDevices == nil {
-		sp.useCaseDevices = ucDevices.New(sp.DevicesRepository(ctx))
+		sp.useCaseDevices = ucDevices.New(sp.DbManager(ctx), sp.DevicesRepository(ctx))
 	}
 	return sp.useCaseDevices
 }

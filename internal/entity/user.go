@@ -15,3 +15,8 @@ type User struct {
 	UpdatedAt  time.Time
 }
 
+type UserInfo struct {
+	UserUid uuid.UUID
+	Roles   []string
+	Token   string
+}
