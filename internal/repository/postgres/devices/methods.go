@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	sq "github.com/Masterminds/squirrel"
 	"github.com/balobas/auth_service/internal/entity"
 	pgEntity "github.com/balobas/auth_service/internal/repository/postgres/pg_entity"
 	"github.com/jackc/pgx/v5"
@@ -34,7 +35,28 @@ func (r *Repository) GetUserAuthorizedDevices(ctx context.Context, userUid uuid.
 	row := pgEntity.NewDeviceRow().FromEntity(entity.UserAuthorizedDevice{UserDevice: entity.UserDevice{UserUid: userUid}})
 
 	rows := pgEntity.NewDevicesRows()
-	if err := r.GetSome(ctx, row, rows, row.ConditionUserUidEqual()); err != nil {
+	if err := r.GetSome(ctx, row, rows,
+		sq.And{
+			row.ConditionUserUidEqual(),
+			row.ConditionUnauthorizedIsNull(),
+		},
+	); err != nil {
+		return nil, err
+	}
+
+	return rows.ToEntities(), nil
+}
+
+func (r *Repository) GetUsersAuthorizedDevices(ctx context.Context, usersUids ...uuid.UUID) ([]entity.UserAuthorizedDevice, error) {
+	row := pgEntity.NewDeviceRow()
+
+	rows := pgEntity.NewDevicesRows()
+	if err := r.GetSome(ctx, row, rows,
+		sq.And{
+			row.ConditionUserUidIn(usersUids),
+			row.ConditionUnauthorizedIsNull(),
+		},
+	); err != nil {
 		return nil, err
 	}
 

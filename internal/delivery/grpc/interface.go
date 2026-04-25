@@ -22,7 +22,7 @@ type UcAuth interface {
 	Refresh(ctx context.Context, token string) (string, string, error)
 	VerifyAuth(ctx context.Context, token string) (entity.TokenInfo, error)
 	VerifyAccess(ctx context.Context, uri string, method string, token string) error
-	UpdateUserCreds(ctx context.Context, user entity.User, password string, device entity.UserDevice) (string, string, error)
+	UpdateUserCreds(ctx context.Context, user entity.User, password string, deviceUid uuid.UUID) (string, string, error)
 }
 
 type UcVerification interface {
@@ -31,6 +31,7 @@ type UcVerification interface {
 
 type UcDevices interface {
 	GetUserAuthorizedDevices(ctx context.Context, userUid uuid.UUID) ([]entity.UserAuthorizedDevice, error)
+	GetUsersAuthorizedDevices(ctx context.Context, usersUids ...uuid.UUID) ([]entity.UserAuthorizedDevice, error)
 }
 
 type UcAccess interface {

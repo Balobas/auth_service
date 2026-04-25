@@ -13,5 +13,6 @@ type (
 		UpdateUserAuthorizedDevice(ctx context.Context, device entity.UserAuthorizedDevice) error
 		GetUserAuthorizedDevice(ctx context.Context, userUid uuid.UUID, deviceUid uuid.UUID) (entity.UserAuthorizedDevice, bool, error)
 		GetUserAuthorizedDevices(ctx context.Context, userUid uuid.UUID) ([]entity.UserAuthorizedDevice, error)
+		GetUsersAuthorizedDevices(ctx context.Context, usersUids ...uuid.UUID) ([]entity.UserAuthorizedDevice, error)
 	}
 )

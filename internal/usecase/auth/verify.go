@@ -68,6 +68,11 @@ func (uc *UseCaseAuth) VerifyAuth(ctx context.Context, token string) (entity.Tok
 		return entity.TokenInfo{}, errors.Wrap(serviceErrors.ErrInvalidToken, "you should use last issued token")
 	}
 
+	if !uuid.Equal(tokenInfo.DeviceUid, session.DeviceUid) {
+		log.Printf("usecaseAuth.VerifyAuth: invalid device uid for session %s", tokenInfo.SessionUid)
+		return entity.TokenInfo{}, errors.Wrap(serviceErrors.ErrInvalidToken, "invalid device in token")
+	}
+
 	if len(tokenInfo.Roles) != len(user.Roles) {
 		log.Printf("usecaseAuth.VerifyAuth: invalid roles in user %s token: len mismatch", tokenInfo.UserUid)
 		return tokenInfo, errors.Wrap(serviceErrors.ErrInvalidToken, "invalid roles in token")

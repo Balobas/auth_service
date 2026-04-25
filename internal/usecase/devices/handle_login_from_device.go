@@ -21,7 +21,7 @@ func (uc *UseCase) HandleLoginFromDevice(ctx context.Context, device entity.User
 			}
 
 			// иначе, юзер разлогинивался с девайса и сейчас нужно учесть его логин
-			authDevice = device.Authorize(loginTime)
+			authDevice = authDevice.Authorize(loginTime)
 			return uc.devicesRepo.UpdateUserAuthorizedDevice(ctx, authDevice)
 		}
 

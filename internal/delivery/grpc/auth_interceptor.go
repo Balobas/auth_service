@@ -69,9 +69,10 @@ func contextWithUserInfo(ctx context.Context, tokenInfo entity.TokenInfo, tokenS
 	return context.WithValue(
 		ctx, userCtxKey{},
 		entity.UserInfo{
-			UserUid: tokenInfo.UserUid,
-			Roles:   tokenInfo.Roles,
-			Token:   tokenStr,
+			UserUid:   tokenInfo.UserUid,
+			DeviceUid: tokenInfo.DeviceUid,
+			Roles:     tokenInfo.Roles,
+			Token:     tokenStr,
 		},
 	)
 }

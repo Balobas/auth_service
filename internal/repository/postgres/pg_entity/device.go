@@ -7,6 +7,7 @@ import (
 	"github.com/balobas/auth_service/internal/entity"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
+	uuid "github.com/satori/go.uuid"
 )
 
 const devicesTableName = "users_devices"
@@ -167,6 +168,16 @@ func (s *DeviceRow) ConditionUidEqual() sq.Eq {
 func (s *DeviceRow) ConditionUserUidEqual() sq.Eq {
 	return sq.Eq{
 		"user_uid": s.UserUid,
+	}
+}
+
+func (s *DeviceRow) ConditionUserUidIn(uids []uuid.UUID) sq.Eq {
+	uidsStrs := make([]string, len(uids))
+	for i := 0; i < len(uids); i++ {
+		uidsStrs[i] = uids[i].String()
+	}
+	return sq.Eq{
+		"user_uid": uidsStrs,
 	}
 }
 

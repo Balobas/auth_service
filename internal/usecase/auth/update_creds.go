@@ -12,17 +12,17 @@ import (
 	uuid "github.com/satori/go.uuid"
 )
 
-func (uc *UseCaseAuth) UpdateUserCreds(ctx context.Context, user entity.User, password string, device entity.UserDevice) (string, string, error) {
+func (uc *UseCaseAuth) UpdateUserCreds(ctx context.Context, user entity.User, password string, deviceUid uuid.UUID) (string, string, error) {
 	log.Printf("usecaseAuth.UpdateUserCreds: user %s", user.Uid)
 
 	if uuid.Equal(user.Uid, uuid.UUID{}) {
 		return emptyTokensWithError(errors.Wrap(serviceErrors.ErrBadRequest, "empty user uid"))
 	}
+	if uuid.Equal(deviceUid, uuid.UUID{}) {
+		return emptyTokensWithError(errors.Wrap(serviceErrors.ErrBadRequest, "empty device uid"))
+	}
 	if len(user.Email) == 0 && len(password) == 0 {
 		return emptyTokensWithError(errors.Wrap(serviceErrors.ErrBadRequest, "empty user email and password"))
-	}
-	if err := device.Validate(); err != nil {
-		return emptyTokensWithError(err)
 	}
 
 	var access, refresh string
@@ -49,7 +49,7 @@ func (uc *UseCaseAuth) UpdateUserCreds(ctx context.Context, user entity.User, pa
 		session := entity.Session{
 			Uid:            uuid.NewV4(),
 			UserUid:        user.Uid,
-			DeviceUid:      device.Uid,
+			DeviceUid:      deviceUid,
 			TokensIssuedAt: now.Unix(),
 			CreatedAt:      now,
 			UpdatedAt:      now,
@@ -57,7 +57,7 @@ func (uc *UseCaseAuth) UpdateUserCreds(ctx context.Context, user entity.User, pa
 
 		tokenInfo := entity.TokenInfo{
 			UserUid:    user.Uid,
-			DeviceUid:  device.Uid,
+			DeviceUid:  deviceUid,
 			Email:      user.Email,
 			Roles:      rolesStrs,
 			SessionUid: session.Uid,
@@ -67,7 +67,7 @@ func (uc *UseCaseAuth) UpdateUserCreds(ctx context.Context, user entity.User, pa
 		if err := uc.ucDevices.UnauthorizeUserDevices(ctx, user.Uid, now); err != nil {
 			return err
 		}
-		if err := uc.ucDevices.HandleLoginFromDevice(ctx, device, now); err != nil {
+		if err := uc.ucDevices.HandleLoginFromDevice(ctx, entity.UserDevice{UserUid: user.Uid, Uid: deviceUid}, now); err != nil {
 			return err
 		}
 
