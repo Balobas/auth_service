@@ -183,7 +183,7 @@ func (s *DeviceRow) ConditionUserUidIn(uids []uuid.UUID) sq.Eq {
 
 func (s *DeviceRow) ConditionUnauthorizedIsNull() sq.Eq {
 	return sq.Eq{
-		"unauthorized": pgtype.Timestamp{},
+		"unauthorized_at": pgtype.Timestamp{},
 	}
 }
 
