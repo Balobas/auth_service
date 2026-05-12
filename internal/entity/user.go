@@ -16,8 +16,12 @@ type User struct {
 }
 
 type UserInfo struct {
-	UserUid   uuid.UUID
-	Roles     []string
-	Token     string
-	DeviceUid uuid.UUID
+	UserUid     uuid.UUID
+	Roles       []string
+	Token       string
+	DeviceUid   uuid.UUID
+	IsSystem    bool
+	ServiceUid  uuid.UUID
+	Domain      string
+	ServiceName string
 }

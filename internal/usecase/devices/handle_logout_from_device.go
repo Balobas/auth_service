@@ -11,7 +11,7 @@ import (
 
 func (uc *UseCase) HandleLogoutFromDevice(ctx context.Context, userUid uuid.UUID, deviceUid uuid.UUID, logoutTime time.Time) error {
 	return uc.dbm.ExecuteTx(ctx, common.ReadCommitted, func(ctx context.Context) error {
-		authDevice, isFound, err := uc.devicesRepo.GetUserAuthorizedDevice(ctx, userUid, deviceUid)
+		authDevice, isFound, err := uc.devicesRepo.GetAuthorizedDevice(ctx, userUid, deviceUid)
 		if err != nil {
 			return err
 		}
@@ -28,6 +28,6 @@ func (uc *UseCase) HandleLogoutFromDevice(ctx context.Context, userUid uuid.UUID
 		}
 
 		authDevice = authDevice.Unauthorize(logoutTime)
-		return uc.devicesRepo.UpdateUserAuthorizedDevice(ctx, authDevice)
+		return uc.devicesRepo.UpdateAuthorizedDevice(ctx, authDevice)
 	})
 }

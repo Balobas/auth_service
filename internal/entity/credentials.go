@@ -6,3 +6,8 @@ type UserCredentials struct {
 	UserUid      uuid.UUID
 	PasswordHash []byte
 }
+
+type ServiceCredentials struct {
+	ServiceUid   uuid.UUID
+	PasswordHash []byte
+}

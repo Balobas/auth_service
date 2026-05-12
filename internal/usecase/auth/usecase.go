@@ -9,6 +9,7 @@ type UseCaseAuth struct {
 
 	sessionsRepo SessionsRepository
 	accessRepo   AccessRepository
+	servicesRepo ServicesRepository
 
 	ucUsers       UcUsers
 	ucCredentials UcCredentials
@@ -22,6 +23,7 @@ func New(
 	cfg Config,
 	sessionsRepo SessionsRepository,
 	accessRepo AccessRepository,
+	servicesRepo ServicesRepository,
 	ucUsers UcUsers,
 	ucCreds UcCredentials,
 	ucDevices UcDevices,
@@ -32,6 +34,7 @@ func New(
 		cfg:           cfg,
 		sessionsRepo:  sessionsRepo,
 		accessRepo:    accessRepo,
+		servicesRepo:  servicesRepo,
 		ucUsers:       ucUsers,
 		ucCredentials: ucCreds,
 		ucDevices:     ucDevices,

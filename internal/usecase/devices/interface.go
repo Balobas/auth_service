@@ -9,10 +9,10 @@ import (
 
 type (
 	DevicesRepository interface {
-		CreateUserAuthorizedDevice(ctx context.Context, device entity.UserAuthorizedDevice) error
-		UpdateUserAuthorizedDevice(ctx context.Context, device entity.UserAuthorizedDevice) error
-		GetUserAuthorizedDevice(ctx context.Context, userUid uuid.UUID, deviceUid uuid.UUID) (entity.UserAuthorizedDevice, bool, error)
-		GetUserAuthorizedDevices(ctx context.Context, userUid uuid.UUID) ([]entity.UserAuthorizedDevice, error)
-		GetUsersAuthorizedDevices(ctx context.Context, usersUids ...uuid.UUID) ([]entity.UserAuthorizedDevice, error)
+		CreateAuthorizedDevice(ctx context.Context, device entity.AuthorizedDevice) error
+		UpdateAuthorizedDevice(ctx context.Context, device entity.AuthorizedDevice) error
+		GetAuthorizedDevice(ctx context.Context, maintainerUid uuid.UUID, deviceUid uuid.UUID) (entity.AuthorizedDevice, bool, error)
+		GetUserAuthorizedDevices(ctx context.Context, userUid uuid.UUID) ([]entity.AuthorizedDevice, error)
+		GetUsersAuthorizedDevices(ctx context.Context, usersUids ...uuid.UUID) ([]entity.AuthorizedDevice, error)
 	}
 )

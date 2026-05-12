@@ -21,7 +21,7 @@ get-deps:
 generate:
 	make generate-auth-api
 
-generate-auth-api:
+gen-api:
 	mkdir -p pkg/auth_v1
 	protoc --proto_path api/auth_v1 \
 	--go_out=pkg/auth_v1 --go_opt=paths=source_relative \
@@ -29,6 +29,14 @@ generate-auth-api:
 	--go-grpc_out=pkg/auth_v1 --go-grpc_opt=paths=source_relative \
 	--plugin=protoc-gen-go-grpc=bin/protoc-gen-go-grpc \
 	api/auth_v1/auth_api.proto
+
+	mkdir -p pkg/auth_internal_api
+	protoc --proto_path api/auth_internal_api \
+	--go_out=pkg/auth_internal_api --go_opt=paths=source_relative \
+	--plugin=protoc-gen-go=bin/protoc-gen-go \
+	--go-grpc_out=pkg/auth_internal_api --go-grpc_opt=paths=source_relative \
+	--plugin=protoc-gen-go-grpc=bin/protoc-gen-go-grpc \
+	api/auth_internal_api/auth_internal_api.proto
 
 run-server:
 	go run $(CURDIR)/cmd/server/main.go

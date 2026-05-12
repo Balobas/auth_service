@@ -15,4 +15,8 @@ type CredentialsRepository interface {
 	UpdateCredentials(ctx context.Context, creds entity.UserCredentials) error
 	GetByUserUid(ctx context.Context, userUid uuid.UUID) (entity.UserCredentials, bool, error)
 	DeleteByUserUid(ctx context.Context, userUid uuid.UUID) error
+
+	CreateServiceCredentials(ctx context.Context, creds entity.ServiceCredentials) error 
+	GetByServiceUid(ctx context.Context, serviceUid uuid.UUID) (entity.ServiceCredentials, bool, error)
+	
 }

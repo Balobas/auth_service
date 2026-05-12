@@ -13,7 +13,7 @@ import (
 func (r *AccessRepository) GetUserRoles(ctx context.Context, userUid uuid.UUID) ([]entity.Role, error) {
 	log.Printf("accessRepository.GetUserRoles: user %s", userUid)
 
-	stmt := "SELECT ur.role, r.description from user_roles ur INNER JOIN roles r on ur.role=r.role  WHERE user_uid=$1"
+	stmt := "SELECT ur.role, r.description from user_roles ur INNER JOIN roles r on ur.role=r.role  WHERE ur.user_uid=$1"
 
 	rows, err := r.Query(ctx, stmt, pgtype.UUID{
 		Bytes:  userUid,

@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 
+	sq "github.com/Masterminds/squirrel"
 	"github.com/balobas/auth_service/internal/entity"
 	pgEntity "github.com/balobas/auth_service/internal/repository/postgres/pg_entity"
 	"github.com/jackc/pgx/v5"
@@ -19,7 +20,7 @@ func (r *SessionRepository) CreateSession(ctx context.Context, session entity.Se
 		return errors.Wrapf(
 			err,
 			"failed to create session with uid %s, user uid %s",
-			session.Uid, session.UserUid,
+			session.Uid, session.MaintainerUid,
 		)
 	}
 	log.Printf("successfuly create session")
@@ -41,15 +42,15 @@ func (r *SessionRepository) GetSessionByUid(ctx context.Context, uid uuid.UUID) 
 	return sessionRow.ToEntity(), true, nil
 }
 
-func (r *SessionRepository) GetSessionByUserUidAndDeviceUid(ctx context.Context, userUid uuid.UUID, deviceUid uuid.UUID) (entity.Session, bool, error) {
-	sessionRow := pgEntity.NewSessionRow().FromEntity(entity.Session{UserUid: userUid, DeviceUid: deviceUid})
+func (r *SessionRepository) GetSessionByMaintainerAndDevice(ctx context.Context, maintainerUid uuid.UUID, deviceUid uuid.UUID) (entity.Session, bool, error) {
+	sessionRow := pgEntity.NewSessionRow().FromEntity(entity.Session{MaintainerUid: maintainerUid, DeviceUid: deviceUid})
 
-	if err := r.GetOne(ctx, sessionRow, sessionRow.ConditionUserUidAndDeviceUidEqual()); err != nil {
+	if err := r.GetOne(ctx, sessionRow, sessionRow.ConditionMaintainerUidAndDeviceUidEqual()); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return entity.Session{}, false, nil
 		}
 		log.Printf("failed to get session by user uid and device uid")
-		return entity.Session{}, false, errors.Wrapf(err, "failed to get sessions by user uid %s and device uid %s", userUid, deviceUid)
+		return entity.Session{}, false, errors.Wrapf(err, "failed to get sessions by maintainer uid %s and device uid %s", maintainerUid, deviceUid)
 	}
 
 	log.Printf("successfuly get session by user uid and device uid")
@@ -68,10 +69,16 @@ func (r *SessionRepository) UpdateSession(ctx context.Context, session entity.Se
 	return nil
 }
 
-func (r *SessionRepository) DeleteSessionsByUserUid(ctx context.Context, userUid uuid.UUID) error {
-	sessionRow := pgEntity.NewSessionRow().FromEntity(entity.Session{UserUid: userUid})
+func (r *SessionRepository) DeleteUserSessions(ctx context.Context, userUid uuid.UUID) error {
+	sessionRow := pgEntity.NewSessionRow().FromEntity(entity.Session{MaintainerUid: userUid})
 
-	if err := r.Delete(ctx, sessionRow, sessionRow.ConditionUserUidEqual()); err != nil {
+	if err := r.Delete(
+		ctx, sessionRow,
+		sq.And{
+			sessionRow.ConditionMaintainerUidEqual(),
+			sessionRow.ConditionTypeEqual(entity.SessionTypeUser),
+		},
+	); err != nil {
 		log.Printf("failed to delete sessions by user uid")
 		return errors.Wrapf(err, "failed to delete sessions with user uid %s", userUid)
 	}
@@ -80,12 +87,12 @@ func (r *SessionRepository) DeleteSessionsByUserUid(ctx context.Context, userUid
 	return nil
 }
 
-func (r *SessionRepository) DeleteSessionByUserUidAndDeviceUid(ctx context.Context, userUid uuid.UUID, deviceUid uuid.UUID) error {
-	sessionRow := pgEntity.NewSessionRow().FromEntity(entity.Session{UserUid: userUid, DeviceUid: deviceUid})
+func (r *SessionRepository) DeleteSessionByMaintainerAndDevice(ctx context.Context, maintainerUid uuid.UUID, deviceUid uuid.UUID) error {
+	sessionRow := pgEntity.NewSessionRow().FromEntity(entity.Session{MaintainerUid: maintainerUid, DeviceUid: deviceUid})
 
-	if err := r.Delete(ctx, sessionRow, sessionRow.ConditionUserUidAndDeviceUidEqual()); err != nil {
+	if err := r.Delete(ctx, sessionRow, sessionRow.ConditionMaintainerUidAndDeviceUidEqual()); err != nil {
 		log.Printf("failed to delete session by user uid and device uid")
-		return errors.Wrapf(err, "failed to delete sessions with user uid %s and device uid %s", userUid, deviceUid)
+		return errors.Wrapf(err, "failed to delete sessions with maintainer uid %s and device uid %s", maintainerUid, deviceUid)
 	}
 
 	log.Printf("successfuly delete session by user uid and device uid")

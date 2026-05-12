@@ -46,3 +46,24 @@ func (r *CredentialsRepository) DeleteByUserUid(ctx context.Context, userUid uui
 	}
 	return nil
 }
+
+func (r *CredentialsRepository) CreateServiceCredentials(ctx context.Context, creds entity.ServiceCredentials) error {
+	credsRow := pgEntity.NewServiceCredentialsRow().FromEntity(creds)
+	if err := r.Create(ctx, credsRow); err != nil {
+		return errors.Wrapf(err, "failed to create credentials for service %s", creds.ServiceUid)
+	}
+	return nil
+}
+
+func (r *CredentialsRepository) GetByServiceUid(ctx context.Context, serviceUid uuid.UUID) (entity.ServiceCredentials, bool, error) {
+	credsRow := pgEntity.NewServiceCredentialsRow()
+
+	if err := r.GetOne(ctx, credsRow, credsRow.ConditionServiceUidEqual(serviceUid)); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return entity.ServiceCredentials{}, false, nil
+		}
+		return entity.ServiceCredentials{}, false, errors.Wrapf(err, "failed to get credentials for service %s", serviceUid)
+	}
+
+	return credsRow.ToEntity(), true, nil
+}

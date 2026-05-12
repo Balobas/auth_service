@@ -7,6 +7,6 @@ import (
 	uuid "github.com/satori/go.uuid"
 )
 
-func (uc *UseCase) GetUserAuthorizedDevices(ctx context.Context, userUid uuid.UUID) ([]entity.UserAuthorizedDevice, error) {
+func (uc *UseCase) GetUserAuthorizedDevices(ctx context.Context, userUid uuid.UUID) ([]entity.AuthorizedDevice, error) {
 	return uc.devicesRepo.GetUserAuthorizedDevices(ctx, userUid)
 }

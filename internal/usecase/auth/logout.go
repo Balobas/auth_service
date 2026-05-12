@@ -25,7 +25,7 @@ func (uc *UseCaseAuth) Logout(ctx context.Context, userUid uuid.UUID, deviceUid 
 			return err
 		}
 
-		if err := uc.sessionsRepo.DeleteSessionByUserUidAndDeviceUid(ctx, userUid, deviceUid); err != nil {
+		if err := uc.sessionsRepo.DeleteSessionByMaintainerAndDevice(ctx, userUid, deviceUid); err != nil {
 			log.Printf("usecaseAuth.Logout: failed to delete session for user %s device %s: %v", userUid, deviceUid, err)
 			return err
 		}

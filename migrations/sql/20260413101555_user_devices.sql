@@ -1,15 +1,19 @@
 -- +goose Up
 -- +goose StatementBegin
-create table users_devices (
+
+create type device_type as enum('user_device', 'system_device');
+
+create table devices (
     uid uuid not null,
-    user_uid uuid references users(uid),
+    maintainer_uid uuid not null,
+    type device_type not null,
     name varchar,
     agent varchar,
     language varchar,
     created_at timestamp not null default now(),
     authorized_at timestamp not null default now(),
     unauthorized_at timestamp,
-    primary key(uid, user_uid)
+    primary key(uid, maintainer_uid)
 );
 
 alter table sessions add column device_uid uuid not null;
@@ -25,4 +29,5 @@ alter table sessions add column device_uid uuid not null;
 -- +goose StatementBegin
 alter table sessions drop column device_uid;
 drop table users_devices;
+drop type device_type;
 -- +goose StatementEnd

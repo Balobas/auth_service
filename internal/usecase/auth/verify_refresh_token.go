@@ -24,41 +24,97 @@ func (uc *UseCaseAuth) parseAndVerifyRefreshToken(ctx context.Context, token str
 		log.Printf("usecaseAuth.parseAndVerifyRefreshToken: failed to parse token\n")
 		return entity.TokenInfo{}, errors.Wrap(serviceErrors.ErrBadRequest, err.Error())
 	}
+	// TODO: switch tokenInfo.Type: verifyUserToken/verifySystemToken
+	switch tokenInfo.Type {
+	case entity.TokenTypeUser:
+		return tokenInfo, uc.verifyUserRefreshToken(ctx, tokenInfo)
+	case entity.TokenTypeSystem:
+		return tokenInfo, uc.verifySystemRefreshToken(ctx, tokenInfo)
+	default:
+		return entity.TokenInfo{}, errors.New("unknow token type")
+	}
+}
 
+func (uc *UseCaseAuth) verifyUserRefreshToken(ctx context.Context, tokenInfo entity.TokenInfo) error {
 	if tokenInfo.ExpiredAt <= time.Now().Unix() {
-		log.Printf("usecaseAuth.parseAndVerifyRefreshToken: token expired for user %s", tokenInfo.UserUid)
-		return entity.TokenInfo{}, serviceErrors.ErrTokenExpired
+		log.Printf("usecaseAuth.verifyUserRefreshToken: token expired for user %s", tokenInfo.UserUid)
+		return serviceErrors.ErrTokenExpired
 	}
 
 	user, err := uc.ucUsers.GetUserByEmail(ctx, tokenInfo.Email)
 	if err != nil {
-		log.Printf("usecaseAuth.parseAndVerifyRefreshToken: failed to get user %s by email %s: %v\n", tokenInfo.UserUid, tokenInfo.Email, err)
-		return entity.TokenInfo{}, errors.WithStack(err)
+		log.Printf("usecaseAuth.verifyUserRefreshToken: failed to get user %s by email %s: %v\n", tokenInfo.UserUid, tokenInfo.Email, err)
+		return errors.WithStack(err)
 	}
 
 	if !uuid.Equal(user.Uid, tokenInfo.UserUid) {
 		// на случаи когда в токене email реального юзера, а uid не реального
-		log.Printf("usecaseAuth.parseAndVerifyRefreshToken: user in token (%s) is not user in request (%s)", tokenInfo.UserUid, user.Uid)
-		return entity.TokenInfo{}, errors.Wrap(serviceErrors.ErrInvalidToken, "user in token is not user in request")
+		log.Printf("usecaseAuth.verifyUserRefreshToken: user in token (%s) is not user in request (%s)", tokenInfo.UserUid, user.Uid)
+		return errors.Wrap(serviceErrors.ErrInvalidToken, "user in token is not user in request")
 	}
 
 	session, isFound, err := uc.sessionsRepo.GetSessionByUid(ctx, tokenInfo.SessionUid)
 	if err != nil {
-		log.Printf("usecaseAuth.parseAndVerifyRefreshToken: failed to get session %s: %v", tokenInfo.SessionUid, err)
-		return entity.TokenInfo{}, errors.WithStack(err)
+		log.Printf("usecaseAuth.verifyUserRefreshToken: failed to get session %s: %v", tokenInfo.SessionUid, err)
+		return errors.WithStack(err)
 	}
 	if !isFound {
-		log.Printf("usecaseAuth.parseAndVerifyRefreshToken: session %s not found", tokenInfo.SessionUid)
-		return entity.TokenInfo{}, errors.Wrap(serviceErrors.ErrNotFound, "session")
+		log.Printf("usecaseAuth.verifyUserRefreshToken: session %s not found", tokenInfo.SessionUid)
+		return errors.Wrap(serviceErrors.ErrNotFound, "session")
 	}
 
 	if session.TokensIssuedAt != tokenInfo.IssuedAt {
-		log.Printf("usecaseAuth.parseAndVerifyRefreshToken: token from request already invalid for session %s", tokenInfo.SessionUid)
-		return entity.TokenInfo{}, errors.Wrap(serviceErrors.ErrInvalidToken, "you should use last issued token")
+		log.Printf("usecaseAuth.verifyUserRefreshToken: token from request already invalid for session %s", tokenInfo.SessionUid)
+		return errors.Wrap(serviceErrors.ErrInvalidToken, "you should use last issued token")
 	}
 	if !uuid.Equal(session.DeviceUid, tokenInfo.DeviceUid) {
-		return entity.TokenInfo{}, errors.Wrap(serviceErrors.ErrInvalidToken, "wrong device")
+		return errors.Wrap(serviceErrors.ErrInvalidToken, "wrong device")
 	}
 
-	return tokenInfo, nil
+	return nil
+}
+
+func (uc *UseCaseAuth) verifySystemRefreshToken(ctx context.Context, tokenInfo entity.TokenInfo) error {
+	if tokenInfo.ExpiredAt <= time.Now().Unix() {
+		log.Printf("usecaseAuth.verifySystemRefreshToken: token expired for service %s", tokenInfo.ServiceUid)
+		return serviceErrors.ErrTokenExpired
+	}
+
+	service, isFound, err := uc.servicesRepo.GetServiceByUid(ctx, tokenInfo.ServiceUid)
+	if err != nil {
+		log.Printf("usecaseAuth.verifySystemRefreshToken: failed to get service %s by  uid: %v\n", tokenInfo.ServiceUid, err)
+		return errors.WithStack(err)
+	}
+	if !isFound {
+		return errors.Wrap(serviceErrors.ErrNotFound, "service")
+	}
+
+	if service.Name != tokenInfo.ServiceName {
+		log.Printf("usecaseAuth.verifySystemRefreshToken: service name in token (%s) is not service name in request (%s)", tokenInfo.ServiceName, service.Name)
+		return errors.Wrap(serviceErrors.ErrInvalidToken, "invalid service name")
+	}
+	if service.Domain != tokenInfo.Domain {
+		log.Printf("usecaseAuth.verifySystemRefreshToken: service domain in token (%s) is not service domain in request (%s)", tokenInfo.Domain, service.Domain)
+		return errors.Wrap(serviceErrors.ErrInvalidToken, "invalid service domain")
+	}
+
+	session, isFound, err := uc.sessionsRepo.GetSessionByUid(ctx, tokenInfo.SessionUid)
+	if err != nil {
+		log.Printf("usecaseAuth.verifySystemRefreshToken: failed to get session %s: %v", tokenInfo.SessionUid, err)
+		return errors.WithStack(err)
+	}
+	if !isFound {
+		log.Printf("usecaseAuth.verifySystemRefreshToken: session %s not found", tokenInfo.SessionUid)
+		return errors.Wrap(serviceErrors.ErrNotFound, "session")
+	}
+
+	if session.TokensIssuedAt != tokenInfo.IssuedAt {
+		log.Printf("usecaseAuth.verifySystemRefreshToken: token from request already invalid for session %s", tokenInfo.SessionUid)
+		return errors.Wrap(serviceErrors.ErrInvalidToken, "you should use last issued token")
+	}
+	if !uuid.Equal(session.DeviceUid, tokenInfo.DeviceUid) {
+		return errors.Wrap(serviceErrors.ErrInvalidToken, "wrong device")
+	}
+
+	return nil
 }

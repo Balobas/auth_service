@@ -18,7 +18,7 @@ func (uc *UseCase) UnauthorizeUserDevices(ctx context.Context, userUid uuid.UUID
 		for _, device := range authDevices {
 			device = device.Unauthorize(unauthTime)
 
-			if err := uc.devicesRepo.UpdateUserAuthorizedDevice(ctx, device); err != nil {
+			if err := uc.devicesRepo.UpdateAuthorizedDevice(ctx, device); err != nil {
 				return err
 			}
 		}

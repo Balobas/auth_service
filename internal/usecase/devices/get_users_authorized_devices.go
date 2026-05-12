@@ -8,7 +8,7 @@ import (
 	uuid "github.com/satori/go.uuid"
 )
 
-func (uc *UseCase) GetUsersAuthorizedDevices(ctx context.Context, usersUids ...uuid.UUID) ([]entity.UserAuthorizedDevice, error) {
+func (uc *UseCase) GetUsersAuthorizedDevices(ctx context.Context, usersUids ...uuid.UUID) ([]entity.AuthorizedDevice, error) {
 	if len(usersUids) == 0 {
 		return nil, errors.New("empty users uids")
 	}

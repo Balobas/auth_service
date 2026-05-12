@@ -10,11 +10,12 @@ import (
 	uuid "github.com/satori/go.uuid"
 )
 
-const devicesTableName = "users_devices"
+const devicesTableName = "devices"
 
 var devicesTableColumns = []string{
 	"uid",
-	"user_uid",
+	"maintainer_uid",
+	"type",
 	"name",
 	"agent",
 	"language",
@@ -25,7 +26,8 @@ var devicesTableColumns = []string{
 
 type DeviceRow struct {
 	Uid            pgtype.UUID
-	UserUid        pgtype.UUID
+	MaintainerUid  pgtype.UUID
+	Type           string
 	Name           string
 	Agent          string
 	Language       string
@@ -38,15 +40,16 @@ func NewDeviceRow() *DeviceRow {
 	return &DeviceRow{}
 }
 
-func (s *DeviceRow) FromEntity(device entity.UserAuthorizedDevice) *DeviceRow {
+func (s *DeviceRow) FromEntity(device entity.AuthorizedDevice) *DeviceRow {
 	s.Uid = pgtype.UUID{
 		Bytes: device.Uid,
 		Valid: true,
 	}
-	s.UserUid = pgtype.UUID{
-		Bytes: device.UserUid,
+	s.MaintainerUid = pgtype.UUID{
+		Bytes: device.MaintainerUid,
 		Valid: true,
 	}
+	s.Type = string(device.Type)
 	s.Name = device.Name
 	s.Agent = device.Agent
 	s.Language = device.Language
@@ -83,15 +86,16 @@ func (s *DeviceRow) FromEntity(device entity.UserAuthorizedDevice) *DeviceRow {
 	return s
 }
 
-func (s *DeviceRow) ToEntity() entity.UserAuthorizedDevice {
-	d := entity.UserAuthorizedDevice{
-		UserDevice: entity.UserDevice{
-			Uid:       s.Uid.Bytes,
-			UserUid:   s.UserUid.Bytes,
-			Name:      s.Name,
-			Agent:     s.Agent,
-			Language:  s.Language,
-			CreatedAt: s.CreatedAt.Time,
+func (s *DeviceRow) ToEntity() entity.AuthorizedDevice {
+	d := entity.AuthorizedDevice{
+		Device: entity.Device{
+			Uid:           s.Uid.Bytes,
+			MaintainerUid: s.MaintainerUid.Bytes,
+			Type:          entity.DeviceType(s.Type),
+			Name:          s.Name,
+			Agent:         s.Agent,
+			Language:      s.Language,
+			CreatedAt:     s.CreatedAt.Time,
 		},
 		AuthorizedAt: s.AuthorizedAt.Time,
 	}
@@ -108,7 +112,8 @@ func (s *DeviceRow) IdColumnName() string {
 func (s *DeviceRow) Values() []interface{} {
 	return []interface{}{
 		s.Uid,
-		s.UserUid,
+		s.MaintainerUid,
+		s.Type,
 		s.Name,
 		s.Agent,
 		s.Language,
@@ -129,7 +134,8 @@ func (s *DeviceRow) Table() string {
 func (s *DeviceRow) Scan(row pgx.Row) error {
 	return row.Scan(
 		&s.Uid,
-		&s.UserUid,
+		&s.MaintainerUid,
+		&s.Type,
 		&s.Name,
 		&s.Agent,
 		&s.Language,
@@ -165,19 +171,19 @@ func (s *DeviceRow) ConditionUidEqual() sq.Eq {
 	}
 }
 
-func (s *DeviceRow) ConditionUserUidEqual() sq.Eq {
+func (s *DeviceRow) ConditionMaintainerUidEqual() sq.Eq {
 	return sq.Eq{
-		"user_uid": s.UserUid,
+		"maintainer_uid": s.MaintainerUid,
 	}
 }
 
-func (s *DeviceRow) ConditionUserUidIn(uids []uuid.UUID) sq.Eq {
+func (s *DeviceRow) ConditionMaintainerUidIn(uids []uuid.UUID) sq.Eq {
 	uidsStrs := make([]string, len(uids))
 	for i := 0; i < len(uids); i++ {
 		uidsStrs[i] = uids[i].String()
 	}
 	return sq.Eq{
-		"user_uid": uidsStrs,
+		"maintainer_uid": uidsStrs,
 	}
 }
 
@@ -187,10 +193,16 @@ func (s *DeviceRow) ConditionUnauthorizedIsNull() sq.Eq {
 	}
 }
 
-func (s *DeviceRow) ConditionUserUidAndDeviceUidEqual() sq.Eq {
+func (s *DeviceRow) ConditionMaintainerUidAndDeviceUidEqual() sq.Eq {
 	return sq.Eq{
-		"uid":      s.Uid,
-		"user_uid": s.UserUid,
+		"uid":            s.Uid,
+		"maintainer_uid": s.MaintainerUid,
+	}
+}
+
+func (s *DeviceRow) ConditionTypeEqual(t entity.DeviceType) sq.Eq {
+	return sq.Eq{
+		"type": t,
 	}
 }
 
@@ -215,12 +227,12 @@ func (s *DevicesRows) ScanAll(rows pgx.Rows) error {
 	return nil
 }
 
-func (s *DevicesRows) ToEntities() []entity.UserAuthorizedDevice {
+func (s *DevicesRows) ToEntities() []entity.AuthorizedDevice {
 	if len(s.devices) == 0 {
 		return nil
 	}
 
-	res := make([]entity.UserAuthorizedDevice, len(s.devices))
+	res := make([]entity.AuthorizedDevice, len(s.devices))
 
 	for i := 0; i < len(s.devices); i++ {
 		res[i] = s.devices[i].ToEntity()

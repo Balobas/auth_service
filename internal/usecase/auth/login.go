@@ -23,10 +23,7 @@ func (uc *UseCaseAuth) Login(ctx context.Context, params entity.LoginParams) (st
 	if err := validations.ValidateEmail(params.Email); err != nil {
 		return emptyTokensWithError(err)
 	}
-
-	if err := params.Device.Validate(); err != nil {
-		return emptyTokensWithError(err)
-	}
+	loginTime := time.Now()
 
 	var access, refresh string
 	if err := uc.dbm.ExecuteTx(ctx, common.ReadCommitted, func(ctx context.Context) error {
@@ -35,59 +32,36 @@ func (uc *UseCaseAuth) Login(ctx context.Context, params entity.LoginParams) (st
 			return err
 		}
 
+		device, err := entity.NewUserDevice(user.Uid, params.Device)
+		if err != nil {
+			return err
+		}
+
 		if err := uc.ucCredentials.Validate(ctx, user.Uid, params.Password); err != nil {
 			return err
 		}
 
-		savedSession, isFound, err := uc.sessionsRepo.GetSessionByUserUidAndDeviceUid(ctx, user.Uid, params.Device.Uid)
+		savedSession, isFound, err := uc.sessionsRepo.GetSessionByMaintainerAndDevice(ctx, user.Uid, device.Uid)
 		if err != nil {
 			return err
 		}
 		if isFound {
-			access, refresh, err = uc.handleLoginWithExistingSession(user, savedSession)
+			access, refresh, err = uc.handleUserLoginWithExistingSession(user, savedSession)
 			return err
 		}
 
-		loginTime := time.Now()
-
-		if err := uc.ucDevices.HandleLoginFromDevice(
-			ctx,
-			params.Device.WithUserUid(user.Uid),
-			loginTime,
-		); err != nil {
+		if err := uc.ucDevices.HandleLoginFromDevice(ctx, device, loginTime); err != nil {
 			return err
 		}
 
-		session := entity.Session{
-			Uid:            uuid.NewV4(),
-			UserUid:        user.Uid,
-			DeviceUid:      params.Device.Uid,
-			CreatedAt:      loginTime,
-			TokensIssuedAt: loginTime.Unix(),
-		}
-
-		tokenInfo := entity.TokenInfo{
-			UserUid:    user.Uid,
-			DeviceUid:  params.Device.Uid,
-			Email:      user.Email,
-			Roles:      user.Roles,
-			SessionUid: session.Uid,
-			IssuedAt:   loginTime.Unix(),
-		}
-
-		access, err = uc.jwtManager.NewToken(tokenInfo, uc.cfg.AccessJwtTTL())
-		if err != nil {
-			return err
-		}
-		refresh, err = uc.jwtManager.NewToken(tokenInfo, uc.cfg.RefreshJwtTTL())
-		if err != nil {
-			return err
-		}
-
+		session := entity.NewUserSession(uuid.NewV4(), user.Uid, device.Uid, loginTime)
 		if err := uc.sessionsRepo.CreateSession(ctx, session); err != nil {
 			return err
 		}
-		return nil
+
+		tokenInfo := entity.NewUserTokenInfo(user, device.Uid, session.Uid, loginTime)
+		access, refresh, err = uc.jwtManager.NewUserTokens(tokenInfo, uc.cfg.AccessJwtTTL(), uc.cfg.RefreshJwtTTL())
+		return err
 	}); err != nil {
 		return emptyTokensWithError(err)
 	}
@@ -99,23 +73,7 @@ func emptyTokensWithError(err error) (string, string, error) {
 	return "", "", err
 }
 
-func (uc *UseCaseAuth) handleLoginWithExistingSession(user entity.User, session entity.Session) (string, string, error) {
-	tokenInfo := entity.TokenInfo{
-		UserUid:    session.UserUid,
-		DeviceUid:  session.DeviceUid,
-		Email:      user.Email,
-		Roles:      user.Roles,
-		SessionUid: session.Uid,
-		IssuedAt:   session.TokensIssuedAt,
-	}
-
-	access, err := uc.jwtManager.NewToken(tokenInfo, uc.cfg.AccessJwtTTL())
-	if err != nil {
-		return emptyTokensWithError(err)
-	}
-	refresh, err := uc.jwtManager.NewToken(tokenInfo, uc.cfg.RefreshJwtTTL())
-	if err != nil {
-		return emptyTokensWithError(err)
-	}
-	return access, refresh, nil
+func (uc *UseCaseAuth) handleUserLoginWithExistingSession(user entity.User, session entity.Session) (string, string, error) {
+	tokenInfo := entity.UserTokenInfoFromSession(user, session)
+	return uc.jwtManager.NewUserTokens(tokenInfo, uc.cfg.AccessJwtTTL(), uc.cfg.RefreshJwtTTL())
 }

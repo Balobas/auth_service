@@ -23,15 +23,22 @@ func (uc *UseCaseAuth) VerifyAccess(ctx context.Context, uri string, method stri
 		return nil
 	}
 
-	hasPerms, err := uc.accessRepo.IsUserHasPermissionsForResource(ctx, tokenInfo.UserUid, uri, method)
-	if err != nil {
-		log.Printf("usecaseAuth.VerifyAccess: failed to check if user has permissions for resource: %v", err)
-		return err
+	hasPerms := false
+	
+	switch tokenInfo.Type {
+	case entity.TokenTypeUser:
+		hasPerms, err = uc.accessRepo.IsUserHasPermissionsForResource(ctx, tokenInfo.UserUid, uri, method)
+		if err != nil {
+			log.Printf("usecaseAuth.VerifyAccess: failed to check if user has permissions for resource: %v", err)
+			return err
+		}
+	default:
+		return errors.New("unknow token type")
 	}
 
 	if !hasPerms {
 		log.Printf("usecaseAuth.VerifyAccess: user %s has no permissions for resource %s %s", tokenInfo.UserUid, uri, method)
-		return errors.Wrap(serviceErrors.ErrNotAllowedByPermissions, "user has no permissions for resource")
+		return errors.Wrap(serviceErrors.ErrNotAllowedByPermissions, "has no permissions for resource")
 	}
 
 	return nil

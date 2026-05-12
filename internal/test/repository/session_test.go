@@ -24,10 +24,10 @@ func TestSessionRepo(t *testing.T) {
 	userUid := uuid.NewV4()
 
 	session := entity.Session{
-		Uid:       uuid.NewV4(),
-		UserUid:   userUid,
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
+		Uid:           uuid.NewV4(),
+		MaintainerUid: userUid,
+		CreatedAt:     time.Now(),
+		UpdatedAt:     time.Now(),
 	}
 
 	if err := sRepo.CreateSession(ctx, session); err == nil {
@@ -69,7 +69,7 @@ func TestSessionRepo(t *testing.T) {
 	log.Printf("getted by uid: %v", ses)
 	log.Printf("successfully get session by uid")
 
-	ses, isFound, err = sRepo.GetSessionByUserUid(ctx, session.UserUid)
+	ses, isFound, err = sRepo.GetSessionByUserUid(ctx, session.MaintainerUid)
 	if err != nil {
 		t.Fatalf("failed to get session by user: %v", err)
 	}
@@ -120,7 +120,7 @@ func TestSessionRepo(t *testing.T) {
 	}
 	log.Printf("successfully create session again")
 
-	if err := sRepo.DeleteSessionByUserUid(ctx, session.UserUid); err != nil {
+	if err := sRepo.DeleteSessionByUserUid(ctx, session.MaintainerUid); err != nil {
 		t.Fatalf("failed to delete session by user uid: %v", err)
 	}
 

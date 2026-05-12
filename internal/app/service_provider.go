@@ -6,7 +6,9 @@ import (
 	"log"
 
 	"github.com/balobas/auth_service/internal/config"
-	deliveryGrpc "github.com/balobas/auth_service/internal/delivery/grpc"
+	deliveryGrpcAuth "github.com/balobas/auth_service/internal/delivery/grpc/auth"
+	deliveryGrpcInterceptors "github.com/balobas/auth_service/internal/delivery/grpc/interceptors"
+	deliveryGrpcAuthInternalApi "github.com/balobas/auth_service/internal/delivery/grpc/internal_api"
 	"github.com/balobas/auth_service/internal/entity"
 	jwtManager "github.com/balobas/auth_service/internal/manager/jwt"
 	emailMock "github.com/balobas/auth_service/internal/mocks/email"
@@ -16,6 +18,7 @@ import (
 	repositoryConfig "github.com/balobas/auth_service/internal/repository/postgres/config"
 	repositoryCredentials "github.com/balobas/auth_service/internal/repository/postgres/credentials"
 	devicesRepository "github.com/balobas/auth_service/internal/repository/postgres/devices"
+	servicesRepository "github.com/balobas/auth_service/internal/repository/postgres/services"
 	sessionRepository "github.com/balobas/auth_service/internal/repository/postgres/session"
 	repositoryUsers "github.com/balobas/auth_service/internal/repository/postgres/users"
 	repositoryVerification "github.com/balobas/auth_service/internal/repository/postgres/verification"
@@ -26,6 +29,7 @@ import (
 	useCaseCredentials "github.com/balobas/auth_service/internal/usecase/credentials"
 	ucDevices "github.com/balobas/auth_service/internal/usecase/devices"
 	useCaseOutboxMessages "github.com/balobas/auth_service/internal/usecase/outbox_messages"
+	useCaseServices "github.com/balobas/auth_service/internal/usecase/services"
 	useCaseUsers "github.com/balobas/auth_service/internal/usecase/users"
 	useCaseVerification "github.com/balobas/auth_service/internal/usecase/verification"
 	riverWorkers "github.com/balobas/auth_service/internal/worker/river"
@@ -58,6 +62,7 @@ type serviceProvider struct {
 	verificationRepository *repositoryVerification.VerificationRepository
 	configRepository       *repositoryConfig.ConfigRepository
 	devicesRepository      *devicesRepository.Repository
+	servicesRepository     *servicesRepository.Repository
 
 	dbManager  *dbManager.Manager
 	jwtManager *jwtManager.JwtManager
@@ -70,11 +75,14 @@ type serviceProvider struct {
 	useCaseAccess         *useCaseAccess.UseCaseAccess
 	useCaseOutboxMessages *useCaseOutboxMessages.UseCaseOutboxMessages
 	useCaseDevices        *ucDevices.UseCase
+	useCaseServices       *useCaseServices.UcServices
 
 	workerVerification *workerVerification.Worker
 	workerMqPublisher  *riverOutboxPublisher.Worker
 
-	authServerGrpc *deliveryGrpc.AuthServerGrpc
+	interceptorsProvider      *deliveryGrpcInterceptors.Provider
+	authServerGrpc            *deliveryGrpcAuth.AuthServerGrpc
+	authInternalApiServerGrpc *deliveryGrpcAuthInternalApi.AuthInternalApiServerGrpc
 }
 
 func newServiceProvider() *serviceProvider {
@@ -186,6 +194,13 @@ func (sp *serviceProvider) UsersRepository(ctx context.Context) *repositoryUsers
 	return sp.usersRepository
 }
 
+func (sp *serviceProvider) ServicesRepository(ctx context.Context) *servicesRepository.Repository {
+	if sp.servicesRepository == nil {
+		sp.servicesRepository = servicesRepository.New(sp.PgClient(ctx))
+	}
+	return sp.servicesRepository
+}
+
 func (sp *serviceProvider) AccessRepository(ctx context.Context) *accessRepository.AccessRepository {
 	if sp.accessRepository == nil {
 		sp.accessRepository = accessRepository.New(sp.PgClient(ctx))
@@ -273,6 +288,19 @@ func (sp *serviceProvider) UseCaseUsers(ctx context.Context) *useCaseUsers.UseCa
 	return sp.useCaseUsers
 }
 
+func (sp *serviceProvider) UseCaseServices(ctx context.Context) *useCaseServices.UcServices {
+	if sp.useCaseServices == nil {
+		sp.useCaseServices = useCaseServices.New(
+			sp.ServiceConfig(),
+			sp.ServicesRepository(ctx),
+			sp.AccessRepository(ctx),
+			sp.UseCaseCredentials(ctx),
+			sp.DbManager(ctx),
+		)
+	}
+	return sp.useCaseServices
+}
+
 func (sp *serviceProvider) UseCaseCredentials(ctx context.Context) *useCaseCredentials.UseCaseCredentials {
 	if sp.useCaseCredentials == nil {
 		sp.useCaseCredentials = useCaseCredentials.New(
@@ -301,6 +329,7 @@ func (sp *serviceProvider) UseCaseAuth(ctx context.Context) *useCaseAuth.UseCase
 			sp.ServiceConfig(),
 			sp.SessionsRepository(ctx),
 			sp.AccessRepository(ctx),
+			sp.ServicesRepository(ctx),
 			sp.UseCaseUsers(ctx),
 			sp.UseCaseCredentials(ctx),
 			sp.UseCaseDevices(ctx),
@@ -357,11 +386,18 @@ func (sp *serviceProvider) WorkerMqPublisher(ctx context.Context) *riverOutboxPu
 	return sp.workerMqPublisher
 }
 
-func (sp *serviceProvider) AuthServerGrpc(ctx context.Context) *deliveryGrpc.AuthServerGrpc {
+func (sp *serviceProvider) GrpcInterceptorsProvider(ctx context.Context) *deliveryGrpcInterceptors.Provider {
+	if sp.interceptorsProvider == nil {
+		sp.interceptorsProvider = deliveryGrpcInterceptors.NewProvider(sp.UseCaseAuth(ctx))
+	}
+	return sp.interceptorsProvider
+}
+
+func (sp *serviceProvider) AuthServerGrpc(ctx context.Context) *deliveryGrpcAuth.AuthServerGrpc {
 	if sp.authServerGrpc == nil {
 		sp.initConfig(ctx)
 
-		sp.authServerGrpc = deliveryGrpc.NewAuthServerGRPC(
+		sp.authServerGrpc = deliveryGrpcAuth.NewAuthServerGRPC(
 			sp.ServiceConfig(),
 			sp.UseCaseUsers(ctx),
 			sp.UseCaseAuth(ctx),
@@ -371,6 +407,17 @@ func (sp *serviceProvider) AuthServerGrpc(ctx context.Context) *deliveryGrpc.Aut
 		)
 	}
 	return sp.authServerGrpc
+}
+
+func (sp *serviceProvider) AuthInternalApiServerGrpc(ctx context.Context) *deliveryGrpcAuthInternalApi.AuthInternalApiServerGrpc {
+	if sp.authInternalApiServerGrpc == nil {
+		sp.authInternalApiServerGrpc = deliveryGrpcAuthInternalApi.NewAuthInternalApiServerGrpc(
+			sp.ServiceConfig(),
+			sp.UseCaseAuth(ctx),
+			sp.UseCaseServices(ctx),
+		)
+	}
+	return sp.authInternalApiServerGrpc
 }
 
 type EmailClient interface {

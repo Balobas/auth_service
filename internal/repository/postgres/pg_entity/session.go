@@ -11,7 +11,8 @@ const sessionTableName = "sessions"
 
 var sessionTableColumns = []string{
 	"uid",
-	"user_uid",
+	"type",
+	"maintainer_uid",
 	"device_uid",
 	"tokens_issued_at",
 	"created_at",
@@ -20,7 +21,8 @@ var sessionTableColumns = []string{
 
 type SessionRow struct {
 	Uid            pgtype.UUID
-	UserUid        pgtype.UUID
+	MaintainerUid  pgtype.UUID
+	Type           string
 	DeviceUid      pgtype.UUID
 	CreatedAt      pgtype.Timestamp
 	TokensIssuedAt int64
@@ -36,8 +38,9 @@ func (s *SessionRow) FromEntity(session entity.Session) *SessionRow {
 		Bytes: session.Uid,
 		Valid: true,
 	}
-	s.UserUid = pgtype.UUID{
-		Bytes: session.UserUid,
+	s.Type = string(session.Type)
+	s.MaintainerUid = pgtype.UUID{
+		Bytes: session.MaintainerUid,
 		Valid: true,
 	}
 	s.DeviceUid = pgtype.UUID{
@@ -68,7 +71,8 @@ func (s *SessionRow) FromEntity(session entity.Session) *SessionRow {
 func (s *SessionRow) ToEntity() entity.Session {
 	return entity.Session{
 		Uid:            s.Uid.Bytes,
-		UserUid:        s.UserUid.Bytes,
+		MaintainerUid:  s.MaintainerUid.Bytes,
+		Type:           entity.SessionType(s.Type),
 		DeviceUid:      s.DeviceUid.Bytes,
 		TokensIssuedAt: s.TokensIssuedAt,
 		CreatedAt:      s.CreatedAt.Time,
@@ -83,7 +87,8 @@ func (s *SessionRow) IdColumnName() string {
 func (s *SessionRow) Values() []interface{} {
 	return []interface{}{
 		s.Uid,
-		s.UserUid,
+		s.Type,
+		s.MaintainerUid,
 		s.DeviceUid,
 		s.TokensIssuedAt,
 		s.CreatedAt,
@@ -102,7 +107,8 @@ func (s *SessionRow) Table() string {
 func (s *SessionRow) Scan(row pgx.Row) error {
 	return row.Scan(
 		&s.Uid,
-		&s.UserUid,
+		&s.Type,
+		&s.MaintainerUid,
 		&s.DeviceUid,
 		&s.TokensIssuedAt,
 		&s.CreatedAt,
@@ -129,16 +135,22 @@ func (s *SessionRow) ConditionUidEqual() sq.Eq {
 	}
 }
 
-func (s *SessionRow) ConditionUserUidEqual() sq.Eq {
+func (s *SessionRow) ConditionMaintainerUidEqual() sq.Eq {
 	return sq.Eq{
-		"user_uid": s.UserUid,
+		"maintainer_uid": s.MaintainerUid,
 	}
 }
 
-func (s *SessionRow) ConditionUserUidAndDeviceUidEqual() sq.Eq {
+func (s *SessionRow) ConditionMaintainerUidAndDeviceUidEqual() sq.Eq {
 	return sq.Eq{
-		"user_uid":   s.UserUid,
-		"device_uid": s.DeviceUid,
+		"maintainer_uid": s.MaintainerUid,
+		"device_uid":     s.DeviceUid,
+	}
+}
+
+func (s *SessionRow) ConditionTypeEqual(t entity.SessionType) sq.Eq {
+	return sq.Eq{
+		"type": string(t),
 	}
 }
 

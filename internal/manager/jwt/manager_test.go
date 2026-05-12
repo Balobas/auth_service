@@ -22,7 +22,7 @@ func TestManager(t *testing.T) {
 		ExpiredAt:  time.Now().Add(100 * time.Hour).Unix(),
 	}
 
-	token, err := manager.NewToken(tokenInfo, 100*time.Hour)
+	token, err := manager.newToken(tokenInfo, 100*time.Hour, fillUserTokenClaims)
 	if err != nil {
 		t.Fatalf("failed to create new token: %v", err)
 		return

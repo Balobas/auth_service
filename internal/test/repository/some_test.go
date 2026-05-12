@@ -32,10 +32,10 @@ func TestCascade(t *testing.T) {
 	sesRepo := sessionRepository.New(c)
 	sUid := uuid.NewV4()
 	err = sesRepo.CreateSession(ctx, entity.Session{
-		Uid:       sUid,
-		UserUid:   user.Uid,
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
+		Uid:           sUid,
+		MaintainerUid: user.Uid,
+		CreatedAt:     time.Now(),
+		UpdatedAt:     time.Now(),
 	})
 	if err != nil {
 		t.Fatalf("failed to create session: %v", err)

@@ -11,6 +11,7 @@ import (
 
 func (uc *UseCaseAuth) Refresh(ctx context.Context, token string) (string, string, error) {
 	log.Printf("usecaseAuth.Refresh: ")
+	refreshTime := time.Now()
 
 	var access, refresh string
 	if err := uc.dbm.ExecuteTx(ctx, common.ReadCommitted, func(ctx context.Context) error {
@@ -24,32 +25,18 @@ func (uc *UseCaseAuth) Refresh(ctx context.Context, token string) (string, strin
 			return err
 		}
 
-		refreshTime := time.Now()
-
-		newTokenInfo := entity.TokenInfo{
-			UserUid:    user.Uid,
-			DeviceUid:  tokenInfo.DeviceUid,
-			Email:      user.Email,
-			Roles:      user.Roles,
-			SessionUid: tokenInfo.SessionUid,
-			IssuedAt:   refreshTime.Unix(),
-		}
-
-		access, err = uc.jwtManager.NewToken(newTokenInfo, uc.cfg.AccessJwtTTL())
-		if err != nil {
-			return err
-		}
-		refresh, err = uc.jwtManager.NewToken(newTokenInfo, uc.cfg.RefreshJwtTTL())
+		newTokenInfo := entity.NewUserTokenInfo(user, tokenInfo.DeviceUid, tokenInfo.SessionUid, refreshTime)
+		access, refresh, err = uc.jwtManager.NewUserTokens(newTokenInfo, uc.cfg.AccessJwtTTL(), uc.cfg.RefreshJwtTTL())
 		if err != nil {
 			return err
 		}
 
 		if err := uc.sessionsRepo.UpdateSession(ctx, entity.Session{
 			Uid:            tokenInfo.SessionUid,
-			UserUid:        tokenInfo.UserUid,
+			MaintainerUid:  tokenInfo.UserUid,
 			DeviceUid:      tokenInfo.DeviceUid,
 			TokensIssuedAt: refreshTime.Unix(),
-			UpdatedAt:      time.Now(),
+			UpdatedAt:      refreshTime,
 		}); err != nil {
 			return err
 		}

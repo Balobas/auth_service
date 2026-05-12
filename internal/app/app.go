@@ -9,6 +9,7 @@ import (
 	"github.com/balobas/auth_service/internal/config"
 	"github.com/balobas/auth_service/internal/shutdown"
 	"github.com/balobas/auth_service/migrations"
+	"github.com/balobas/auth_service/pkg/auth_internal_api"
 	"github.com/balobas/auth_service/pkg/auth_v1"
 	"github.com/balobas/sport_city_common/logger"
 	"github.com/pkg/errors"
@@ -94,16 +95,21 @@ func (a *App) initServiceProvider(ctx context.Context) error {
 func (a *App) runGrpcServer(ctx context.Context, done chan<- struct{}) {
 	log.Printf("grpc server is running on %v\n", a.serviceProvider.GrpcConfig())
 	authGrpcServer := a.serviceProvider.AuthServerGrpc(ctx)
+	authInternalApiServer := a.serviceProvider.AuthInternalApiServerGrpc(ctx)
+
+	interceptors := a.serviceProvider.GrpcInterceptorsProvider(ctx)
 
 	a.grpcServer = grpc.NewServer(
 		grpc.Creds(insecure.NewCredentials()),
 		grpc.ChainUnaryInterceptor(
-			authGrpcServer.UnaryAuthInterceptor(),
-			authGrpcServer.UnaryErrorsPostInterceptor(),
+			interceptors.UnaryAuthInterceptor(),
+			interceptors.UnaryErrorsPostInterceptor(),
 		),
 	)
+
 	reflection.Register(a.grpcServer)
 	auth_v1.RegisterAuthServer(a.grpcServer, authGrpcServer)
+	auth_internal_api.RegisterAuthInternalApiServer(a.grpcServer, authInternalApiServer)
 
 	go func() {
 		lis, err := net.Listen("tcp", a.serviceProvider.GrpcConfig().Address())
