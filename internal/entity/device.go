@@ -47,7 +47,7 @@ func NewUserDevice(userUid uuid.UUID, deviceData LoginDeviceData) (Device, error
 		Type:          DeviceTypeUserDevice,
 		Name:          deviceData.Name,
 		Agent:         deviceData.Agent,
-		Language:      deviceData.Agent,
+		Language:      deviceData.Language,
 	}
 
 	return d, d.Validate()
@@ -60,7 +60,7 @@ func NewSystemDevice(serviceUid uuid.UUID, deviceData LoginDeviceData) (Device, 
 		Type:          DeviceTypeSystemDevice,
 		Name:          deviceData.Name,
 		Agent:         deviceData.Agent,
-		Language:      deviceData.Agent,
+		Language:      deviceData.Language,
 	}
 
 	return d, d.Validate()
