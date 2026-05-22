@@ -27,7 +27,7 @@ type UcCredentials interface {
 type UcDevices interface {
 	HandleLoginFromDevice(ctx context.Context, device entity.Device, loginTime time.Time) error
 	HandleLogoutFromDevice(ctx context.Context, userUid uuid.UUID, deviceUid uuid.UUID, logoutTime time.Time) error
-	UnauthorizeUserDevices(ctx context.Context, userUid uuid.UUID, unauthTime time.Time) error
+	UnauthorizeUserDevices(ctx context.Context, userUid uuid.UUID, unauthTime time.Time, keepAuthorizedUids ...uuid.UUID) error
 }
 
 type JwtManager interface {
@@ -41,7 +41,7 @@ type SessionsRepository interface {
 	GetSessionByUid(ctx context.Context, uid uuid.UUID) (entity.Session, bool, error)
 	GetSessionByMaintainerAndDevice(ctx context.Context, maintainerUid uuid.UUID, deviceUid uuid.UUID) (entity.Session, bool, error)
 	UpdateSession(ctx context.Context, session entity.Session) error
-	DeleteUserSessions(ctx context.Context, userUid uuid.UUID) error
+	DeleteUserSessions(ctx context.Context, userUid uuid.UUID, excludedUids ...uuid.UUID) error
 	DeleteSessionByMaintainerAndDevice(ctx context.Context, maintainerUid uuid.UUID, deviceUid uuid.UUID) error
 }
 

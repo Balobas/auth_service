@@ -19,6 +19,7 @@ type UcUsers interface {
 type UcAuth interface {
 	Login(ctx context.Context, params entity.LoginParams) (string, string, error)
 	Logout(ctx context.Context, userUid uuid.UUID, deviceUid uuid.UUID) error
+	LogoutAllOtherDevices(ctx context.Context, userUid uuid.UUID, keepAuthorizedDeviceUid uuid.UUID) error
 	Refresh(ctx context.Context, token string) (string, string, error)
 	VerifyAuth(ctx context.Context, token string) (entity.TokenInfo, error)
 	VerifyAccess(ctx context.Context, uri string, method string, token string) error
