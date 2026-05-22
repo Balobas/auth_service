@@ -14,7 +14,16 @@ func (s *AuthServerGrpc) Logout(ctx context.Context, req *auth_v1.LogoutRequest)
 	userInfo := deliveryGrpcInterceptors.UserInfoFromContext(ctx)
 	log.Printf("authServerGrpc.Logout: user uid %s device uid %s", userInfo.UserUid, req.GetDeviceUid())
 
-	if err := s.ucAuth.Logout(ctx, userInfo.UserUid, uuid.FromStringOrNil(req.GetDeviceUid())); err != nil {
+	var logoutDeviceUid uuid.UUID
+	deviceUidFromRequest := uuid.FromStringOrNil(req.GetDeviceUid())
+	if !uuid.Equal(deviceUidFromRequest, uuid.UUID{}) {
+		logoutDeviceUid = deviceUidFromRequest
+	} else {
+		// Если в запросе не указан явно uid девайса -> берем из токена
+		logoutDeviceUid = userInfo.DeviceUid
+	}
+
+	if err := s.ucAuth.Logout(ctx, userInfo.UserUid, logoutDeviceUid); err != nil {
 		log.Printf("authServerGrpc.Logout: failed to logout user %s from device %s: %v", userInfo.UserUid, req.GetDeviceUid(), err)
 		return nil, err
 	}
