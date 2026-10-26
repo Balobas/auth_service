@@ -16,6 +16,7 @@ type UsersRepository interface {
 	GetUserByUid(ctx context.Context, uid uuid.UUID) (entity.User, bool, error)
 	GetAdminUsers(ctx context.Context) ([]entity.User, error)
 	GetByEmail(ctx context.Context, email string) (entity.User, bool, error)
+	GetByTelegramID(ctx context.Context, telegramID int64) (entity.User, bool, error)
 	UpdateUser(ctx context.Context, userParams entity.User) error
 	DeleteUser(ctx context.Context, uid uuid.UUID) error
 }
@@ -42,6 +43,6 @@ type JwtManager interface {
 }
 
 type UcOutboxMessages interface {
-	CreateUserRegisteredMessage(ctx context.Context, user entity.User) error
+	CreateUserRegisteredMessage(ctx context.Context, user entity.User, name string, nickname string) error
 	CreateUserDeletedMessage(ctx context.Context, user entity.User) error
 }

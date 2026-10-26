@@ -59,6 +59,8 @@ var (
 		"/auth.Auth/Login":                                   {},
 		"/auth.Auth/Register":                                {},
 		"/auth.Auth/Refresh":                                 {},
+		"/auth.Auth/AuthWithTelegram":                        {},
+		"/auth.Auth/LinkTelegram":                            {},
 		"/auth.Auth/CreateAdmin":                             {},
 		"/auth.Auth/HealthCheck":                             {},
 		"/auth_internal_api.AuthInternalApi/ServiceRegister": {},

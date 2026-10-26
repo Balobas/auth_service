@@ -20,6 +20,8 @@ type configEnv struct {
 	UsersStreamName              string
 	UserRegisteredMessageSubject string
 	UserDeletedMessageSubject    string
+
+	TelegramBotToken string
 }
 
 func ParseEnv(cfg *configEnv) {
@@ -35,4 +37,5 @@ func ParseEnv(cfg *configEnv) {
 	cfg.UserRegisteredMessageSubject = os.Getenv("USER_REGISTERED_MESSAGE_SUBJECT")
 	cfg.UserDeletedMessageSubject = os.Getenv("USER_DELETED_MESSAGE_SUBJECT")
 	cfg.UsersStreamName = os.Getenv("USERS_STREAM_NAME")
+	cfg.TelegramBotToken = os.Getenv("TELEGRAM_BOT_TOKEN")
 }

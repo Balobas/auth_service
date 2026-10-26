@@ -32,6 +32,9 @@ type AuthClient interface {
 	Logout(ctx context.Context, in *LogoutRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	LogoutAllOtherDevices(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	Refresh(ctx context.Context, in *RefreshRequest, opts ...grpc.CallOption) (*JwtResponse, error)
+	// Вход/регистрация через Telegram Mini App по initData; линковка к существующему аккаунту.
+	AuthWithTelegram(ctx context.Context, in *TelegramAuthRequest, opts ...grpc.CallOption) (*TelegramAuthResponse, error)
+	LinkTelegram(ctx context.Context, in *TelegramLinkRequest, opts ...grpc.CallOption) (*JwtResponse, error)
 	Verify(ctx context.Context, in *VerifyRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	VerifyAccess(ctx context.Context, in *VerifyAccessRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	VerifyEmail(ctx context.Context, in *VerifyEmailRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
@@ -143,6 +146,24 @@ func (c *authClient) LogoutAllOtherDevices(ctx context.Context, in *emptypb.Empt
 func (c *authClient) Refresh(ctx context.Context, in *RefreshRequest, opts ...grpc.CallOption) (*JwtResponse, error) {
 	out := new(JwtResponse)
 	err := c.cc.Invoke(ctx, "/auth.Auth/Refresh", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authClient) AuthWithTelegram(ctx context.Context, in *TelegramAuthRequest, opts ...grpc.CallOption) (*TelegramAuthResponse, error) {
+	out := new(TelegramAuthResponse)
+	err := c.cc.Invoke(ctx, "/auth.Auth/AuthWithTelegram", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authClient) LinkTelegram(ctx context.Context, in *TelegramLinkRequest, opts ...grpc.CallOption) (*JwtResponse, error) {
+	out := new(JwtResponse)
+	err := c.cc.Invoke(ctx, "/auth.Auth/LinkTelegram", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -396,6 +417,9 @@ type AuthServer interface {
 	Logout(context.Context, *LogoutRequest) (*emptypb.Empty, error)
 	LogoutAllOtherDevices(context.Context, *emptypb.Empty) (*emptypb.Empty, error)
 	Refresh(context.Context, *RefreshRequest) (*JwtResponse, error)
+	// Вход/регистрация через Telegram Mini App по initData; линковка к существующему аккаунту.
+	AuthWithTelegram(context.Context, *TelegramAuthRequest) (*TelegramAuthResponse, error)
+	LinkTelegram(context.Context, *TelegramLinkRequest) (*JwtResponse, error)
 	Verify(context.Context, *VerifyRequest) (*emptypb.Empty, error)
 	VerifyAccess(context.Context, *VerifyAccessRequest) (*emptypb.Empty, error)
 	VerifyEmail(context.Context, *VerifyEmailRequest) (*emptypb.Empty, error)
@@ -455,6 +479,12 @@ func (UnimplementedAuthServer) LogoutAllOtherDevices(context.Context, *emptypb.E
 }
 func (UnimplementedAuthServer) Refresh(context.Context, *RefreshRequest) (*JwtResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Refresh not implemented")
+}
+func (UnimplementedAuthServer) AuthWithTelegram(context.Context, *TelegramAuthRequest) (*TelegramAuthResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AuthWithTelegram not implemented")
+}
+func (UnimplementedAuthServer) LinkTelegram(context.Context, *TelegramLinkRequest) (*JwtResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method LinkTelegram not implemented")
 }
 func (UnimplementedAuthServer) Verify(context.Context, *VerifyRequest) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Verify not implemented")
@@ -705,6 +735,42 @@ func _Auth_Refresh_Handler(srv interface{}, ctx context.Context, dec func(interf
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(AuthServer).Refresh(ctx, req.(*RefreshRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Auth_AuthWithTelegram_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(TelegramAuthRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServer).AuthWithTelegram(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/auth.Auth/AuthWithTelegram",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServer).AuthWithTelegram(ctx, req.(*TelegramAuthRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Auth_LinkTelegram_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(TelegramLinkRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServer).LinkTelegram(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/auth.Auth/LinkTelegram",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServer).LinkTelegram(ctx, req.(*TelegramLinkRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1219,6 +1285,14 @@ var Auth_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Refresh",
 			Handler:    _Auth_Refresh_Handler,
+		},
+		{
+			MethodName: "AuthWithTelegram",
+			Handler:    _Auth_AuthWithTelegram_Handler,
+		},
+		{
+			MethodName: "LinkTelegram",
+			Handler:    _Auth_LinkTelegram_Handler,
 		},
 		{
 			MethodName: "Verify",

@@ -12,11 +12,15 @@ type Config interface {
 	MinPasswordLen() int
 	AccessJwtTTL() time.Duration
 	RefreshJwtTTL() time.Duration
+	TelegramBotToken() string
 }
 
 type UcUsers interface {
 	GetUserByEmail(ctx context.Context, email string) (entity.User, error)
 	UpdateUser(ctx context.Context, user entity.User, password string) error
+	GetUserByTelegramID(ctx context.Context, telegramID int64) (entity.User, bool, error)
+	RegisterTelegramUser(ctx context.Context, telegramID int64, name, nickname string) (entity.User, error)
+	SetTelegramID(ctx context.Context, userUid uuid.UUID, telegramID int64) error
 }
 
 type UcCredentials interface {

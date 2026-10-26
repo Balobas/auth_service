@@ -20,6 +20,10 @@ service Auth {
     rpc LogoutAllOtherDevices(google.protobuf.Empty) returns (google.protobuf.Empty);
     rpc Refresh(RefreshRequest) returns (JwtResponse);
 
+    // Вход/регистрация через Telegram Mini App по initData; линковка к существующему аккаунту.
+    rpc AuthWithTelegram(TelegramAuthRequest) returns (TelegramAuthResponse);
+    rpc LinkTelegram(TelegramLinkRequest) returns (JwtResponse);
+
     rpc Verify(VerifyRequest) returns (google.protobuf.Empty);
     rpc VerifyAccess(VerifyAccessRequest) returns (google.protobuf.Empty);
     rpc VerifyEmail(VerifyEmailRequest) returns (google.protobuf.Empty);
@@ -191,6 +195,25 @@ message LoginRequest {
 message JwtResponse {
     string accessJwt = 1;
     string refreshJwt = 2;
+}
+
+message TelegramAuthRequest {
+    string init_data = 1;
+    Device device = 2;
+    bool   create_if_missing = 3;
+}
+
+message TelegramAuthResponse {
+    string accessJwt = 1;
+    string refreshJwt = 2;
+    bool   created = 3; // true — аккаунт только что заведён
+}
+
+message TelegramLinkRequest {
+    string init_data = 1;
+    Device device = 2;
+    string email = 3;
+    string password = 4;
 }
 
 message LogoutRequest {

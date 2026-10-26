@@ -116,6 +116,10 @@ func (c *ServiceConfig) PortSMTP() string {
 	return c.configEnv.PortSMTP
 }
 
+func (c *ServiceConfig) TelegramBotToken() string {
+	return c.configEnv.TelegramBotToken
+}
+
 func (c *ServiceConfig) EnableMqMessages() bool {
 	return c.configEnv.EnableMqMessages
 }

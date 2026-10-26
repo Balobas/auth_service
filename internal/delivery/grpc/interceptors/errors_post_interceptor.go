@@ -27,11 +27,16 @@ func grpcErrorWithStatus(err error) error {
 	case errors.Is(err, serviceErrors.ErrBadRequest):
 		// TODO: подумать над расширением, часть ошибок можно сделать FailedPrecondition
 		return status.Error(codes.InvalidArgument, err.Error())
-	case errors.Is(err, serviceErrors.ErrNotFound):
+	case errors.Is(err, serviceErrors.ErrNotFound),
+		errors.Is(err, serviceErrors.ErrTelegramUserNotFound):
 
+		// ErrTelegramUserNotFound — не ошибка сервера: telegram ещё не привязан
+		// ни к одному аккаунту; мини-апп по 404 предлагает создать/привязать аккаунт.
 		return status.Error(codes.NotFound, err.Error())
 	case errors.Is(err, serviceErrors.ErrIdempotentOperation),
-		errors.Is(err, serviceErrors.ErrAlreadyExists):
+		errors.Is(err, serviceErrors.ErrAlreadyExists),
+		errors.Is(err, serviceErrors.ErrTelegramAlreadyLinked),
+		errors.Is(err, serviceErrors.ErrAccountAlreadyHasTelegram):
 
 		return status.Error(codes.AlreadyExists, err.Error())
 	case errors.Is(err, serviceErrors.ErrNotAllowedByPermissions):

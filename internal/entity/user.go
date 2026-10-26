@@ -9,6 +9,7 @@ import (
 type User struct {
 	Uid        uuid.UUID
 	Email      string
+	TelegramID int64 // 0 = не привязан
 	Roles      []string
 	IsVerified bool
 	CreatedAt  time.Time

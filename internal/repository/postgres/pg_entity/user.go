@@ -17,6 +17,7 @@ var (
 	usersTableColumns = []string{
 		"uid",
 		"email",
+		"telegram_id",
 		"is_verified",
 		"created_at",
 		"updated_at",
@@ -26,6 +27,7 @@ var (
 type UserRow struct {
 	Uid        pgtype.UUID
 	Email      string
+	TelegramID pgtype.Int8
 	IsVerified bool
 	CreatedAt  pgtype.Timestamp
 	UpdatedAt  pgtype.Timestamp
@@ -67,6 +69,12 @@ func (ur *UserRow) FromEntity(user entity.User) *UserRow {
 	}
 	ur.Email = user.Email
 
+	if user.TelegramID != 0 {
+		ur.TelegramID = pgtype.Int8{Int64: user.TelegramID, Valid: true}
+	} else {
+		ur.TelegramID = pgtype.Int8{}
+	}
+
 	ur.IsVerified = user.IsVerified
 
 	if user.CreatedAt.Unix() == 0 {
@@ -94,6 +102,7 @@ func (ur *UserRow) ToEntity() entity.User {
 	return entity.User{
 		Uid:        ur.Uid.Bytes,
 		Email:      ur.Email,
+		TelegramID: ur.TelegramID.Int64, // 0, если NULL
 		IsVerified: ur.IsVerified,
 		CreatedAt:  ur.CreatedAt.Time,
 		UpdatedAt:  ur.UpdatedAt.Time,
@@ -108,6 +117,7 @@ func (ur *UserRow) Values() []interface{} {
 	return []interface{}{
 		ur.Uid,
 		ur.Email,
+		ur.TelegramID,
 		ur.IsVerified,
 		ur.CreatedAt,
 		ur.UpdatedAt,
@@ -122,6 +132,7 @@ func (ur *UserRow) Scan(row pgx.Row) error {
 	return row.Scan(
 		&ur.Uid,
 		&ur.Email,
+		&ur.TelegramID,
 		&ur.IsVerified,
 		&ur.CreatedAt,
 		&ur.UpdatedAt,
@@ -132,6 +143,7 @@ func (ur *UserRow) ValuesForScan() []interface{} {
 	return []interface{}{
 		&ur.Uid,
 		&ur.Email,
+		&ur.TelegramID,
 		&ur.IsVerified,
 		&ur.CreatedAt,
 		&ur.UpdatedAt,
@@ -141,6 +153,7 @@ func (ur *UserRow) ValuesForScan() []interface{} {
 func (ur *UserRow) ColumnsForUpdate() []string {
 	return []string{
 		"email",
+		"telegram_id",
 		"updated_at",
 	}
 }
@@ -148,6 +161,7 @@ func (ur *UserRow) ColumnsForUpdate() []string {
 func (ur *UserRow) ValuesForUpdate() []interface{} {
 	return []interface{}{
 		ur.Email,
+		ur.TelegramID,
 		ur.UpdatedAt,
 	}
 }
@@ -167,6 +181,12 @@ func (ur *UserRow) ConditionNotSuperAdmin() sq.NotEq {
 func (ur *UserRow) ConditionEmailEqual() sq.Eq {
 	return sq.Eq{
 		"email": ur.Email,
+	}
+}
+
+func (ur *UserRow) ConditionTelegramIDEqual() sq.Eq {
+	return sq.Eq{
+		"telegram_id": ur.TelegramID,
 	}
 }
 

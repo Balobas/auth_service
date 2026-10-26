@@ -62,7 +62,7 @@ func (uc *UseCaseUsers) Register(ctx context.Context, user entity.User, password
 			return err
 		}
 
-		if err := uc.ucOutboxMessages.CreateUserRegisteredMessage(ctx, user); err != nil {
+		if err := uc.ucOutboxMessages.CreateUserRegisteredMessage(ctx, user, "", ""); err != nil {
 			log.Printf("usecaseUsers.Register: failed to create user registered message (email %s): %v", user.Email, err)
 			return err
 		}

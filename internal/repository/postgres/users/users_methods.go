@@ -78,6 +78,20 @@ func (r *UsersRepository) GetByEmail(ctx context.Context, email string) (entity.
 	return userRow.ToEntity(), true, nil
 }
 
+func (r *UsersRepository) GetByTelegramID(ctx context.Context, telegramID int64) (entity.User, bool, error) {
+	userRow := pgEntity.NewUserRow().FromEntity(entity.User{TelegramID: telegramID})
+
+	if err := r.GetOne(ctx, userRow, userRow.ConditionTelegramIDEqual()); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return entity.User{}, false, nil
+		}
+		log.Printf("failed to get user by telegram_id %v", err)
+		return entity.User{}, false, errors.WithStack(err)
+	}
+
+	return userRow.ToEntity(), true, nil
+}
+
 func (r *UsersRepository) UpdateUser(ctx context.Context, user entity.User) error {
 	userRow := pgEntity.NewUserRow().FromEntity(user)
 	if err := r.Update(ctx, userRow, userRow.ConditionUserUidEqual()); err != nil {

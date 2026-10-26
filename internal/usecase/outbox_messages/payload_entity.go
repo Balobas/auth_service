@@ -8,8 +8,10 @@ type BaseMsgPayload struct {
 
 type UserCreatedPayload struct {
 	BaseMsgPayload
-	Uid   uuid.UUID `json:"uid"`
-	Email string    `json:"email"`
+	Uid      uuid.UUID `json:"uid"`
+	Email    string    `json:"email"`
+	Name     string    `json:"name"`     // отображаемое имя (из Telegram first_name), пусто для email-регистрации
+	Nickname string    `json:"nickname"` // желаемый ник (из Telegram username), пусто если нет
 }
 
 type UserDeletedPayload struct {

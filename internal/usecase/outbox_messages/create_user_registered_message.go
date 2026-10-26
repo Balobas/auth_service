@@ -12,7 +12,7 @@ import (
 	uuid "github.com/satori/go.uuid"
 )
 
-func (uc *UseCaseOutboxMessages) CreateUserRegisteredMessage(ctx context.Context, user entity.User) error {
+func (uc *UseCaseOutboxMessages) CreateUserRegisteredMessage(ctx context.Context, user entity.User, name string, nickname string) error {
 	log.Printf("UseCaseOutboxMessages.CreateUserRegisteredMessage: userUid %s", user.Uid)
 
 	if !uc.cfg.EnableMqMessages() {
@@ -28,8 +28,10 @@ func (uc *UseCaseOutboxMessages) CreateUserRegisteredMessage(ctx context.Context
 	msgUid := uuid.NewV4()
 
 	payload := UserCreatedPayload{
-		Uid:   user.Uid,
-		Email: user.Email,
+		Uid:      user.Uid,
+		Email:    user.Email,
+		Name:     name,
+		Nickname: nickname,
 	}
 	payload.MsgUid = msgUid
 

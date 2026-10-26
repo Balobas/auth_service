@@ -21,6 +21,8 @@ type UcAuth interface {
 	Logout(ctx context.Context, userUid uuid.UUID, deviceUid uuid.UUID) error
 	LogoutAllOtherDevices(ctx context.Context, userUid uuid.UUID, keepAuthorizedDeviceUid uuid.UUID) error
 	Refresh(ctx context.Context, token string) (string, string, error)
+	AuthWithTelegram(ctx context.Context, params entity.TelegramAuthParams) (access string, refresh string, created bool, err error)
+	LinkTelegram(ctx context.Context, params entity.TelegramLinkParams) (access string, refresh string, err error)
 	VerifyAuth(ctx context.Context, token string) (entity.TokenInfo, error)
 	VerifyAccess(ctx context.Context, uri string, method string, token string) error
 	UpdateUserCreds(ctx context.Context, user entity.User, password string, deviceUid uuid.UUID) (string, string, error)
