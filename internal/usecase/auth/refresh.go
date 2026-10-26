@@ -7,6 +7,7 @@ import (
 
 	"github.com/balobas/auth_service/internal/entity"
 	common "github.com/balobas/sport_city_common"
+	uuid "github.com/satori/go.uuid"
 )
 
 func (uc *UseCaseAuth) Refresh(ctx context.Context, token string) (string, string, error) {
@@ -20,7 +21,7 @@ func (uc *UseCaseAuth) Refresh(ctx context.Context, token string) (string, strin
 			return err
 		}
 
-		user, err := uc.getUserWithRolesByEmail(ctx, tokenInfo.Email)
+		user, err := uc.getUserWithRolesByUid(ctx, tokenInfo.UserUid)
 		if err != nil {
 			return err
 		}
@@ -48,17 +49,27 @@ func (uc *UseCaseAuth) Refresh(ctx context.Context, token string) (string, strin
 	return access, refresh, nil
 }
 
+func (uc *UseCaseAuth) getUserWithRolesByUid(ctx context.Context, uid uuid.UUID) (entity.User, error) {
+	user, err := uc.ucUsers.GetUserByUid(ctx, uid)
+	if err != nil {
+		return entity.User{}, err
+	}
+	return uc.withRoles(ctx, user)
+}
+
 func (uc *UseCaseAuth) getUserWithRolesByEmail(ctx context.Context, email string) (entity.User, error) {
 	user, err := uc.ucUsers.GetUserByEmail(ctx, email)
 	if err != nil {
 		return entity.User{}, err
 	}
+	return uc.withRoles(ctx, user)
+}
+
+func (uc *UseCaseAuth) withRoles(ctx context.Context, user entity.User) (entity.User, error) {
 	roles, err := uc.accessRepo.GetUserRoles(ctx, user.Uid)
 	if err != nil {
 		return entity.User{}, err
 	}
-
-	rolesStrs := entity.RolesToStrings(roles)
-	user.Roles = rolesStrs
+	user.Roles = entity.RolesToStrings(roles)
 	return user, nil
 }

@@ -40,10 +40,12 @@ func (uc *UseCaseAuth) verifyUserToken(ctx context.Context, tokenInfo entity.Tok
 		return serviceErrors.ErrTokenExpired
 	}
 
-	user, err := uc.ucUsers.GetUserByEmail(ctx, tokenInfo.Email)
+	// По uid, а не email: у Telegram-аккаунтов email пустой, GetUserByEmail
+	// на нём падает с "empty email". Uid в токене есть всегда.
+	user, err := uc.ucUsers.GetUserByUid(ctx, tokenInfo.UserUid)
 	if err != nil {
 		if errors.Is(err, serviceErrors.ErrNotFound) {
-			log.Printf("usecaseAuth.VerifyAuth: user with email %s not found", tokenInfo.Email)
+			log.Printf("usecaseAuth.VerifyAuth: user with uid %s not found", tokenInfo.UserUid)
 			return errors.Wrap(serviceErrors.ErrInvalidToken, "user not found")
 		}
 		return err

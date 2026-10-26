@@ -41,9 +41,10 @@ func (uc *UseCaseAuth) verifyUserRefreshToken(ctx context.Context, tokenInfo ent
 		return serviceErrors.ErrTokenExpired
 	}
 
-	user, err := uc.ucUsers.GetUserByEmail(ctx, tokenInfo.Email)
+	// По uid (а не email): у Telegram-аккаунтов email пустой.
+	user, err := uc.ucUsers.GetUserByUid(ctx, tokenInfo.UserUid)
 	if err != nil {
-		log.Printf("usecaseAuth.verifyUserRefreshToken: failed to get user %s by email %s: %v\n", tokenInfo.UserUid, tokenInfo.Email, err)
+		log.Printf("usecaseAuth.verifyUserRefreshToken: failed to get user %s by uid: %v\n", tokenInfo.UserUid, err)
 		return errors.WithStack(err)
 	}
 

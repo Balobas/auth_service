@@ -17,6 +17,7 @@ type Config interface {
 
 type UcUsers interface {
 	GetUserByEmail(ctx context.Context, email string) (entity.User, error)
+	GetUserByUid(ctx context.Context, uid uuid.UUID) (entity.User, error)
 	UpdateUser(ctx context.Context, user entity.User, password string) error
 	GetUserByTelegramID(ctx context.Context, telegramID int64) (entity.User, bool, error)
 	RegisterTelegramUser(ctx context.Context, telegramID int64, name, nickname string) (entity.User, error)
