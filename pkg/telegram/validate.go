@@ -8,12 +8,16 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/url"
 	"sort"
 	"strconv"
 	"strings"
 	"time"
 )
+
+// TODO: временная диагностика hash mismatch — убрать после отладки.
+const tgValidateDebug = true
 
 var (
 	ErrInvalidInitData = fmt.Errorf("invalid telegram init data")
@@ -37,6 +41,9 @@ type TelegramUser struct {
 //	secret = HMAC_SHA256(key="WebAppData", data=bot_token)
 //	hash   = hex(HMAC_SHA256(key=secret, data=data_check_string))
 func ValidateInitData(botToken, initData string, maxAge time.Duration) (TelegramUser, error) {
+	// Страховка от скрытых символов в конце токена (CRLF/пробел из .env).
+	botToken = strings.TrimSpace(botToken)
+
 	values, err := url.ParseQuery(initData)
 	if err != nil {
 		return TelegramUser{}, fmt.Errorf("%w: parse: %v", ErrInvalidInitData, err)
@@ -65,6 +72,32 @@ func ValidateInitData(botToken, initData string, maxAge time.Duration) (Telegram
 
 	secret := hmacSHA256([]byte("WebAppData"), []byte(botToken))
 	computed := hex.EncodeToString(hmacSHA256(secret, []byte(dataCheckString)))
+
+	if tgValidateDebug {
+		// Фингерпринт токена (без утечки самого токена) — чтобы отличить скрытые
+		// символы; а также альтернативный хэш С включением signature, чтобы
+		// проверить гипотезу об алгоритме.
+		tokenFp := sha256.Sum256([]byte(botToken))
+
+		altKeys := make([]string, 0, len(values))
+		for k := range values {
+			if k == "hash" {
+				continue
+			}
+			altKeys = append(altKeys, k)
+		}
+		sort.Strings(altKeys)
+		altPairs := make([]string, 0, len(altKeys))
+		for _, k := range altKeys {
+			altPairs = append(altPairs, k+"="+values.Get(k))
+		}
+		altComputed := hex.EncodeToString(
+			hmacSHA256(secret, []byte(strings.Join(altPairs, "\n"))))
+
+		_, hasSig := values["signature"]
+		log.Printf("[tg-debug] tokenLen=%d tokenFp=%x initDataLen=%d keys=%v hasSig=%v recv=%s calc(noSig)=%s calc(withSig)=%s",
+			len(botToken), tokenFp[:6], len(initData), keys, hasSig, hash, computed, altComputed)
+	}
 
 	if !hmac.Equal([]byte(computed), []byte(hash)) {
 		return TelegramUser{}, fmt.Errorf("%w: hash mismatch", ErrInvalidInitData)
