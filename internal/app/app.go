@@ -166,9 +166,10 @@ func (a *App) runMetricsServer(ctx context.Context, done chan<- struct{}) {
 
 	go func() {
 		log.Printf("metrics server is running on %s/metrics", addr)
+		// Метрики некритичны: ошибка сервера метрик НЕ должна ронять сервис,
+		// поэтому просто логируем и не сигналим в done.
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Printf("metrics server error: %v", err)
-			done <- struct{}{}
+			log.Printf("metrics server error (non-fatal): %v", err)
 		}
 	}()
 }
