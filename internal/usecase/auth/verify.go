@@ -28,7 +28,14 @@ func (uc *UseCaseAuth) VerifyAuth(ctx context.Context, token string) (entity.Tok
 	// TODO: switch tokenInfo.Type: verifyUserToken/verifySystemToken
 	switch tokenInfo.Type {
 	case entity.TokenTypeUser:
-		return tokenInfo, uc.verifyUserToken(ctx, tokenInfo)
+		if err := uc.verifyUserToken(ctx, tokenInfo); err != nil {
+			return entity.TokenInfo{}, err
+		}
+		// Отметка активности для DAU/MAU (неблокирующе, best-effort).
+		if uc.activity != nil {
+			uc.activity.Touch(tokenInfo.UserUid)
+		}
+		return tokenInfo, nil
 	default:
 		return entity.TokenInfo{}, errors.New("unknow token type")
 	}

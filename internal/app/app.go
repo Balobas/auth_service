@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"net"
+	"net/http"
 	"time"
 
 	"github.com/balobas/auth_service/internal/config"
@@ -11,6 +12,7 @@ import (
 	"github.com/balobas/auth_service/migrations"
 	"github.com/balobas/auth_service/pkg/auth_internal_api"
 	"github.com/balobas/auth_service/pkg/auth_v1"
+	"github.com/balobas/auth_service/pkg/metrics"
 	"github.com/balobas/sport_city_common/logger"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
@@ -54,6 +56,8 @@ func (a *App) Run(ctx context.Context) error {
 
 	a.migrateDb(ctx)
 	a.runGrpcServer(ctx, done)
+	a.runMetricsServer(ctx, done)
+	a.runStatsUpdater(ctx)
 	a.runWorkers(ctx)
 	a.runVerificationWorker(ctx)
 
@@ -102,6 +106,8 @@ func (a *App) runGrpcServer(ctx context.Context, done chan<- struct{}) {
 	a.grpcServer = grpc.NewServer(
 		grpc.Creds(insecure.NewCredentials()),
 		grpc.ChainUnaryInterceptor(
+			// Внешний — считает все запросы и итоговый status-код.
+			metrics.UnaryServerInterceptor(),
 			interceptors.UnaryAuthInterceptor(),
 			interceptors.UnaryErrorsPostInterceptor(),
 		),
@@ -144,6 +150,33 @@ func (a *App) runGrpcServer(ctx context.Context, done chan<- struct{}) {
 			done <- struct{}{}
 		}
 	}()
+}
+
+// runMetricsServer поднимает HTTP-сервер с /metrics (Prometheus scrape target).
+func (a *App) runMetricsServer(ctx context.Context, done chan<- struct{}) {
+	addr := a.serviceProvider.ServiceConfig().MetricsAddr()
+
+	mux := http.NewServeMux()
+	mux.Handle("/metrics", metrics.Handler())
+	srv := &http.Server{Addr: addr, Handler: mux}
+
+	shutdown.Add(func(ctx context.Context) error {
+		return srv.Shutdown(ctx)
+	})
+
+	go func() {
+		log.Printf("metrics server is running on %s/metrics", addr)
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Printf("metrics server error: %v", err)
+			done <- struct{}{}
+		}
+	}()
+}
+
+// runStatsUpdater периодически пересчитывает продуктовые метрики (users/DAU/MAU).
+func (a *App) runStatsUpdater(ctx context.Context) {
+	updater := metrics.NewStatsUpdater(a.serviceProvider.MetricsRepository(ctx), time.Minute)
+	go updater.Run(ctx)
 }
 
 func (a *App) runVerificationWorker(ctx context.Context) {

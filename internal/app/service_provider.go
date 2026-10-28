@@ -18,12 +18,14 @@ import (
 	repositoryConfig "github.com/balobas/auth_service/internal/repository/postgres/config"
 	repositoryCredentials "github.com/balobas/auth_service/internal/repository/postgres/credentials"
 	devicesRepository "github.com/balobas/auth_service/internal/repository/postgres/devices"
+	repositoryMetrics "github.com/balobas/auth_service/internal/repository/postgres/metrics"
 	servicesRepository "github.com/balobas/auth_service/internal/repository/postgres/services"
 	sessionRepository "github.com/balobas/auth_service/internal/repository/postgres/session"
 	repositoryUsers "github.com/balobas/auth_service/internal/repository/postgres/users"
 	repositoryVerification "github.com/balobas/auth_service/internal/repository/postgres/verification"
 	"github.com/balobas/auth_service/internal/shutdown"
 	useCaseAccess "github.com/balobas/auth_service/internal/usecase/access"
+	useCaseActivity "github.com/balobas/auth_service/internal/usecase/activity"
 	useCaseAuth "github.com/balobas/auth_service/internal/usecase/auth"
 	useCaseConfig "github.com/balobas/auth_service/internal/usecase/config"
 	useCaseCredentials "github.com/balobas/auth_service/internal/usecase/credentials"
@@ -63,9 +65,11 @@ type serviceProvider struct {
 	configRepository       *repositoryConfig.ConfigRepository
 	devicesRepository      *devicesRepository.Repository
 	servicesRepository     *servicesRepository.Repository
+	metricsRepository      *repositoryMetrics.MetricsRepository
 
-	dbManager  *dbManager.Manager
-	jwtManager *jwtManager.JwtManager
+	dbManager       *dbManager.Manager
+	jwtManager      *jwtManager.JwtManager
+	activityTracker *useCaseActivity.Tracker
 
 	useCaseConfig         *useCaseConfig.UseCaseConfig
 	useCaseUsers          *useCaseUsers.UseCaseUsers
@@ -243,6 +247,20 @@ func (sp *serviceProvider) DevicesRepository(ctx context.Context) *devicesReposi
 	return sp.devicesRepository
 }
 
+func (sp *serviceProvider) MetricsRepository(ctx context.Context) *repositoryMetrics.MetricsRepository {
+	if sp.metricsRepository == nil {
+		sp.metricsRepository = repositoryMetrics.New(sp.PgClient(ctx))
+	}
+	return sp.metricsRepository
+}
+
+func (sp *serviceProvider) ActivityTracker(ctx context.Context) *useCaseActivity.Tracker {
+	if sp.activityTracker == nil {
+		sp.activityTracker = useCaseActivity.New(sp.MetricsRepository(ctx))
+	}
+	return sp.activityTracker
+}
+
 func (sp *serviceProvider) DbManager(ctx context.Context) *dbManager.Manager {
 	if sp.dbManager == nil {
 		sp.dbManager = dbManager.NewDbManager(sp.PgClient(ctx))
@@ -335,6 +353,7 @@ func (sp *serviceProvider) UseCaseAuth(ctx context.Context) *useCaseAuth.UseCase
 			sp.UseCaseDevices(ctx),
 			sp.JwtManager(ctx),
 			sp.DbManager(ctx),
+			sp.ActivityTracker(ctx),
 		)
 	}
 	return sp.useCaseAuth

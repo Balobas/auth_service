@@ -1,0 +1,22 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  # auth_service /metrics. Замените host.docker.internal:9091 на реальный адрес
+  # сервиса (host:порт METRICS_ADDR). В одной docker-сети — просто auth_service:9091.
+  - job_name: auth_service
+    static_configs:
+      - targets: ['host.docker.internal:9091']
+        labels:
+          service: auth_service
+
+  # По мере инструментирования добавляйте остальные сервисы тем же блоком:
+  # - job_name: api_gateway
+  #   static_configs:
+  #     - targets: ['host.docker.internal:9092']
+  #       labels: { service: api_gateway }
+
+  - job_name: prometheus
+    static_configs:
+      - targets: ['localhost:9090']

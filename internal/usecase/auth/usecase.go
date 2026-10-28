@@ -17,6 +17,8 @@ type UseCaseAuth struct {
 
 	jwtManager JwtManager
 	dbm        *dbManager.Manager
+
+	activity ActivityTracker
 }
 
 func New(
@@ -29,6 +31,7 @@ func New(
 	ucDevices UcDevices,
 	jwtManager JwtManager,
 	dbm *dbManager.Manager,
+	activity ActivityTracker,
 ) *UseCaseAuth {
 	return &UseCaseAuth{
 		cfg:           cfg,
@@ -40,5 +43,6 @@ func New(
 		ucDevices:     ucDevices,
 		jwtManager:    jwtManager,
 		dbm:           dbm,
+		activity:      activity,
 	}
 }

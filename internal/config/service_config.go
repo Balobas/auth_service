@@ -120,6 +120,10 @@ func (c *ServiceConfig) TelegramBotToken() string {
 	return c.configEnv.TelegramBotToken
 }
 
+func (c *ServiceConfig) MetricsAddr() string {
+	return c.configEnv.MetricsAddr
+}
+
 func (c *ServiceConfig) EnableMqMessages() bool {
 	return c.configEnv.EnableMqMessages
 }

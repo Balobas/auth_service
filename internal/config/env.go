@@ -22,6 +22,8 @@ type configEnv struct {
 	UserDeletedMessageSubject    string
 
 	TelegramBotToken string
+
+	MetricsAddr string
 }
 
 func ParseEnv(cfg *configEnv) {
@@ -38,4 +40,9 @@ func ParseEnv(cfg *configEnv) {
 	cfg.UserDeletedMessageSubject = os.Getenv("USER_DELETED_MESSAGE_SUBJECT")
 	cfg.UsersStreamName = os.Getenv("USERS_STREAM_NAME")
 	cfg.TelegramBotToken = os.Getenv("TELEGRAM_BOT_TOKEN")
+
+	cfg.MetricsAddr = os.Getenv("METRICS_ADDR")
+	if cfg.MetricsAddr == "" {
+		cfg.MetricsAddr = ":9091" // /metrics по умолчанию
+	}
 }

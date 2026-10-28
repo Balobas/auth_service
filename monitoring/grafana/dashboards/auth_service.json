@@ -1,0 +1,99 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "graphTooltip": 0,
+  "schemaVersion": 39,
+  "tags": ["auth", "product"],
+  "time": { "from": "now-30d", "to": "now" },
+  "timezone": "",
+  "title": "Auth Service",
+  "uid": "auth-service",
+  "version": 1,
+  "panels": [
+    {
+      "type": "row",
+      "title": "Продуктовые метрики",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 }
+    },
+    {
+      "type": "stat",
+      "title": "Всего пользователей",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 5, "w": 6, "x": 0, "y": 1 },
+      "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "steps": [{ "color": "blue", "value": null }] } } },
+      "targets": [{ "expr": "auth_users_total", "refId": "A" }]
+    },
+    {
+      "type": "stat",
+      "title": "DAU (сегодня)",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 5, "w": 6, "x": 6, "y": 1 },
+      "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "steps": [{ "color": "green", "value": null }] } } },
+      "targets": [{ "expr": "auth_dau", "refId": "A" }]
+    },
+    {
+      "type": "stat",
+      "title": "MAU (30 дней)",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 5, "w": 6, "x": 12, "y": 1 },
+      "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "steps": [{ "color": "purple", "value": null }] } } },
+      "targets": [{ "expr": "auth_mau", "refId": "A" }]
+    },
+    {
+      "type": "stat",
+      "title": "Новые сегодня",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 5, "w": 6, "x": 18, "y": 1 },
+      "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "steps": [{ "color": "orange", "value": null }] } } },
+      "targets": [{ "expr": "auth_new_users_today", "refId": "A" }]
+    },
+    {
+      "type": "timeseries",
+      "title": "DAU / MAU во времени",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 6 },
+      "fieldConfig": { "defaults": { "custom": { "drawStyle": "line", "fillOpacity": 10 } } },
+      "targets": [
+        { "expr": "auth_dau", "legendFormat": "DAU", "refId": "A" },
+        { "expr": "auth_mau", "legendFormat": "MAU", "refId": "B" }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Пользователи по способу входа",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 6 },
+      "fieldConfig": { "defaults": { "custom": { "drawStyle": "line", "fillOpacity": 10, "stacking": { "mode": "normal" } } } },
+      "targets": [
+        { "expr": "auth_users_by_method{method=\"telegram\"}", "legendFormat": "telegram", "refId": "A" },
+        { "expr": "auth_users_by_method{method=\"email\"}", "legendFormat": "email", "refId": "B" }
+      ]
+    },
+    {
+      "type": "row",
+      "title": "Технические метрики (gRPC)",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 14 }
+    },
+    {
+      "type": "timeseries",
+      "title": "RPS по методам",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 15 },
+      "targets": [{ "expr": "sum by (method) (rate(grpc_requests_total[5m]))", "legendFormat": "{{method}}", "refId": "A" }]
+    },
+    {
+      "type": "timeseries",
+      "title": "Ошибки (не OK) RPS",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 15 },
+      "targets": [{ "expr": "sum by (code) (rate(grpc_requests_total{code!=\"OK\"}[5m]))", "legendFormat": "{{code}}", "refId": "A" }]
+    },
+    {
+      "type": "timeseries",
+      "title": "Латентность p95 (сек)",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 15 },
+      "targets": [{ "expr": "histogram_quantile(0.95, sum by (le, method) (rate(grpc_request_duration_seconds_bucket[5m])))", "legendFormat": "{{method}}", "refId": "A" }]
+    }
+  ]
+}

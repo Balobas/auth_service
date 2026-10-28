@@ -15,6 +15,12 @@ type Config interface {
 	TelegramBotToken() string
 }
 
+// ActivityTracker фиксирует активность пользователя (для DAU/MAU). Вызывается на
+// успешной проверке токена; реализация неблокирующая и best-effort.
+type ActivityTracker interface {
+	Touch(userUid uuid.UUID)
+}
+
 type UcUsers interface {
 	GetUserByEmail(ctx context.Context, email string) (entity.User, error)
 	GetUserByUid(ctx context.Context, uid uuid.UUID) (entity.User, error)

@@ -12,5 +12,6 @@ COPY --from=builder /github.com/balobasta/auth_service/src/bin/auth_service .
 COPY --from=builder /github.com/balobasta/auth_service/src/local.env .
 
 EXPOSE 50051
+EXPOSE 9091
 
 ENTRYPOINT ["./auth_service", "-config-path=local.env"]
